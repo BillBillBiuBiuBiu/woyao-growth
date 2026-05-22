@@ -3,7 +3,39 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer,
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
-import { mockRadarData, mockGrowthCurve, dimensionColors } from "@/lib/mock-data";
+import { mockRadarData, mockRadarNextLevel, mockGrowthCurve, dimensionColors } from "@/lib/mock-data";
+
+const dualRadarData = mockRadarData.map((d, i) => ({
+  dimension: d.dimension,
+  score: d.score,
+  target: mockRadarNextLevel[i]?.score ?? d.score,
+  fullMark: 100,
+}));
+
+export function GrowthRadarDual() {
+  return (
+    <div className="w-full">
+      <ResponsiveContainer width="100%" height={240}>
+        <RadarChart data={dualRadarData} margin={{ top: 10, right: 28, bottom: 10, left: 28 }}>
+          <PolarGrid stroke="#BBDEFB" />
+          <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 10, fill: "#1565C0", fontWeight: 600 }} />
+          <Radar name="个人当前能力" dataKey="score" stroke="#E53935" fill="#E53935" fillOpacity={0.35} strokeWidth={2} />
+          <Radar name="进入下一阶段要求" dataKey="target" stroke="#1976D2" fill="#1976D2" fillOpacity={0.1} strokeWidth={1.5} strokeDasharray="5 3" />
+        </RadarChart>
+      </ResponsiveContainer>
+      <div className="flex justify-center gap-5 mt-1">
+        <div className="flex items-center gap-1.5 text-xs text-gray-600">
+          <div className="w-4 h-2 rounded" style={{ background: "#E53935", opacity: 0.7 }} />
+          个人当前能力
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-gray-600">
+          <div className="w-4 h-2 rounded border-2 border-blue-600 border-dashed" />
+          进入下一阶段要求
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function GrowthRadar() {
   return (

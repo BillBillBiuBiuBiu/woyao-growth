@@ -491,6 +491,38 @@ export const mockStudentList = [
   { id: "stu-006", name: "子轩", age: 9, class: "U8基础班", reportCount: 5, openRate: 0.80, lastActive: "2026-05-18", growth: "up" },
 ];
 
+export const mockAssessment = {
+  level: "L2",
+  levelGrade: "A",
+  totalScore: 89,
+  date: "2026-05-24",
+  physicals: { height: "142cm", weight: "38kg", armspan: "145cm", fingerSpan: "18cm" },
+  skillItems: [
+    { name: "配合类", score: 2, max: 4 },
+    { name: "防守类", score: 2, max: 4 },
+    { name: "传球类", score: 1, max: 4 },
+    { name: "投篮类", score: 2, max: 4 },
+    { name: "综合类", score: 0, max: 4 },
+  ],
+  dimensionDetails: [
+    { dimension: "技术成长", score: 62, achieveScore: 72, result: "16次", desc: "运球稳定性提升，左右手控球能力改善，突破终结稳定性持续提升中", next: "强化左手突破后的终结技术" },
+    { dimension: "战术认知", score: 45, achieveScore: 54, result: "14.2秒", desc: "比赛阅读能力初步建立，攻守转换判断力有提升空间", next: "提升高压下的场上判断速度" },
+    { dimension: "比赛状态", score: 70, achieveScore: 80, result: "8次", desc: "比赛参与度高，关键回合表现稳定，回防速度明显提升", next: "继续强化高压局面下的稳定性" },
+    { dimension: "心理成长", score: 75, achieveScore: 85, result: "进步↑10", desc: "进攻信心增强，开始主动突破，失误后恢复速度提升明显", next: "建立更强的比赛主动参与意识" },
+    { dimension: "团队协作", score: 55, achieveScore: 70, result: "进步↑5", desc: "传球意识觉醒，开始观察队友位置，团队配合习惯初步建立", next: "练习传球后的无球二次跑位" },
+    { dimension: "训练习惯", score: 85, achieveScore: 90, result: "100%出勤", desc: "连续4周100%出勤，训练投入度高，保持良好的训练节律", next: "保持习惯，提升训练后半段专注度" },
+  ],
+};
+
+export const mockRadarNextLevel = [
+  { dimension: "技术成长", score: 75, fullMark: 100 },
+  { dimension: "战术认知", score: 65, fullMark: 100 },
+  { dimension: "比赛状态", score: 80, fullMark: 100 },
+  { dimension: "心理成长", score: 85, fullMark: 100 },
+  { dimension: "团队协作", score: 70, fullMark: 100 },
+  { dimension: "训练习惯", score: 90, fullMark: 100 },
+];
+
 export const dimensionColors: Record<string, string> = {
   "技术成长": "#F97316",
   "战术认知": "#8B5CF6",
