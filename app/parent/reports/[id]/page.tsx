@@ -60,20 +60,26 @@ export default function ReportDetailPage() {
         <div className="flex flex-col gap-4">
           {report.clips.map((clip, i) => (
             <div key={clip.id} className="rounded-2xl border border-border bg-white overflow-hidden">
-              {/* Video placeholder */}
-              <div className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 flex flex-col items-center justify-center cursor-pointer relative group">
-                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors">
-                  <span className="text-white text-xl">▶</span>
-                </div>
+              {/* Video */}
+              <div className="relative">
+                {clip.videoUrl ? (
+                  <video
+                    className="w-full aspect-video bg-black"
+                    controls
+                    playsInline
+                    poster={clip.thumbnail ?? undefined}
+                    src={clip.videoUrl}
+                  />
+                ) : (
+                  <div className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
+                    <span className="text-white/40 text-sm">暂无视频</span>
+                  </div>
+                )}
                 <div className="absolute top-2 left-2">
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${levelColors[clip.level]}`}>
                     {levelLabels[clip.level]}
                   </span>
                 </div>
-                <div className="absolute bottom-2 right-2 text-xs text-white/60 bg-black/30 px-1.5 py-0.5 rounded">
-                  {clip.timestamp}
-                </div>
-                <div className="absolute bottom-2 left-2 text-xs text-white/60">证据 {i + 1}</div>
               </div>
 
               <div className="p-4">

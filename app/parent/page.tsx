@@ -65,14 +65,20 @@ export default function ParentHome() {
         <div className="text-sm font-medium text-foreground mb-3">🎬 成长高光片段</div>
         <div className="grid grid-cols-3 gap-2">
           {mockReport.clips.map((clip) => (
-            <div
-              key={clip.id}
-              className="aspect-video bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex flex-col items-center justify-center relative overflow-hidden cursor-pointer"
-            >
-              <div className="text-2xl">▶</div>
-              <div className="text-xs text-slate-500 mt-1 px-1 text-center leading-tight">{clip.title}</div>
-              <div className="absolute bottom-1 right-1 text-xs text-slate-400">{clip.timestamp}</div>
-            </div>
+            <Link key={clip.id} href="/parent/reports/rpt-001">
+              <div className="aspect-video rounded-xl overflow-hidden relative cursor-pointer bg-slate-900">
+                {clip.thumbnail ? (
+                  <img src={clip.thumbnail} alt={clip.title} className="w-full h-full object-cover opacity-80" />
+                ) : null}
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-white/30 flex items-center justify-center">
+                    <span className="text-white text-sm">▶</span>
+                  </div>
+                </div>
+                <div className="absolute bottom-1 left-1 right-1 text-xs text-white/90 text-center leading-tight px-1 truncate drop-shadow">{clip.title}</div>
+                <div className="absolute top-1 right-1 text-xs text-white/60 bg-black/40 px-1 rounded">{clip.timestamp}</div>
+              </div>
+            </Link>
           ))}
         </div>
       </div>
