@@ -79,12 +79,22 @@ export default function AnnotatePage() {
         ))}
       </div>
 
-      {/* Video placeholder */}
-      <div className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl flex flex-col items-center justify-center">
-        <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer">
-          <span className="text-white text-2xl">▶</span>
-        </div>
-        <div className="text-white/60 text-sm mt-2">{clip.timestamp} · {clip.title}</div>
+      {/* Video */}
+      <div className="rounded-2xl overflow-hidden bg-black">
+        {clip.videoUrl ? (
+          <video
+            key={clip.videoUrl}
+            className="w-full aspect-video"
+            controls
+            playsInline
+            poster={clip.thumbnail ?? undefined}
+            src={clip.videoUrl}
+          />
+        ) : (
+          <div className="aspect-video flex items-center justify-center">
+            <span className="text-white/40 text-sm">暂无视频</span>
+          </div>
+        )}
       </div>
 
       {/* Dimension + Tag */}
