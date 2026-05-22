@@ -1,23 +1,34 @@
 "use client";
-import { mockStudent, mockGrowthHistory, mockBadges } from "@/lib/mock-data";
+import { mockStudent, mockGrowthHistory, mockBadges, mockStudentCards } from "@/lib/mock-data";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import BasketballCard from "@/components/BasketballCard";
 
 const GrowthRadar = dynamic(() => import("@/components/GrowthCharts").then((m) => m.GrowthRadar), { ssr: false });
 const GrowthCurve = dynamic(() => import("@/components/GrowthCharts").then((m) => m.GrowthCurve), { ssr: false });
 
 export default function StudentProfilePage() {
+  const card = mockStudentCards.find((c) => c.id === mockStudent.id)!;
+
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-300 flex items-center justify-center text-2xl font-bold text-white">
-          {mockStudent.name[0]}
-        </div>
-        <div>
+      {/* Header with basketball card */}
+      <div className="flex items-start gap-4">
+        <BasketballCard
+          name={card.name}
+          namePinyin={card.namePinyin}
+          number={card.number}
+          position={card.position}
+          photo={card.photo}
+          prebuiltCard={card.prebuiltCard}
+          size="mini"
+        />
+        <div className="pt-2">
           <h1 className="text-xl font-bold">{mockStudent.name}的成长档案</h1>
-          <div className="text-sm text-muted-foreground">{mockStudent.age}岁 · {mockStudent.class}</div>
-          <div className="text-sm text-muted-foreground">教练：{mockStudent.coach} · {mockStudent.organization}</div>
+          <div className="text-sm text-muted-foreground mt-1">{mockStudent.age}岁 · {mockStudent.class}</div>
+          <div className="text-sm text-muted-foreground">教练：{mockStudent.coach}</div>
+          <div className="text-sm text-muted-foreground">{mockStudent.organization}</div>
+          <div className="text-xs bg-orange-100 text-orange-700 rounded-full px-2.5 py-1 inline-block mt-2">{mockStudent.currentStage}</div>
         </div>
       </div>
 

@@ -1,40 +1,47 @@
+"use client";
 import Link from "next/link";
-import { mockStudent, mockReport, mockBadges } from "@/lib/mock-data";
+import { mockStudent, mockReport, mockBadges, mockStudentCards } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
+import BasketballCard from "@/components/BasketballCard";
 
 export default function ParentHome() {
   const badge = mockBadges[0];
+  const card = mockStudentCards.find((c) => c.id === mockStudent.id)!;
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Student card */}
-      <div className="rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 p-5 text-white shadow-md">
-        <div className="flex items-start justify-between">
+      {/* Basketball card + info */}
+      <div className="flex gap-4 items-start">
+        <BasketballCard
+          name={card.name}
+          namePinyin={card.namePinyin}
+          number={card.number}
+          position={card.position}
+          photo={card.photo}
+          prebuiltCard={card.prebuiltCard}
+          size="full"
+        />
+        <div className="flex-1 min-w-0 flex flex-col gap-3 pt-1">
           <div>
-            <div className="text-3xl font-bold">{mockStudent.name}</div>
-            <div className="text-orange-100 text-sm mt-1">{mockStudent.age}岁 · {mockStudent.class}</div>
-            <div className="text-orange-100 text-sm">教练：{mockStudent.coach}</div>
+            <div className="text-xl font-bold">{mockStudent.name}</div>
+            <div className="text-sm text-muted-foreground mt-0.5">{mockStudent.age}岁 · {mockStudent.class}</div>
+            <div className="text-sm text-muted-foreground">教练：{mockStudent.coach}</div>
+            <div className="text-xs bg-orange-100 text-orange-700 rounded-full px-2.5 py-1 inline-block mt-1.5">{mockStudent.currentStage}</div>
           </div>
-          <div className="text-right">
-            <div className="text-xs bg-white/20 rounded-full px-2.5 py-1">{mockStudent.currentStage}</div>
-            <div className="text-xs text-orange-100 mt-2">最近活动 5月24日</div>
-          </div>
-        </div>
-        <div className="mt-4 bg-white/15 rounded-xl p-3">
-          <div className="text-xs text-orange-100 mb-1">今日最值得看见的成长</div>
-          <div className="text-sm leading-snug">他开始敢在对抗中主动突破了。</div>
-        </div>
-      </div>
 
-      {/* Latest badge */}
-      <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-4">
-        <div className="text-xs text-muted-foreground mb-2">🏆 本场成长勋章</div>
-        <div className="flex items-center gap-3">
-          <div className="text-4xl">{badge.icon}</div>
-          <div>
-            <div className="font-semibold text-foreground">{badge.name}</div>
-            <div className="text-xs text-muted-foreground mt-0.5">{badge.description}</div>
-            <Badge variant="secondary" className="mt-1.5 text-xs bg-orange-100 text-orange-700">{badge.dimension}</Badge>
+          {/* Latest growth */}
+          <div className="rounded-xl bg-gradient-to-br from-orange-500 to-amber-400 p-3 text-white">
+            <div className="text-xs text-orange-100 mb-1">今日成长</div>
+            <div className="text-sm font-medium leading-snug">他开始敢在对抗中主动突破了。</div>
+          </div>
+
+          {/* Badge */}
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 flex items-center gap-2">
+            <span className="text-2xl">{badge.icon}</span>
+            <div>
+              <div className="text-xs font-semibold">{badge.name}</div>
+              <div className="text-xs text-muted-foreground">{badge.dimension}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -60,7 +67,7 @@ export default function ParentHome() {
           {mockReport.clips.map((clip) => (
             <div
               key={clip.id}
-              className="aspect-video bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex flex-col items-center justify-center relative overflow-hidden group cursor-pointer"
+              className="aspect-video bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex flex-col items-center justify-center relative overflow-hidden cursor-pointer"
             >
               <div className="text-2xl">▶</div>
               <div className="text-xs text-slate-500 mt-1 px-1 text-center leading-tight">{clip.title}</div>
@@ -81,6 +88,27 @@ export default function ParentHome() {
             </li>
           ))}
         </ul>
+      </div>
+
+      {/* Cards showcase */}
+      <div>
+        <div className="text-sm font-medium text-foreground mb-3">🃏 球星卡</div>
+        <div className="flex gap-3 overflow-x-auto pb-2">
+          {mockStudentCards.map((c) => (
+            <div key={c.id} className="shrink-0">
+              <BasketballCard
+                name={c.name}
+                namePinyin={c.namePinyin}
+                number={c.number}
+                position={c.position}
+                photo={c.photo}
+                prebuiltCard={c.prebuiltCard}
+                size="mini"
+              />
+              <div className="text-xs text-center text-muted-foreground mt-1">{c.name}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Profile link */}

@@ -6,7 +6,11 @@ export const mockStudent = {
   gender: "male",
   class: "PAB U10提高班",
   coach: "王教练",
-  avatar: null,
+  avatar: "/students/jiang-haob0.jpg",
+  cardPhoto: "/students/jiang-haob0.jpg",
+  number: "3",
+  namePinyin: "JIANG HAOBO",
+  position: "GUARD",
   currentStage: "L2 稳定阶段",
   organization: "PAB球馆",
   joinedAt: "2025-09-01",
@@ -164,7 +168,7 @@ export const mockPendingReports = [
   },
   {
     id: "sess-002",
-    student: "小明",
+    student: "季禹澄",
     studentId: "stu-002",
     date: "2026-05-24",
     type: "比赛",
@@ -221,13 +225,13 @@ export const mockLeads = [
   },
   {
     id: "lead-002",
-    student: "小明",
+    student: "季禹澄",
     studentId: "stu-002",
     type: "renewal",
     typeLabel: "续费线索",
     reason: "本月报告打开4次，家长分享过1次，成长趋势明显向好",
-    relatedReport: "小明 5月24日比赛成长报告",
-    suggestedMessage: "您好！小明这个月进步非常明显，在防守意识和传球选择上都有很大提升。我们下一期U10提高班正在开放续费，以他现在的状态非常适合继续这个班级的训练。",
+    relatedReport: "季禹澄 5月24日比赛成长报告",
+    suggestedMessage: "您好！季禹澄这个月进步非常明显，在防守意识和传球选择上都有很大提升。我们下一期U10提高班正在开放续费，以他现在的状态非常适合继续这个班级的训练。",
     status: "contacted",
     priority: "medium",
     coachConfirmed: true,
@@ -260,9 +264,30 @@ export const mockLeads = [
   },
 ];
 
+export const mockStudentCards = [
+  {
+    id: "stu-001",
+    name: "蒋皓博",
+    namePinyin: "JIANG HAOBO",
+    number: "3",
+    position: "GUARD",
+    photo: "/students/jiang-haob0.jpg",
+    prebuiltCard: null,
+  },
+  {
+    id: "stu-002",
+    name: "季禹澄",
+    namePinyin: "JI YUCHENG",
+    number: "94",
+    position: "GUARD",
+    photo: null,
+    prebuiltCard: "/students/ji-yucheng-card.jpg",
+  },
+];
+
 export const mockStudentList = [
   { id: "stu-001", name: "蒋皓博", age: 10, class: "U10提高班", reportCount: 8, openRate: 0.9, lastActive: "2026-05-24", growth: "up" },
-  { id: "stu-002", name: "小明", age: 10, class: "U10提高班", reportCount: 7, openRate: 0.85, lastActive: "2026-05-24", growth: "up" },
+  { id: "stu-002", name: "季禹澄", age: 10, class: "U10提高班", reportCount: 7, openRate: 0.85, lastActive: "2026-05-24", growth: "up" },
   { id: "stu-003", name: "小杰", age: 11, class: "U10提高班", reportCount: 9, openRate: 0.78, lastActive: "2026-05-22", growth: "stable" },
   { id: "stu-004", name: "小然", age: 10, class: "U10提高班", reportCount: 6, openRate: 0.5, lastActive: "2026-05-10", growth: "down" },
   { id: "stu-005", name: "浩然", age: 11, class: "U10提高班", reportCount: 7, openRate: 0.72, lastActive: "2026-05-20", growth: "stable" },
