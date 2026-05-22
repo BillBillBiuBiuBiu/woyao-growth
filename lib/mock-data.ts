@@ -1,7 +1,7 @@
 export const mockStudent = {
   id: "stu-001",
-  name: "小宇",
-  nickname: "小宇",
+  name: "蒋皓博",
+  nickname: "蒋皓博",
   age: 10,
   gender: "male",
   class: "PAB U10提高班",
@@ -23,11 +23,11 @@ export const mockReport = {
   id: "rpt-001",
   studentId: "stu-001",
   sessionId: "sess-001",
-  title: "小宇 5月24日比赛成长报告",
+  title: "蒋皓博 5月24日比赛成长报告",
   date: "2026-05-24",
   type: "match",
   status: "published",
-  heroSummary: "今天最值得记录的，不是得分，而是小宇开始在对抗下主动突破。过去几场他更多是在外线等待机会，但今天有两次主动选择进攻，说明他的比赛信心正在建立。",
+  heroSummary: "今天最值得记录的，不是得分，而是蒋皓博开始在对抗下主动突破。过去几场他更多是在外线等待机会，但今天有两次主动选择进攻，说明他的比赛信心正在建立。",
   badge: mockBadges[0],
   clips: [
     {
@@ -38,7 +38,7 @@ export const mockReport = {
       level: "L2",
       thumbnail: null,
       videoUrl: null,
-      parentExplanation: "这次突破虽然没有得分，但小宇主动选择面对防守人，这是很重要的变化。对这个阶段的孩子来说，敢于尝试本身就是成长。",
+      parentExplanation: "这次突破虽然没有得分，但蒋皓博主动选择面对防守人，这是很重要的变化。对这个阶段的孩子来说，敢于尝试本身就是成长。",
       coachComment: "主动突破意愿提升，说明训练中的突破动作开始迁移到比赛。下一阶段建议强化左手突破后的终结稳定性。",
       timestamp: "12:34",
     },
@@ -50,7 +50,7 @@ export const mockReport = {
       level: "L2",
       thumbnail: null,
       videoUrl: null,
-      parentExplanation: "小宇这次被抢断后没有停在原地，而是马上回防。这说明他正在建立比赛责任感和抗挫力。",
+      parentExplanation: "蒋皓博这次被抢断后没有停在原地，而是马上回防。这说明他正在建立比赛责任感和抗挫力。",
       coachComment: "失误后的转换反应明显提升，建议继续强化攻防转换速度。",
       timestamp: "23:15",
     },
@@ -62,7 +62,7 @@ export const mockReport = {
       level: "L1",
       thumbnail: null,
       videoUrl: null,
-      parentExplanation: "这次传球说明小宇开始观察队友位置，不只是自己处理球。团队意识正在形成。",
+      parentExplanation: "这次传球说明蒋皓博开始观察队友位置，不只是自己处理球。团队意识正在形成。",
       coachComment: "传球选择比之前更合理，下一步可以训练传球后的继续移动。",
       timestamp: "31:50",
     },
@@ -89,8 +89,8 @@ export const mockGrowthHistory = [
     id: "rpt-001",
     date: "2026-05-24",
     type: "match",
-    title: "小宇 5月24日比赛成长报告",
-    summary: "小宇开始在对抗中主动突破，比赛信心正在建立",
+    title: "蒋皓博 5月24日比赛成长报告",
+    summary: "蒋皓博开始在对抗中主动突破，比赛信心正在建立",
     badge: "勇敢突破时刻",
     clipCount: 3,
   },
@@ -154,7 +154,7 @@ export const mockGrowthCurve = [
 export const mockPendingReports = [
   {
     id: "sess-001",
-    student: "小宇",
+    student: "蒋皓博",
     studentId: "stu-001",
     date: "2026-05-24",
     type: "比赛",
@@ -208,13 +208,13 @@ export const mockOrgStats = {
 export const mockLeads = [
   {
     id: "lead-001",
-    student: "小宇",
+    student: "蒋皓博",
     studentId: "stu-001",
     type: "private_training",
     typeLabel: "私教推荐",
     reason: "连续3次出现「突破终结不稳定」，家长已播放相关片段5次",
-    relatedReport: "小宇 5月24日比赛成长报告",
-    suggestedMessage: "王教练，根据小宇最近几场比赛的成长数据，他在突破后的左手终结上有很大提升空间。我们有专门针对这个技术的1对1私教课，非常适合他现在的阶段，你觉得可以安排一节试试吗？",
+    relatedReport: "蒋皓博 5月24日比赛成长报告",
+    suggestedMessage: "王教练，根据蒋皓博最近几场比赛的成长数据，他在突破后的左手终结上有很大提升空间。我们有专门针对这个技术的1对1私教课，非常适合他现在的阶段，你觉得可以安排一节试试吗？",
     status: "new",
     priority: "high",
     coachConfirmed: true,
@@ -261,7 +261,7 @@ export const mockLeads = [
 ];
 
 export const mockStudentList = [
-  { id: "stu-001", name: "小宇", age: 10, class: "U10提高班", reportCount: 8, openRate: 0.9, lastActive: "2026-05-24", growth: "up" },
+  { id: "stu-001", name: "蒋皓博", age: 10, class: "U10提高班", reportCount: 8, openRate: 0.9, lastActive: "2026-05-24", growth: "up" },
   { id: "stu-002", name: "小明", age: 10, class: "U10提高班", reportCount: 7, openRate: 0.85, lastActive: "2026-05-24", growth: "up" },
   { id: "stu-003", name: "小杰", age: 11, class: "U10提高班", reportCount: 9, openRate: 0.78, lastActive: "2026-05-22", growth: "stable" },
   { id: "stu-004", name: "小然", age: 10, class: "U10提高班", reportCount: 6, openRate: 0.5, lastActive: "2026-05-10", growth: "down" },

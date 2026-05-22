@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 const roles = [
   {
     value: "parent" as Role,
-    label: "家长 Bill",
+    label: "家长 欣冉",
     emoji: "👨‍👦",
     desc: "查看孩子的成长报告和成长档案",
     href: "/parent",
@@ -79,7 +79,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-8">
-          Demo学员：小宇 · PAB U10提高班 · 教练王教练
+          Demo学员：蒋皓博 · PAB U10提高班 · 教练王教练
         </p>
       </div>
     </div>

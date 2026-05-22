@@ -3,7 +3,7 @@ import { useRole, Role } from "@/lib/store";
 import { useRouter } from "next/navigation";
 
 const roles: { value: Role; label: string; emoji: string; href: string }[] = [
-  { value: "parent", label: "家长 Bill", emoji: "👨‍👦", href: "/parent" },
+  { value: "parent", label: "家长 欣冉", emoji: "👨‍👦", href: "/parent" },
   { value: "coach", label: "王教练", emoji: "🏀", href: "/coach" },
   { value: "org", label: "PAB球馆运营", emoji: "🏢", href: "/org" },
 ];
