@@ -56,7 +56,7 @@ export default function StudentProfilePage() {
         <h2 className="font-semibold text-sm mb-3">📅 成长时间线</h2>
         <div className="flex flex-col gap-3">
           {mockGrowthHistory.map((h) => (
-            <Link key={h.id} href="/parent/reports/rpt-001">
+            <Link key={h.id} href={`/parent/reports/${h.id}`}>
               <div className="flex gap-3 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer">
                 <div className="flex flex-col items-center">
                   <div className={`w-2.5 h-2.5 rounded-full mt-1 shrink-0 ${h.type === "match" ? "bg-orange-400" : "bg-blue-400"}`} />

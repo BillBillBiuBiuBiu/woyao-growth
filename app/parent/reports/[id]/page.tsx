@@ -1,9 +1,10 @@
 "use client";
-import { mockReport, mockStudent, mockRadarData } from "@/lib/mock-data";
+import { mockReports, mockReport, mockStudent, mockRadarData } from "@/lib/mock-data";
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
+import { useParams } from "next/navigation";
 
 const GrowthRadarCompact = dynamic(
   () => import("@/components/GrowthCharts").then((m) => m.GrowthRadarCompact),
@@ -23,7 +24,8 @@ const scoreDeltas: Record<string, number> = {
 };
 
 export default function ReportDetailPage() {
-  const report = mockReport;
+  const { id } = useParams<{ id: string }>();
+  const report = mockReports.find((r) => r.id === id) ?? mockReport;
   const [shared, setShared] = useState(false);
   const [activeClip, setActiveClip] = useState(0);
   const clip = report.clips[activeClip];

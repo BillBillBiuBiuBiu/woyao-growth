@@ -88,6 +88,151 @@ export const mockReport = {
   ],
 };
 
+export const mockReportRpt002 = {
+  id: "rpt-002",
+  studentId: "stu-001",
+  sessionId: "sess-002",
+  title: "蒋皓博 5月10日训练成长记录",
+  date: "2026-05-10",
+  type: "training",
+  status: "published",
+  heroSummary: "这次训练最让我印象深刻的，是蒋皓博在防守端的专注。之前他在防守时容易分心，但这次训练里有两次关键的协防补位，说明他开始用大局观打球了。",
+  badge: mockBadges[1],
+  clips: [
+    {
+      id: "clip-002-a",
+      title: "关键协防补位",
+      dimension: "比赛状态",
+      tag: "快速回防",
+      level: "L2",
+      thumbnail: "/videos/thumb2.jpg",
+      videoUrl: "/videos/clip2_defense.mp4",
+      parentExplanation: "这次协防说明蒋皓博不只在盯自己的人，还在关注整个防守端。这是很重要的防守意识提升，很多成年球员都未必能做到。",
+      coachComment: "协防时机判断准确，移动速度也快。下一步可以练习协防后如何快速归位，形成完整的防守轮转。",
+      timestamp: "08:22",
+    },
+    {
+      id: "clip-002-b",
+      title: "稳定传球出球",
+      dimension: "团队协作",
+      tag: "主动传球",
+      level: "L2",
+      thumbnail: "/videos/thumb3.jpg",
+      videoUrl: "/videos/clip3_passing.mp4",
+      parentExplanation: "训练中的传球比比赛更稳定了，说明他在安全环境下已经建立了这个习惯，下一步就是把它迁移到比赛压力下。",
+      coachComment: "传球出手时机越来越果断，不再犹豫。建议继续强化接球即传的节奏，减少多余的运球。",
+      timestamp: "19:45",
+    },
+  ],
+  progressPoints: [
+    "防守专注度明显提升，有效完成两次协防补位",
+    "传球出手更果断，减少了犹豫期",
+  ],
+  improvementPoints: [
+    "协防后的快速归位还需加强，避免给对方留下空位",
+    "对抗强度下的传球稳定性仍有提升空间",
+  ],
+  coachAdvice: "本次训练防守端进步明显，是本周训练的最大亮点。建议下周专项训练协防归位的速度，同时继续在对抗中练习传球节奏。",
+  nextSteps: [
+    "练习协防后快速归位的脚步",
+    "加强对抗中传球的稳定性",
+    "巩固防守专注度，延伸到比赛场景",
+  ],
+};
+
+export const mockReportRpt003 = {
+  id: "rpt-003",
+  studentId: "stu-001",
+  sessionId: "sess-003",
+  title: "蒋皓博 4月28日比赛成长报告",
+  date: "2026-04-28",
+  type: "match",
+  status: "published",
+  heroSummary: "这场比赛蒋皓博的传球意识有了明显觉醒。他开始不只想着自己处理球，而是主动观察队友位置。虽然最终结果不是每次都完美，但这个改变本身就非常珍贵。",
+  badge: mockBadges[2],
+  clips: [
+    {
+      id: "clip-003-a",
+      title: "传球创造机会",
+      dimension: "团队协作",
+      tag: "主动传球",
+      level: "L2",
+      thumbnail: "/videos/thumb3.jpg",
+      videoUrl: "/videos/clip3_passing.mp4",
+      parentExplanation: "这次传球是蒋皓博主动观察到队友空位后做出的选择，不是被迫的，而是主动的。这种团队意识在10岁的孩子身上很难得。",
+      coachComment: "传球选择非常合理，时机也抓得好。这说明他的比赛视野在拓宽，下一步练习传球后的无球跑动。",
+      timestamp: "14:10",
+    },
+    {
+      id: "clip-003-b",
+      title: "主动寻找突破",
+      dimension: "心理成长",
+      tag: "敢于突破",
+      level: "L1",
+      thumbnail: "/videos/thumb1.jpg",
+      videoUrl: "/videos/clip1_breakthrough.mp4",
+      parentExplanation: "虽然这次突破被防住了，但蒋皓博主动去尝试的勇气很重要。比赛是练习勇气的最好地方，敢于尝试就是成长。",
+      coachComment: "突破意图清晰，但切入路线选择还需要优化。建议继续多尝试，找到自己最顺手的突破角度。",
+      timestamp: "27:33",
+    },
+  ],
+  progressPoints: [
+    "传球意识觉醒，开始主动观察并为队友创造机会",
+    "进攻主动性有所提升，开始尝试突破",
+  ],
+  improvementPoints: [
+    "传球后的二次跑位还未形成习惯，传完球后容易停在原地",
+    "突破路线的选择需要更多训练，找到自己的优势方向",
+  ],
+  coachAdvice: "传球意识的觉醒是这场比赛最大的收获。建议重点强化传球后的继续移动，让团队配合更流畅。同时继续鼓励主动突破的尝试。",
+  nextSteps: [
+    "练习传球后立即移动，不停在原地",
+    "找到自己最顺手的突破路线",
+    "保持对全场局势的观察习惯",
+  ],
+};
+
+export const mockReportRpt004 = {
+  id: "rpt-004",
+  studentId: "stu-001",
+  sessionId: "sess-004",
+  title: "蒋皓博 4月15日训练成长记录",
+  date: "2026-04-15",
+  type: "training",
+  status: "published",
+  heroSummary: "蒋皓博这四周的出勤率达到了100%，每次训练都全力投入。稳定的训练习惯本身就是一种重要的成长——它意味着他对篮球有了真正的热爱和承诺。",
+  badge: mockBadges[3],
+  clips: [
+    {
+      id: "clip-004-a",
+      title: "全力对抗不退缩",
+      dimension: "心理成长",
+      tag: "敢于突破",
+      level: "L2",
+      thumbnail: "/videos/thumb1.jpg",
+      videoUrl: "/videos/clip1_breakthrough.mp4",
+      parentExplanation: "连续四周出勤，每次都全力投入训练，这本身就是一种了不起的坚持。这次对抗中的不退缩，正是四周积累的成果。",
+      coachComment: "对抗中的投入度和上个月相比有明显提升，身体对抗时不再退缩。这是持续训练带来的自信。建议保持这种势头。",
+      timestamp: "31:05",
+    },
+  ],
+  progressPoints: [
+    "连续四周100%出勤，训练习惯稳定建立",
+    "对抗中的身体投入度明显提升，不再退缩",
+  ],
+  improvementPoints: [
+    "对抗后的体力管理需要加强，避免后半段训练质量下降",
+  ],
+  coachAdvice: "连续四周的坚持非常棒！这种训练态度是未来进步的基础。建议下阶段在保持出勤的同时，关注训练后半段的体力分配。",
+  nextSteps: [
+    "保持稳定的出勤习惯",
+    "注意训练后半段的体力分配",
+    "把训练中的对抗投入度延伸到比赛中",
+  ],
+};
+
+export const mockReports = [mockReport, mockReportRpt002, mockReportRpt003, mockReportRpt004];
+
 export const mockGrowthHistory = [
   {
     id: "rpt-001",
