@@ -39,6 +39,25 @@ export function GrowthRadar() {
   );
 }
 
+export function GrowthRadarCompact() {
+  return (
+    <ResponsiveContainer width="100%" height={180}>
+      <RadarChart data={mockRadarData} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+        <PolarGrid stroke="#fbd5a8" />
+        <PolarAngleAxis dataKey="dimension" tick={false} />
+        <Radar
+          name="成长指数"
+          dataKey="score"
+          stroke="#F97316"
+          fill="#F97316"
+          fillOpacity={0.3}
+          strokeWidth={2}
+        />
+      </RadarChart>
+    </ResponsiveContainer>
+  );
+}
+
 export function GrowthCurve() {
   return (
     <div className="rounded-2xl border border-border bg-white p-4">
