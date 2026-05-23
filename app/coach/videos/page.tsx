@@ -379,7 +379,7 @@ export default function CoachVideosPage() {
                                                   setEditingCell({ videoId: video.id, label: ps.label });
                                                   setEditValue(displayName);
                                                 }}
-                                                className="invisible group-hover:visible text-gray-300 hover:text-orange-400 text-xs leading-none transition-colors"
+                                                className="text-gray-300 hover:text-orange-400 active:text-orange-500 text-xs leading-none transition-colors"
                                                 title="修正球员标签"
                                               >✎</button>
                                             </div>
