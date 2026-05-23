@@ -20,6 +20,12 @@
           "label": "红队91号 持球"
         },
         {
+          "t": 9.53,
+          "player": "红队91号",
+          "action": "hold",
+          "label": "红队91号 持球"
+        },
+        {
           "t": 9.67,
           "player": "红队91号",
           "action": "steal",
@@ -75,6 +81,12 @@
           "player": "黑队#16",
           "action": "hold",
           "label": "黑队#16 持球"
+        },
+        {
+          "t": 11.73,
+          "player": "黑队#16",
+          "action": "shot",
+          "label": "黑队#16 投篮"
         }
       ]
     }
