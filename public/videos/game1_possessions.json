@@ -1,0 +1,280 @@
+{
+  "sourceVideo": "DJI_20260504165513_0075_D(1).MP4",
+  "duration": 79.6,
+  "possessionCount": 5,
+  "possessions": [
+    {
+      "start": 8.83,
+      "end": 19.77,
+      "team": "红队",
+      "duration": 10.94,
+      "id": "poss-001",
+      "index": 1,
+      "videoFile": "poss-001.mp4",
+      "thumbFile": "poss-001_thumb.jpg",
+      "events": [
+        {
+          "t": 8.73,
+          "player": "红队#26",
+          "action": "hold",
+          "label": "红队#26 持球"
+        },
+        {
+          "t": 13.78,
+          "player": "红队02号",
+          "action": "hold",
+          "label": "红队02号 持球"
+        },
+        {
+          "t": 13.83,
+          "player": "红队02号",
+          "action": "shot",
+          "label": "红队02号 投篮"
+        },
+        {
+          "t": 14.76,
+          "player": "红队02号",
+          "action": "hold",
+          "label": "红队02号 持球"
+        },
+        {
+          "t": 14.78,
+          "player": "红队02号",
+          "action": "shot",
+          "label": "红队02号 投篮"
+        },
+        {
+          "t": 16.38,
+          "player": "红队#26",
+          "action": "hold",
+          "label": "红队#26 持球"
+        },
+        {
+          "t": 16.42,
+          "player": "红队#26",
+          "action": "shot",
+          "label": "红队#26 投篮"
+        },
+        {
+          "t": 16.92,
+          "player": "红队02号",
+          "action": "hold",
+          "label": "红队02号 持球"
+        },
+        {
+          "t": 19.12,
+          "player": "白队00号",
+          "action": "hold",
+          "label": "白队00号 持球"
+        }
+      ]
+    },
+    {
+      "start": 19.79,
+      "end": 28.51,
+      "team": "白队",
+      "duration": 8.72,
+      "id": "poss-002",
+      "index": 2,
+      "videoFile": "poss-002.mp4",
+      "thumbFile": "poss-002_thumb.jpg",
+      "events": [
+        {
+          "t": 19.69,
+          "player": "白队00号",
+          "action": "hold",
+          "label": "白队00号 持球"
+        },
+        {
+          "t": 28.53,
+          "player": "白队00号",
+          "action": "steal",
+          "target": "红队02号",
+          "label": "白队00号 被抢断→ 红队02号"
+        },
+        {
+          "t": 28.53,
+          "player": "红队02号",
+          "action": "hold",
+          "label": "红队02号 持球"
+        }
+      ]
+    },
+    {
+      "start": 28.53,
+      "end": 35.67,
+      "team": "红队",
+      "duration": 7.14,
+      "id": "poss-003",
+      "index": 3,
+      "videoFile": "poss-003.mp4",
+      "thumbFile": "poss-003_thumb.jpg",
+      "events": [
+        {
+          "t": 28.43,
+          "player": "白队00号",
+          "action": "hold",
+          "label": "白队00号 持球"
+        },
+        {
+          "t": 28.53,
+          "player": "白队00号",
+          "action": "steal",
+          "target": "红队02号",
+          "label": "白队00号 被抢断→ 红队02号"
+        },
+        {
+          "t": 28.53,
+          "player": "红队02号",
+          "action": "hold",
+          "label": "红队02号 持球"
+        },
+        {
+          "t": 29.8,
+          "player": "红队02号",
+          "action": "shot",
+          "label": "红队02号 投篮"
+        },
+        {
+          "t": 30.03,
+          "player": "红队02号",
+          "action": "hold",
+          "label": "红队02号 持球"
+        },
+        {
+          "t": 35.7,
+          "player": "红队02号",
+          "action": "shot",
+          "label": "红队02号 投篮"
+        }
+      ]
+    },
+    {
+      "start": 47.93,
+      "end": 52.07,
+      "team": "白队",
+      "duration": 4.14,
+      "id": "poss-004",
+      "index": 4,
+      "videoFile": "poss-004.mp4",
+      "thumbFile": "poss-004_thumb.jpg",
+      "events": [
+        {
+          "t": 47.93,
+          "player": "白队#45",
+          "action": "hold",
+          "label": "白队#45 持球"
+        }
+      ]
+    },
+    {
+      "start": 52.09,
+      "end": 79.6,
+      "team": "红队",
+      "duration": 27.51,
+      "id": "poss-005",
+      "index": 5,
+      "videoFile": "poss-005.mp4",
+      "thumbFile": "poss-005_thumb.jpg",
+      "events": [
+        {
+          "t": 51.99,
+          "player": "白队#45",
+          "action": "hold",
+          "label": "白队#45 持球"
+        },
+        {
+          "t": 55.46,
+          "player": "红队#67",
+          "action": "hold",
+          "label": "红队#67 持球"
+        },
+        {
+          "t": 56.31,
+          "player": "白队#45",
+          "action": "hold",
+          "label": "白队#45 持球"
+        },
+        {
+          "t": 56.41,
+          "player": "红队#67",
+          "action": "hold",
+          "label": "红队#67 持球"
+        },
+        {
+          "t": 56.46,
+          "player": "白队#45",
+          "action": "hold",
+          "label": "白队#45 持球"
+        },
+        {
+          "t": 56.91,
+          "player": "红队02号",
+          "action": "hold",
+          "label": "红队02号 持球"
+        },
+        {
+          "t": 57.46,
+          "player": "红队02号",
+          "action": "pass",
+          "target": "红队#67",
+          "label": "红队02号 传球给 红队#67"
+        },
+        {
+          "t": 57.46,
+          "player": "红队#67",
+          "action": "hold",
+          "label": "红队#67 持球"
+        },
+        {
+          "t": 58.11,
+          "player": "红队#67",
+          "action": "shot",
+          "label": "红队#67 投篮"
+        },
+        {
+          "t": 58.99,
+          "player": "红队30号",
+          "action": "hold",
+          "label": "红队30号 持球"
+        },
+        {
+          "t": 59.08,
+          "player": "红队30号",
+          "action": "shot",
+          "label": "红队30号 投篮"
+        },
+        {
+          "t": 60.29,
+          "player": "红队30号",
+          "action": "hold",
+          "label": "红队30号 持球"
+        },
+        {
+          "t": 60.36,
+          "player": "红队30号",
+          "action": "shot",
+          "label": "红队30号 投篮"
+        },
+        {
+          "t": 60.41,
+          "player": "红队30号",
+          "action": "hold",
+          "label": "红队30号 持球"
+        },
+        {
+          "t": 60.43,
+          "player": "红队30号",
+          "action": "shot",
+          "label": "红队30号 投篮"
+        },
+        {
+          "t": 62.28,
+          "player": "红队30号",
+          "action": "hold",
+          "label": "红队30号 持球"
+        }
+      ]
+    }
+  ]
+}

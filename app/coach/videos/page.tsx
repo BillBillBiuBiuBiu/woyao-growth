@@ -73,10 +73,19 @@ const ACTION_TMPL: Record<string, (p: string, t?: string) => string> = {
   shot:   (p)    => `${p} 投篮`,
 };
 
-const ANALYZED_VIDEO_IDS = new Set(["vid-001"]);
-const TRACKING_DATA_MAP: Record<string, string>   = { "vid-001": "/videos/jhb1_tracking.json" };
-const POSSESSION_DATA_MAP: Record<string, string> = { "vid-001": "/videos/jhb1_possessions.json" };
-const STATS_DATA_MAP: Record<string, string>      = { "vid-001": "/videos/jhb1_stats.json" };
+const ANALYZED_VIDEO_IDS = new Set(["vid-001", "vid-004"]);
+const TRACKING_DATA_MAP: Record<string, string>   = {
+  "vid-001": "/videos/jhb1_tracking.json",
+  "vid-004": "/videos/game1_tracking.json",
+};
+const POSSESSION_DATA_MAP: Record<string, string> = {
+  "vid-001": "/videos/jhb1_possessions.json",
+  "vid-004": "/videos/game1_possessions.json",
+};
+const STATS_DATA_MAP: Record<string, string> = {
+  "vid-001": "/videos/jhb1_stats.json",
+  "vid-004": "/videos/game1_stats.json",
+};
 
 export default function CoachVideosPage() {
   const [analyzing, setAnalyzing]       = useState<string | null>(null);
