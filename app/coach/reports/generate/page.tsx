@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { mockStudents, mockVideos } from "@/lib/mock-data";
@@ -39,7 +39,7 @@ const mockDraft: Record<PlanType, { summary: string; strengths: string; weakness
   },
 };
 
-export default function GenerateReportPage() {
+function GenerateReportContent() {
   const searchParams = useSearchParams();
   const preVideoId = searchParams.get("videoId") ?? "";
 
@@ -283,5 +283,13 @@ export default function GenerateReportPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function GenerateReportPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-gray-400">加载中...</div>}>
+      <GenerateReportContent />
+    </Suspense>
   );
 }
