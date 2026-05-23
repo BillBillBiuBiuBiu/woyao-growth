@@ -239,20 +239,29 @@ function analyzeFrame(
     }
   }
 
-  return {t:0,hasPlayer:true,ballNear,playerX,playerY,score:ballNear?1.0:0.3};
+  // ballNear scores 3× higher than "player visible" — ensures key moments dominate
+  return {t:0,hasPlayer:true,ballNear,playerX,playerY,score:ballNear?3.0:0.3};
 }
 
 function findBestWindow(scores:FrameScore[], totalDuration:number):[number,number] {
-  const wf=Math.max(1,Math.floor(HIGHLIGHT_S*SAMPLE_FPS));
-  if (scores.length<=wf) return [0,Math.min(totalDuration,HIGHLIGHT_S)];
-  let bestSum=-1,bestStart=0,windowSum=0;
-  for (let i=0;i<scores.length;i++) {
-    windowSum+=scores[i].score;
-    if (i>=wf) windowSum-=scores[i-wf].score;
-    if (i>=wf-1&&windowSum>bestSum) { bestSum=windowSum; bestStart=i-wf+1; }
+  if (scores.length === 0) return [0, Math.min(totalDuration, HIGHLIGHT_S)];
+
+  // Find the single peak frame — the most important moment
+  let peakIdx = 0, peakScore = -Infinity;
+  for (let i = 0; i < scores.length; i++) {
+    if (scores[i].score > peakScore) { peakScore = scores[i].score; peakIdx = i; }
   }
-  const startT=Math.max(0,scores[bestStart].t-0.5);
-  return [startT,Math.min(totalDuration,startT+HIGHLIGHT_S)];
+
+  const peakT = scores[peakIdx].t;
+
+  // Center 15s around the peak moment, biased slightly before
+  // (60% of window before peak so you see the build-up, 40% after)
+  const before = HIGHLIGHT_S * 0.6;
+  const startT = Math.max(0, peakT - before);
+  const endT   = Math.min(totalDuration, startT + HIGHLIGHT_S);
+  // If we hit the end boundary, pull start back
+  const adjStart = Math.max(0, endT - HIGHLIGHT_S);
+  return [adjStart, endT];
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
