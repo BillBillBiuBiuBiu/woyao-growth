@@ -34,7 +34,7 @@ interface FrameScore {
   score: number;
 }
 
-type Stage = "idle"|"loading_ffmpeg"|"extracting_color"|"writing"|"extracting_frames"|"analyzing"|"cutting"|"done"|"error";
+type Stage = "idle"|"loading_ffmpeg"|"extracting_color"|"writing"|"analyzing"|"cutting"|"done"|"error";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -316,79 +316,90 @@ export default function HighlightsPage() {
       await ff.writeFile("input.mp4", await fetchFile(videoFile));
       setProgress(30);
 
-      // ── 4. Extract frames via FFmpeg (no video element needed!) ───────────
-      setStage("extracting_frames"); setStatusMsg("提取视频帧…");
-      // Use -f null first to get duration
-      let duration = 60; // fallback estimate
-      try {
-        // Extract frames at SAMPLE_FPS, scale to SAMPLE_W, save as PNG
-        await ff.exec([
-          "-i", "input.mp4",
-          "-vf", `fps=${SAMPLE_FPS},scale=${SAMPLE_W}:-2`,
-          "-f", "image2",
-          "frame%04d.png",
-        ]);
-      } catch {
-        // ignore — frames may still be written even on non-zero exit
-      }
-      setProgress(50);
+      // ── 4. Probe duration via FFmpeg log ──────────────────────────────────
+      setStage("analyzing"); setStatusMsg("读取视频信息…");
+      let duration = 0;
+      const onLog = ({ message }: { message: string }) => {
+        const m = message.match(/Duration:\s+(\d+):(\d+):([\d.]+)/);
+        if (m) duration = parseInt(m[1])*3600 + parseInt(m[2])*60 + parseFloat(m[3]);
+      };
+      ff.on("log", onLog);
+      try { await ff.exec(["-i", "input.mp4", "-t", "0", "-f", "null", "probe"]); } catch {}
+      ff.off("log", onLog);
+      if (duration <= 0) duration = Math.max(10, videoFile.size / 1024 / 1024 * 8);
+      setProgress(33);
 
-      // ── 5. Analyze extracted frames ───────────────────────────────────────
-      setStage("analyzing"); setStatusMsg("分析视频帧…");
+      // ── 5. Extract + analyze frames one at a time ─────────────────────────
+      // Single-frame extract: no bulk FS writes, minimal memory on mobile
+      setStage("analyzing");
       const canvas = document.createElement("canvas");
       canvas.width = SAMPLE_W;
-      let sampleH = Math.round(SAMPLE_W * 9/16); // default aspect, updated on first frame
+      let sampleH = Math.round(SAMPLE_W * 9/16);
 
       const scores: FrameScore[] = [];
       let prevFrame: ImageData|null = null;
       const track: TrackState = {x:-1,y:-1,vx:0,vy:0,framesSinceSeen:999,lastExitX:-1};
+      const totalFrames = Math.ceil(duration * SAMPLE_FPS);
 
-      let frameIdx = 1;
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const fname = `frame${String(frameIdx).padStart(4,"0")}.png`;
+      for (let i = 0; i < totalFrames; i++) {
+        const t = i / SAMPLE_FPS;
+        setStatusMsg(`分析帧 ${i+1} / ${totalFrames}（${Math.round(t)}s）`);
+
+        // Extract single frame at time t
+        try {
+          await ff.exec([
+            "-ss", t.toFixed(3),
+            "-i", "input.mp4",
+            "-frames:v", "1",
+            "-vf", `scale=${SAMPLE_W}:-2`,
+            "-f", "image2",
+            "-update", "1",   // always overwrite same file
+            "frame.png",
+          ]);
+        } catch {
+          break; // seek past end of video
+        }
+
         let pngBytes: Uint8Array;
         try {
-          const raw = await ff.readFile(fname);
+          const raw = await ff.readFile("frame.png");
           pngBytes = raw as Uint8Array;
-          await ff.deleteFile(fname); // free FS space
+          await ff.deleteFile("frame.png");
         } catch {
-          break; // no more frames
+          break;
         }
 
         const frameImg = await loadImageFromBytes(pngBytes);
-        if (frameIdx === 1) {
-          sampleH = Math.round(SAMPLE_W * frameImg.naturalHeight / Math.max(frameImg.naturalWidth,1));
+        if (i === 0) {
+          sampleH = Math.round(SAMPLE_W * frameImg.naturalHeight / Math.max(frameImg.naturalWidth, 1));
           canvas.height = sampleH;
-          duration = (scores.length || 1) * totalFramesGuess(videoFile.size); // rough fallback
         }
 
         const ctx = canvas.getContext("2d")!;
         ctx.drawImage(frameImg, 0, 0, SAMPLE_W, sampleH);
         const currFrame = ctx.getImageData(0, 0, SAMPLE_W, sampleH);
 
-        const t = (frameIdx-1) / SAMPLE_FPS;
         const fs = analyzeFrame(currFrame, prevFrame, sig, SAMPLE_W, sampleH, track);
         fs.t = t;
         scores.push(fs);
 
         if (fs.hasPlayer) {
-          if (track.x>=0) { track.vx=track.vx*0.5+(fs.playerX-track.x)*0.5; track.vy=track.vy*0.5+(fs.playerY-track.y)*0.5; }
-          const nearEdge=fs.playerX<SAMPLE_W*0.08||fs.playerX>SAMPLE_W*0.92||fs.playerY<sampleH*0.08||fs.playerY>sampleH*0.92;
-          if (nearEdge) track.lastExitX=fs.playerX;
-          track.x=fs.playerX; track.y=fs.playerY; track.framesSinceSeen=0;
+          if (track.x >= 0) {
+            track.vx = track.vx*0.5 + (fs.playerX - track.x)*0.5;
+            track.vy = track.vy*0.5 + (fs.playerY - track.y)*0.5;
+          }
+          const nearEdge = fs.playerX < SAMPLE_W*0.08 || fs.playerX > SAMPLE_W*0.92
+                        || fs.playerY < sampleH*0.08  || fs.playerY > sampleH*0.92;
+          if (nearEdge) track.lastExitX = fs.playerX;
+          track.x = fs.playerX; track.y = fs.playerY; track.framesSinceSeen = 0;
         } else {
           track.framesSinceSeen++;
         }
 
         prevFrame = currFrame;
-        frameIdx++;
-        // Estimate progress: assume ~90 frames max for reasonable video
-        setProgress(50 + Math.min(25, Math.round(frameIdx/0.9)));
-        if (frameIdx%5===0) setStatusMsg(`分析帧 ${frameIdx}…`);
+        setProgress(33 + Math.round(((i+1) / totalFrames) * 43));
       }
 
-      duration = (frameIdx-1) / SAMPLE_FPS;
       setProgress(76); setStatusMsg("计算最佳片段…");
 
       // ── 6. Find best window ───────────────────────────────────────────────
@@ -424,7 +435,7 @@ export default function HighlightsPage() {
     }
   }, [videoFile, photoFile]);
 
-  const isProcessing = ["loading_ffmpeg","extracting_color","writing","extracting_frames","analyzing","cutting"].includes(stage);
+  const isProcessing = ["loading_ffmpeg","extracting_color","writing","analyzing","cutting"].includes(stage);
   const canRun = !!(videoFile && photoFile && !isProcessing);
 
   return (
@@ -524,7 +535,3 @@ export default function HighlightsPage() {
   );
 }
 
-// rough size-to-duration estimate for progress display only
-function totalFramesGuess(fileSize: number): number {
-  return Math.max(30, fileSize / 1024 / 1024 * 8); // ~8s per MB
-}
