@@ -130,6 +130,17 @@ export default function ParentHome() {
           </div>
         </div>
 
+        {/* Highlight reel */}
+        <Link href="/parent/highlights">
+          <div className="rounded-3xl shadow-sm p-4 flex items-center justify-between active:scale-98 transition-transform" style={{ background: "linear-gradient(135deg, #fff3e0, #ffe0b2)" }}>
+            <div>
+              <div className="font-bold text-sm text-gray-800">🎬 生成我的精彩集锦</div>
+              <div className="text-xs text-gray-500 mt-0.5">上传视频 + 照片，自动剪辑有球精彩片段</div>
+            </div>
+            <div className="text-2xl text-orange-300">›</div>
+          </div>
+        </Link>
+
         {/* Profile link */}
         <Link href="/parent/profile/stu-001">
           <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-center justify-between active:scale-98 transition-transform">
