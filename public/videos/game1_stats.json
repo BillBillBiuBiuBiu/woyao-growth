@@ -7,7 +7,7 @@
       "passCount": 1,
       "stealCount": 2,
       "driveCount": 0,
-      "shotCount": 9,
+      "shotCount": 5,
       "playerCount": 4,
       "possessionPct": 78.0
     },
@@ -30,14 +30,14 @@
       "totalDistanceM": 128.2,
       "offenseDistanceM": 81.9,
       "defenseDistanceM": 46.3,
-      "holdCount": 7,
-      "holdSeconds": 9.8,
+      "holdCount": 6,
+      "holdSeconds": 5.7,
       "passCount": 1,
       "receiveCount": 0,
       "stealCount": 2,
       "turnoverCount": 0,
       "driveCount": 0,
-      "shotCount": 4
+      "shotCount": 2
     },
     {
       "label": "白队00号",
@@ -64,8 +64,8 @@
       "totalDistanceM": 69.8,
       "offenseDistanceM": 66.8,
       "defenseDistanceM": 3.0,
-      "holdCount": 4,
-      "holdSeconds": 8.2,
+      "holdCount": 3,
+      "holdSeconds": 7.7,
       "passCount": 0,
       "receiveCount": 0,
       "stealCount": 0,
@@ -99,7 +99,7 @@
       "offenseDistanceM": 60.2,
       "defenseDistanceM": 4.6,
       "holdCount": 3,
-      "holdSeconds": 1.6,
+      "holdSeconds": 2.0,
       "passCount": 0,
       "receiveCount": 1,
       "stealCount": 0,
@@ -149,14 +149,14 @@
       "totalDistanceM": 37.3,
       "offenseDistanceM": 2.2,
       "defenseDistanceM": 35.1,
-      "holdCount": 4,
-      "holdSeconds": 17.5,
+      "holdCount": 3,
+      "holdSeconds": 19.4,
       "passCount": 0,
       "receiveCount": 0,
       "stealCount": 0,
       "turnoverCount": 0,
       "driveCount": 0,
-      "shotCount": 3
+      "shotCount": 1
     }
   ]
 }

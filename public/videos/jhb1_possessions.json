@@ -81,12 +81,6 @@
           "player": "黑队3号",
           "action": "hold",
           "label": "黑队3号 持球"
-        },
-        {
-          "t": 11.73,
-          "player": "黑队3号",
-          "action": "shot",
-          "label": "黑队3号 投篮"
         }
       ]
     }

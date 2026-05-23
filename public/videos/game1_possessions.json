@@ -10,8 +10,8 @@
       "duration": 10.94,
       "id": "poss-001",
       "index": 1,
-      "videoFile": "game1-poss-001.mp4",
-      "thumbFile": "game1-poss-001_thumb.jpg",
+      "videoFile": "poss-001.mp4",
+      "thumbFile": "poss-001_thumb.jpg",
       "events": [
         {
           "t": 8.73,
@@ -36,12 +36,6 @@
           "player": "红队02号",
           "action": "hold",
           "label": "红队02号 持球"
-        },
-        {
-          "t": 14.78,
-          "player": "红队02号",
-          "action": "shot",
-          "label": "红队02号 投篮"
         },
         {
           "t": 16.38,
@@ -76,8 +70,8 @@
       "duration": 8.72,
       "id": "poss-002",
       "index": 2,
-      "videoFile": "game1-poss-002.mp4",
-      "thumbFile": "game1-poss-002_thumb.jpg",
+      "videoFile": "poss-002.mp4",
+      "thumbFile": "poss-002_thumb.jpg",
       "events": [
         {
           "t": 19.69,
@@ -107,8 +101,8 @@
       "duration": 7.14,
       "id": "poss-003",
       "index": 3,
-      "videoFile": "game1-poss-003.mp4",
-      "thumbFile": "game1-poss-003_thumb.jpg",
+      "videoFile": "poss-003.mp4",
+      "thumbFile": "poss-003_thumb.jpg",
       "events": [
         {
           "t": 28.43,
@@ -134,18 +128,6 @@
           "player": "红队02号",
           "action": "shot",
           "label": "红队02号 投篮"
-        },
-        {
-          "t": 30.03,
-          "player": "红队02号",
-          "action": "hold",
-          "label": "红队02号 持球"
-        },
-        {
-          "t": 35.7,
-          "player": "红队02号",
-          "action": "shot",
-          "label": "红队02号 投篮"
         }
       ]
     },
@@ -156,8 +138,8 @@
       "duration": 4.14,
       "id": "poss-004",
       "index": 4,
-      "videoFile": "game1-poss-004.mp4",
-      "thumbFile": "game1-poss-004_thumb.jpg",
+      "videoFile": "poss-004.mp4",
+      "thumbFile": "poss-004_thumb.jpg",
       "events": [
         {
           "t": 47.93,
@@ -174,8 +156,8 @@
       "duration": 27.51,
       "id": "poss-005",
       "index": 5,
-      "videoFile": "game1-poss-005.mp4",
-      "thumbFile": "game1-poss-005_thumb.jpg",
+      "videoFile": "poss-005.mp4",
+      "thumbFile": "poss-005_thumb.jpg",
       "events": [
         {
           "t": 51.99,
@@ -200,12 +182,6 @@
           "player": "红队#67",
           "action": "hold",
           "label": "红队#67 持球"
-        },
-        {
-          "t": 56.46,
-          "player": "白队#45",
-          "action": "hold",
-          "label": "白队#45 持球"
         },
         {
           "t": 56.91,
@@ -249,24 +225,6 @@
           "player": "红队30号",
           "action": "hold",
           "label": "红队30号 持球"
-        },
-        {
-          "t": 60.36,
-          "player": "红队30号",
-          "action": "shot",
-          "label": "红队30号 投篮"
-        },
-        {
-          "t": 60.41,
-          "player": "红队30号",
-          "action": "hold",
-          "label": "红队30号 持球"
-        },
-        {
-          "t": 60.43,
-          "player": "红队30号",
-          "action": "shot",
-          "label": "红队30号 投篮"
         },
         {
           "t": 62.28,

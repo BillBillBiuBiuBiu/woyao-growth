@@ -16,7 +16,7 @@
       "passCount": 1,
       "stealCount": 2,
       "driveCount": 0,
-      "shotCount": 1,
+      "shotCount": 0,
       "playerCount": 4,
       "possessionPct": 53.1
     }
@@ -82,13 +82,13 @@
       "offenseDistanceM": 29.9,
       "defenseDistanceM": 14.2,
       "holdCount": 1,
-      "holdSeconds": 1.6,
+      "holdSeconds": 10.0,
       "passCount": 0,
       "receiveCount": 1,
       "stealCount": 0,
       "turnoverCount": 0,
       "driveCount": 0,
-      "shotCount": 1
+      "shotCount": 0
     },
     {
       "label": "红队50号",
