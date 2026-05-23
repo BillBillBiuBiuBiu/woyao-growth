@@ -293,10 +293,29 @@ export default function HighlightsPage() {
     try {
       // ── 1. Load FFmpeg ────────────────────────────────────────────────────
       setStage("loading_ffmpeg"); setProgress(2);
-      setStatusMsg("加载视频处理引擎…（首次约30秒）");
+      setStatusMsg("加载视频处理引擎…（首次需30–60秒，请耐心等待）");
+
       if (!ffmpegRef.current) {
         const ff = new FFmpeg();
-        await ff.load({ coreURL:"/ffmpeg/ffmpeg-core.js", wasmURL:"/ffmpeg/ffmpeg-core.wasm" });
+
+        // Animate progress 2→11% while WASM compiles, so it doesn't look frozen
+        let fake = 2;
+        const ticker = setInterval(() => {
+          fake = Math.min(11, fake + 0.25);
+          setProgress(Math.round(fake));
+        }, 1000);
+
+        try {
+          await Promise.race([
+            ff.load({ coreURL:"/ffmpeg/ffmpeg-core.js", wasmURL:"/ffmpeg/ffmpeg-core.wasm" }),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error("视频引擎加载超时（90秒），请在Safari中打开后重试")), 90_000)
+            ),
+          ]);
+        } finally {
+          clearInterval(ticker);
+        }
+
         ffmpegRef.current = ff;
       }
       setProgress(12);
@@ -430,7 +449,8 @@ export default function HighlightsPage() {
 
     } catch(e) {
       console.error(e);
-      setError(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg || "未知错误，请在Safari浏览器中打开后重试");
       setStage("error");
     }
   }, [videoFile, photoFile]);
