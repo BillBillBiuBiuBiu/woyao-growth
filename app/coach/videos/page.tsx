@@ -7,6 +7,16 @@ import type { TrackingData } from "@/components/TrackingViewer";
 
 const TrackingViewer = dynamic(() => import("@/components/TrackingViewer"), { ssr: false });
 
+interface Possession {
+  id: string; index: number; team: string;
+  start: number; end: number; duration: number;
+  videoFile: string; thumbFile: string;
+}
+interface PossessionManifest {
+  sourceVideo: string; duration: number;
+  possessionCount: number; possessions: Possession[];
+}
+
 const typeLabel: Record<string, { label: string; color: string }> = {
   training:  { label: "训练",    color: "bg-blue-100 text-blue-700" },
   match:     { label: "比赛",    color: "bg-orange-100 text-orange-700" },
@@ -20,16 +30,16 @@ const statusConfig: Record<string, { label: string; dot: string }> = {
   failed:     { label: "失败",   dot: "bg-red-400" },
 };
 
-// 真实分析数据映射（已用 player_tracker.py 分析过的视频）
 const ANALYZED_VIDEO_IDS = new Set(["vid-001"]);
-const TRACKING_DATA_MAP: Record<string, string> = {
-  "vid-001": "/videos/jhb1_tracking.json",
-};
+const TRACKING_DATA_MAP: Record<string, string> = { "vid-001": "/videos/jhb1_tracking.json" };
+const POSSESSION_DATA_MAP: Record<string, string> = { "vid-001": "/videos/jhb1_possessions.json" };
 
 export default function CoachVideosPage() {
   const [analyzing, setAnalyzing] = useState<string | null>(null);
   const [trackingData, setTrackingData] = useState<Record<string, TrackingData>>({});
+  const [possessionData, setPossessionData] = useState<Record<string, PossessionManifest>>({});
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<Record<string, "tracking" | "possessions">>({});
 
   async function handleAnalyze(videoId: string) {
     const jsonPath = TRACKING_DATA_MAP[videoId];
@@ -39,10 +49,18 @@ export default function CoachVideosPage() {
     }
     setAnalyzing(videoId);
     try {
-      const res = await fetch(jsonPath);
-      const data: TrackingData = await res.json();
+      const [trackRes, possRes] = await Promise.all([
+        fetch(jsonPath),
+        fetch(POSSESSION_DATA_MAP[videoId] || ""),
+      ]);
+      const data: TrackingData = await trackRes.json();
       setTrackingData((prev) => ({ ...prev, [videoId]: data }));
+      if (possRes.ok) {
+        const poss: PossessionManifest = await possRes.json();
+        setPossessionData((prev) => ({ ...prev, [videoId]: poss }));
+      }
       setExpanded(videoId);
+      setActiveTab((prev) => ({ ...prev, [videoId]: "tracking" }));
     } catch {
       alert("加载分析数据失败");
     } finally {
@@ -141,9 +159,64 @@ export default function CoachVideosPage() {
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-1 h-4 rounded-full bg-green-500" />
                     <span className="text-sm font-semibold text-gray-800">真实视频分析结果</span>
-                    <span className="text-xs text-gray-400 ml-1">YOLOv8 + ByteTrack · {data.sourceVideo}</span>
+                    <span className="text-xs text-gray-400 ml-1">YOLOv8 + 光流追踪 · {data.sourceVideo}</span>
                   </div>
-                  <TrackingViewer data={data} />
+
+                  {/* 子tab */}
+                  <div className="flex gap-2 mb-3">
+                    {(["tracking", "possessions"] as const).map((t) => (
+                      <button key={t} onClick={() => setActiveTab((prev) => ({ ...prev, [video.id]: t }))}
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                          (activeTab[video.id] || "tracking") === t
+                            ? "bg-green-500 text-white" : "bg-white border border-gray-200 text-gray-600"
+                        }`}>
+                        {t === "tracking" ? "📊 运动轨迹" : "⚡ 回合切片"}
+                        {t === "possessions" && possessionData[video.id] &&
+                          <span className="ml-1 bg-white/30 px-1 rounded-full">
+                            {possessionData[video.id].possessionCount}
+                          </span>
+                        }
+                      </button>
+                    ))}
+                  </div>
+
+                  {(activeTab[video.id] || "tracking") === "tracking" && <TrackingViewer data={data} />}
+
+                  {(activeTab[video.id] || "tracking") === "possessions" && (
+                    <div className="flex flex-col gap-2">
+                      {possessionData[video.id] ? (
+                        possessionData[video.id].possessions.map((p) => (
+                          <div key={p.id} className="rounded-xl bg-white border border-gray-100 overflow-hidden">
+                            <div className="flex items-center gap-3 p-3">
+                              <div className={`w-1.5 self-stretch rounded-full ${p.team === "红队" ? "bg-red-400" : "bg-gray-700"}`} />
+                              <div className="w-16 h-10 rounded-lg bg-slate-800 overflow-hidden shrink-0">
+                                <img src={`/videos/${p.thumbFile}`} alt={p.id}
+                                  className="w-full h-full object-cover opacity-80"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                    p.team === "红队" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700"
+                                  }`}>{p.team}</span>
+                                  <span className="text-xs text-gray-400">回合 {p.index}</span>
+                                </div>
+                                <div className="text-xs text-gray-500 mt-0.5">
+                                  {p.start.toFixed(1)}s – {p.end.toFixed(1)}s &nbsp;·&nbsp; {p.duration.toFixed(1)}s
+                                </div>
+                              </div>
+                              <a href={`/videos/${p.videoFile}`} target="_blank" rel="noopener"
+                                className="text-xs px-3 py-1.5 rounded-lg bg-orange-500 text-white font-medium hover:bg-orange-600 shrink-0">
+                                播放
+                              </a>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-sm text-gray-400 text-center py-4">暂无回合数据</div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

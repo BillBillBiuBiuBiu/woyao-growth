@@ -1,0 +1,27 @@
+{
+  "sourceVideo": "jhb1.mp4",
+  "duration": 20.1,
+  "possessionCount": 2,
+  "possessions": [
+    {
+      "start": 0.4,
+      "end": 9.57,
+      "team": "红队",
+      "duration": 9.17,
+      "id": "poss-001",
+      "index": 1,
+      "videoFile": "poss-001.mp4",
+      "thumbFile": "poss-001_thumb.jpg"
+    },
+    {
+      "start": 9.67,
+      "end": 11.83,
+      "team": "黑队",
+      "duration": 2.16,
+      "id": "poss-002",
+      "index": 2,
+      "videoFile": "poss-002.mp4",
+      "thumbFile": "poss-002_thumb.jpg"
+    }
+  ]
+}
