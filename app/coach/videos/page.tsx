@@ -7,10 +7,15 @@ import type { TrackingData } from "@/components/TrackingViewer";
 
 const TrackingViewer = dynamic(() => import("@/components/TrackingViewer"), { ssr: false });
 
+interface PossessionEvent {
+  t: number; player: string; action: string;
+  label: string; target?: string;
+}
 interface Possession {
   id: string; index: number; team: string;
   start: number; end: number; duration: number;
   videoFile: string; thumbFile: string;
+  events?: PossessionEvent[];
 }
 interface PossessionManifest {
   sourceVideo: string; duration: number;
@@ -187,6 +192,7 @@ export default function CoachVideosPage() {
                       {possessionData[video.id] ? (
                         possessionData[video.id].possessions.map((p) => (
                           <div key={p.id} className="rounded-xl bg-white border border-gray-100 overflow-hidden">
+                            {/* Header */}
                             <div className="flex items-center gap-3 p-3">
                               <div className={`w-1.5 self-stretch rounded-full ${p.team === "红队" ? "bg-red-400" : "bg-gray-700"}`} />
                               <div className="w-16 h-10 rounded-lg bg-slate-800 overflow-hidden shrink-0">
@@ -199,17 +205,42 @@ export default function CoachVideosPage() {
                                   <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                                     p.team === "红队" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700"
                                   }`}>{p.team}</span>
-                                  <span className="text-xs text-gray-400">回合 {p.index}</span>
+                                  <span className="text-xs text-gray-400">回合 {p.index} · {p.duration.toFixed(1)}s</span>
                                 </div>
-                                <div className="text-xs text-gray-500 mt-0.5">
-                                  {p.start.toFixed(1)}s – {p.end.toFixed(1)}s &nbsp;·&nbsp; {p.duration.toFixed(1)}s
-                                </div>
+                                <div className="text-xs text-gray-400 mt-0.5">{p.start.toFixed(1)}s – {p.end.toFixed(1)}s</div>
                               </div>
                               <a href={`/videos/${p.videoFile}`} target="_blank" rel="noopener"
                                 className="text-xs px-3 py-1.5 rounded-lg bg-orange-500 text-white font-medium hover:bg-orange-600 shrink-0">
-                                播放
+                                ▶ 播放
                               </a>
                             </div>
+
+                            {/* Events timeline */}
+                            {p.events && p.events.length > 0 && (
+                              <div className="px-3 pb-3 border-t border-gray-50 pt-2">
+                                <div className="text-xs text-gray-400 mb-1.5 font-medium">关键动作</div>
+                                <div className="flex flex-col gap-1">
+                                  {p.events.map((ev, ei) => {
+                                    const cfg: Record<string, {icon:string; color:string}> = {
+                                      hold:   { icon:"🏀", color:"bg-orange-50 text-orange-700 border-orange-100" },
+                                      pass:   { icon:"➡️", color:"bg-blue-50 text-blue-700 border-blue-100" },
+                                      steal:  { icon:"✋", color:"bg-red-50 text-red-700 border-red-100" },
+                                      drive:  { icon:"⚡", color:"bg-yellow-50 text-yellow-700 border-yellow-100" },
+                                      shot:   { icon:"🎯", color:"bg-green-50 text-green-700 border-green-100" },
+                                      receive:{ icon:"👐", color:"bg-purple-50 text-purple-700 border-purple-100" },
+                                    };
+                                    const c = cfg[ev.action] || cfg.hold;
+                                    return (
+                                      <div key={ei} className={`flex items-center gap-2 px-2 py-1 rounded-lg border text-xs ${c.color}`}>
+                                        <span className="shrink-0 w-8 text-gray-400 font-mono">{ev.t.toFixed(1)}s</span>
+                                        <span>{c.icon}</span>
+                                        <span className="font-medium">{ev.label}</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ))
                       ) : (

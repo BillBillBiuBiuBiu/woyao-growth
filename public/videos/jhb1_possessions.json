@@ -11,7 +11,28 @@
       "id": "poss-001",
       "index": 1,
       "videoFile": "poss-001.mp4",
-      "thumbFile": "poss-001_thumb.jpg"
+      "thumbFile": "poss-001_thumb.jpg",
+      "events": [
+        {
+          "t": 0.4,
+          "player": "红队91号",
+          "action": "hold",
+          "label": "红队91号 持球"
+        },
+        {
+          "t": 9.67,
+          "player": "红队91号",
+          "action": "steal",
+          "target": "黑队#12",
+          "label": "红队91号 被抢断→ 黑队#12"
+        },
+        {
+          "t": 9.67,
+          "player": "黑队#12",
+          "action": "hold",
+          "label": "黑队#12 持球"
+        }
+      ]
     },
     {
       "start": 9.67,
@@ -21,7 +42,41 @@
       "id": "poss-002",
       "index": 2,
       "videoFile": "poss-002.mp4",
-      "thumbFile": "poss-002_thumb.jpg"
+      "thumbFile": "poss-002_thumb.jpg",
+      "events": [
+        {
+          "t": 9.57,
+          "player": "红队91号",
+          "action": "hold",
+          "label": "红队91号 持球"
+        },
+        {
+          "t": 9.67,
+          "player": "红队91号",
+          "action": "steal",
+          "target": "黑队#12",
+          "label": "红队91号 被抢断→ 黑队#12"
+        },
+        {
+          "t": 9.67,
+          "player": "黑队#12",
+          "action": "hold",
+          "label": "黑队#12 持球"
+        },
+        {
+          "t": 10.1,
+          "player": "黑队#12",
+          "action": "pass",
+          "target": "黑队#16",
+          "label": "黑队#12 传球给 黑队#16"
+        },
+        {
+          "t": 10.1,
+          "player": "黑队#16",
+          "action": "hold",
+          "label": "黑队#16 持球"
+        }
+      ]
     }
   ]
 }
