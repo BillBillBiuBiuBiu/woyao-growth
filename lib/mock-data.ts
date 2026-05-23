@@ -382,7 +382,7 @@ export const mockVideos: Video[] = [
     id: 'vid-004', title: '5月4日4V4比赛录像', type: 'match',
     uploadedBy: 'cch-001', studentIds: ['stu-001', 'stu-002', 'stu-003', 'stu-004'],
     classId: 'cls-001', duration: 80, status: 'analyzed',
-    thumbnailUrl: '/videos/poss-001_thumb.jpg', videoUrl: '',
+    thumbnailUrl: '/videos/poss-003_thumb.jpg', videoUrl: '',
     createdAt: '2026-05-04',
   },
 ]

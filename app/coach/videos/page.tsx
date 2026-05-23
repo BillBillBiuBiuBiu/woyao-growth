@@ -99,6 +99,7 @@ export default function CoachVideosPage() {
   const [labelOverrides, setLabelOverrides] = useState<Record<string, Record<string, string>>>({});
   const [editingCell, setEditingCell] = useState<{ videoId: string; label: string } | null>(null);
   const [editValue, setEditValue]     = useState("");
+  const [playingClip, setPlayingClip] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -424,27 +425,47 @@ export default function CoachVideosPage() {
                       {possessionData[video.id] ? (
                         possessionData[video.id].possessions.map((p) => (
                           <div key={p.id} className="rounded-xl bg-white border border-gray-100 overflow-hidden">
-                            <div className="flex items-center gap-3 p-3">
-                              <div className={`w-1.5 self-stretch rounded-full ${p.team === "红队" ? "bg-red-400" : "bg-gray-700"}`} />
-                              <div className="w-16 h-10 rounded-lg bg-slate-800 overflow-hidden shrink-0">
-                                <img src={`/videos/${p.thumbFile}`} alt={p.id}
-                                  className="w-full h-full object-cover opacity-80"
-                                  onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                            {/* 内嵌视频播放器 */}
+                            {playingClip === p.id ? (
+                              <div className="relative bg-black">
+                                <video
+                                  src={`/videos/${p.videoFile}`}
+                                  controls autoPlay playsInline preload="metadata"
+                                  className="w-full max-h-56 object-contain"
+                                />
+                                <button
+                                  onClick={() => setPlayingClip(null)}
+                                  className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full"
+                                >✕ 关闭</button>
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                                    p.team === "红队" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700"
-                                  }`}>{p.team}</span>
-                                  <span className="text-xs text-gray-400">回合 {p.index} · {p.duration.toFixed(1)}s</span>
+                            ) : (
+                              <button
+                                className="flex items-center gap-3 p-3 w-full text-left"
+                                onClick={() => setPlayingClip(p.id)}
+                              >
+                                <div className={`w-1.5 self-stretch rounded-full ${p.team === "红队" ? "bg-red-400" : "bg-gray-700"}`} />
+                                <div className="w-16 h-10 rounded-lg bg-slate-800 overflow-hidden shrink-0 relative">
+                                  <img src={`/videos/${p.thumbFile}`} alt={p.id}
+                                    className="w-full h-full object-cover opacity-80"
+                                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="text-white/90 text-lg drop-shadow">▶</span>
+                                  </div>
                                 </div>
-                                <div className="text-xs text-gray-400 mt-0.5">{p.start.toFixed(1)}s – {p.end.toFixed(1)}s</div>
-                              </div>
-                              <a href={`/videos/${p.videoFile}`} target="_blank" rel="noopener"
-                                className="text-xs px-3 py-1.5 rounded-lg bg-orange-500 text-white font-medium hover:bg-orange-600 shrink-0">
-                                ▶ 播放
-                              </a>
-                            </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                      p.team === "红队" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700"
+                                    }`}>{p.team}</span>
+                                    <span className="text-xs text-gray-400">回合 {p.index} · {p.duration.toFixed(1)}s</span>
+                                  </div>
+                                  <div className="text-xs text-gray-400 mt-0.5">{p.start.toFixed(1)}s – {p.end.toFixed(1)}s</div>
+                                </div>
+                                <span className="text-xs px-3 py-1.5 rounded-lg bg-orange-500 text-white font-medium shrink-0">
+                                  ▶ 播放
+                                </span>
+                              </button>
+                            )}
 
                             {p.events && p.events.length > 0 && (
                               <div className="px-3 pb-3 border-t border-gray-50 pt-2">
