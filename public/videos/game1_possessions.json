@@ -10,8 +10,8 @@
       "duration": 10.94,
       "id": "poss-001",
       "index": 1,
-      "videoFile": "poss-001.mp4",
-      "thumbFile": "poss-001_thumb.jpg",
+      "videoFile": "game1-poss-001.mp4",
+      "thumbFile": "game1-poss-001_thumb.jpg",
       "events": [
         {
           "t": 8.73,
@@ -76,8 +76,8 @@
       "duration": 8.72,
       "id": "poss-002",
       "index": 2,
-      "videoFile": "poss-002.mp4",
-      "thumbFile": "poss-002_thumb.jpg",
+      "videoFile": "game1-poss-002.mp4",
+      "thumbFile": "game1-poss-002_thumb.jpg",
       "events": [
         {
           "t": 19.69,
@@ -107,8 +107,8 @@
       "duration": 7.14,
       "id": "poss-003",
       "index": 3,
-      "videoFile": "poss-003.mp4",
-      "thumbFile": "poss-003_thumb.jpg",
+      "videoFile": "game1-poss-003.mp4",
+      "thumbFile": "game1-poss-003_thumb.jpg",
       "events": [
         {
           "t": 28.43,
@@ -156,8 +156,8 @@
       "duration": 4.14,
       "id": "poss-004",
       "index": 4,
-      "videoFile": "poss-004.mp4",
-      "thumbFile": "poss-004_thumb.jpg",
+      "videoFile": "game1-poss-004.mp4",
+      "thumbFile": "game1-poss-004_thumb.jpg",
       "events": [
         {
           "t": 47.93,
@@ -174,8 +174,8 @@
       "duration": 27.51,
       "id": "poss-005",
       "index": 5,
-      "videoFile": "poss-005.mp4",
-      "thumbFile": "poss-005_thumb.jpg",
+      "videoFile": "game1-poss-005.mp4",
+      "thumbFile": "game1-poss-005_thumb.jpg",
       "events": [
         {
           "t": 51.99,
