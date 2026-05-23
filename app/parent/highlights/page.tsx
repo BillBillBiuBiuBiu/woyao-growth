@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile, toBlobURL } from "@ffmpeg/util";
+import { fetchFile } from "@ffmpeg/util";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -250,10 +250,9 @@ export default function HighlightsPage() {
         ff.on("progress", ({ progress: p }) => {
           if (stage === "cutting") setProgress(90 + Math.round(p * 9));
         });
-        const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd";
         await ff.load({
-          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`,   "text/javascript"),
-          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, "application/wasm"),
+          coreURL: "/ffmpeg/ffmpeg-core.js",
+          wasmURL: "/ffmpeg/ffmpeg-core.wasm",
         });
         ffmpegRef.current = ff;
       }
