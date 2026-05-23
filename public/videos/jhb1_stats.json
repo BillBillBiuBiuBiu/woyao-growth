@@ -23,9 +23,9 @@
   },
   "playerStats": [
     {
-      "label": "黑队#12",
+      "label": "黑队16号",
       "team": "黑队",
-      "jerseyNumber": null,
+      "jerseyNumber": "16",
       "onCourtSeconds": 20.1,
       "totalDistanceM": 87.2,
       "offenseDistanceM": 40.7,
@@ -74,9 +74,9 @@
       "shotCount": 0
     },
     {
-      "label": "黑队#16",
+      "label": "黑队3号",
       "team": "黑队",
-      "jerseyNumber": null,
+      "jerseyNumber": "03",
       "onCourtSeconds": 20.1,
       "totalDistanceM": 44.0,
       "offenseDistanceM": 29.9,

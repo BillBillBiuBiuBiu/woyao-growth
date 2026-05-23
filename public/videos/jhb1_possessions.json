@@ -29,14 +29,14 @@
           "t": 9.67,
           "player": "红队91号",
           "action": "steal",
-          "target": "黑队#12",
-          "label": "红队91号 被抢断→ 黑队#12"
+          "target": "黑队16号",
+          "label": "红队91号 被抢断→ 黑队16号"
         },
         {
           "t": 9.67,
-          "player": "黑队#12",
+          "player": "黑队16号",
           "action": "hold",
-          "label": "黑队#12 持球"
+          "label": "黑队16号 持球"
         }
       ]
     },
@@ -60,33 +60,33 @@
           "t": 9.67,
           "player": "红队91号",
           "action": "steal",
-          "target": "黑队#12",
-          "label": "红队91号 被抢断→ 黑队#12"
+          "target": "黑队16号",
+          "label": "红队91号 被抢断→ 黑队16号"
         },
         {
           "t": 9.67,
-          "player": "黑队#12",
+          "player": "黑队16号",
           "action": "hold",
-          "label": "黑队#12 持球"
+          "label": "黑队16号 持球"
         },
         {
           "t": 10.1,
-          "player": "黑队#12",
+          "player": "黑队16号",
           "action": "pass",
-          "target": "黑队#16",
-          "label": "黑队#12 传球给 黑队#16"
+          "target": "黑队3号",
+          "label": "黑队16号 传球给 黑队3号"
         },
         {
           "t": 10.1,
-          "player": "黑队#16",
+          "player": "黑队3号",
           "action": "hold",
-          "label": "黑队#16 持球"
+          "label": "黑队3号 持球"
         },
         {
           "t": 11.73,
-          "player": "黑队#16",
+          "player": "黑队3号",
           "action": "shot",
-          "label": "黑队#16 投篮"
+          "label": "黑队3号 投篮"
         }
       ]
     }
