@@ -283,7 +283,244 @@ export const mockReportRpt005 = {
   ],
 };
 
-export const mockReports = [mockReport, mockReportRpt002, mockReportRpt003, mockReportRpt004, mockReportRpt005];
+// ---------------------------------------------------------------------------
+// Typed imports (used by new exports below)
+// ---------------------------------------------------------------------------
+import type { Student, Video, Class, Report } from './types'
+
+// ---------------------------------------------------------------------------
+// mockStudents
+// ---------------------------------------------------------------------------
+export const mockStudents: Student[] = [
+  {
+    id: 'stu-001', name: '蒋皓博', age: 10, gender: 'male',
+    avatar: '/students/jiang-haob0.jpg',
+    classId: 'cls-001', coachId: 'cch-001',
+    level: 'match_class', plan: 'vip',
+    position: 'guard', namePinyin: 'JIANG HAOBO', number: '3',
+    createdAt: '2025-09-01', updatedAt: '2026-05-24',
+  },
+  {
+    id: 'stu-002', name: '季禹澄', age: 10, gender: 'male',
+    classId: 'cls-001', coachId: 'cch-001',
+    level: 'match_class', plan: 'vip',
+    position: 'guard', namePinyin: 'JI YUCHENG', number: '94',
+    createdAt: '2025-09-01', updatedAt: '2026-05-24',
+  },
+  {
+    id: 'stu-003', name: '小杰', age: 11, gender: 'male',
+    classId: 'cls-002', coachId: 'cch-001',
+    level: 'basic_class', plan: 'basic',
+    position: 'forward',
+    createdAt: '2025-09-15', updatedAt: '2026-05-22',
+  },
+  {
+    id: 'stu-004', name: '小然', age: 10, gender: 'male',
+    classId: 'cls-002', coachId: 'cch-001',
+    level: 'basic_class', plan: 'basic',
+    position: 'forward',
+    createdAt: '2025-09-15', updatedAt: '2026-05-15',
+  },
+  {
+    id: 'stu-005', name: '浩然', age: 11, gender: 'male',
+    classId: 'cls-001', coachId: 'cch-001',
+    level: 'elite_class', plan: 'supervip',
+    position: 'center',
+    createdAt: '2025-08-20', updatedAt: '2026-05-24',
+  },
+  {
+    id: 'stu-006', name: '子轩', age: 9, gender: 'male',
+    classId: 'cls-002', coachId: 'cch-001',
+    level: 'elite_class', plan: 'supervip',
+    position: 'guard',
+    createdAt: '2025-10-01', updatedAt: '2026-05-22',
+  },
+]
+
+// ---------------------------------------------------------------------------
+// mockClasses
+// ---------------------------------------------------------------------------
+export const mockClasses: Class[] = [
+  {
+    id: 'cls-001', name: 'PAB U10提高班',
+    level: 'match_class', coachId: 'cch-001', studentCount: 12,
+    description: '10岁以上比赛班，专注提升比赛能力',
+  },
+  {
+    id: 'cls-002', name: 'PAB U8基础班',
+    level: 'basic_class', coachId: 'cch-001', studentCount: 8,
+    description: '8岁基础班，培养篮球兴趣与基本功',
+  },
+]
+
+// ---------------------------------------------------------------------------
+// mockVideos
+// ---------------------------------------------------------------------------
+export const mockVideos: Video[] = [
+  {
+    id: 'vid-001', title: '5月24日比赛录像', type: 'match',
+    uploadedBy: 'cch-001', studentIds: ['stu-001', 'stu-002'],
+    classId: 'cls-001', duration: 61, status: 'analyzed',
+    thumbnailUrl: '/videos/jhb1_thumb.jpg', videoUrl: '/videos/jhb1.mp4',
+    createdAt: '2026-05-24',
+  },
+  {
+    id: 'vid-002', title: '5月10日训练录像', type: 'training',
+    uploadedBy: 'cch-001', studentIds: ['stu-001', 'stu-002', 'stu-003', 'stu-004'],
+    classId: 'cls-001', duration: 90, status: 'analyzed',
+    thumbnailUrl: '/videos/jhb4_thumb.jpg', videoUrl: '/videos/jhb4.mp4',
+    createdAt: '2026-05-10',
+  },
+  {
+    id: 'vid-003', title: '蒋皓博精彩集锦', type: 'highlight',
+    uploadedBy: 'cch-001', studentIds: ['stu-001'],
+    duration: 45, status: 'analyzed',
+    thumbnailUrl: '/videos/jhb2_thumb.jpg', videoUrl: '/videos/jhb2.mp4',
+    createdAt: '2026-05-20',
+  },
+]
+
+// ---------------------------------------------------------------------------
+// mockReports (typed, replaces the old array)
+// ---------------------------------------------------------------------------
+export const mockReports: Report[] = [
+  // rpt-001: 蒋皓博 5/24 比赛 — VIP, sent
+  {
+    id: 'rpt-001', studentId: 'stu-001', coachId: 'cch-001', videoId: 'vid-001',
+    reportType: 'vip', scene: 'match',
+    title: '蒋皓博 5月24日比赛成长报告',
+    summary: '今天最值得记录的，不是得分，而是蒋皓博开始在对抗下主动突破。过去几场他更多是在外线等待机会，但今天有两次主动选择进攻，说明他的比赛信心正在建立。',
+    strengths: ['主动进攻意愿增强，有两次主动突破尝试', '失误后回防更积极，展现比赛责任感', '开始观察队友位置并做出传球选择'],
+    weaknesses: ['左手突破后的终结稳定性还在提升中', '传球后的二次跑位可以进一步加强'],
+    suggestions: ['继续练习左手突破后的终结', '强化传球后的二次跑位', '保持主动参与比赛的信心'],
+    coachComment: '建议继续强化左手突破后的终结，并加强传球后的二次跑位训练。保持主动参与比赛的信心，这是目前最重要的成长方向。',
+    radarData: { shooting: 62, dribbling: 68, passing: 55, defense: 70, positioning: 58, decisionMaking: 60, physicality: 65, focus: 75, teamwork: 55 },
+    metrics: { shootingAttempts: 8, shootingMade: 3, assists: 2, turnovers: 1, rebounds: 4, steals: 2, defensiveInvolvement: 12, passingInvolvement: 8 },
+    status: 'sent', createdAt: '2026-05-24', updatedAt: '2026-05-24',
+    badge: { name: '勇敢突破时刻', icon: '🏆' },
+    clips: [
+      {
+        id: 'clip-001', title: '勇敢突破', videoUrl: '/videos/jhb1.mp4', thumbnail: '/videos/jhb1_thumb.jpg',
+        timestamp: '12:34', dimension: '心理成长', tag: '敢于突破', level: 'L2',
+        coachComment: '主动突破意愿提升，说明训练中的突破动作开始迁移到比赛。下一阶段建议强化左手突破后的终结稳定性。',
+        parentExplanation: '这次突破虽然没有得分，但蒋皓博主动选择面对防守人，这是很重要的变化。对这个阶段的孩子来说，敢于尝试本身就是成长。',
+      },
+      {
+        id: 'clip-002', title: '失误后快速回防', videoUrl: '/videos/jhb2.mp4', thumbnail: '/videos/jhb2_thumb.jpg',
+        timestamp: '23:15', dimension: '比赛状态', tag: '快速回防', level: 'L2',
+        coachComment: '失误后的转换反应明显提升，建议继续强化攻防转换速度。',
+        parentExplanation: '蒋皓博这次被抢断后没有停在原地，而是马上回防。这说明他正在建立比赛责任感和抗挫力。',
+      },
+      {
+        id: 'clip-003', title: '主动传球', videoUrl: '/videos/jhb3.mp4', thumbnail: '/videos/jhb3_thumb.jpg',
+        timestamp: '31:50', dimension: '团队协作', tag: '主动传球', level: 'L1',
+        coachComment: '传球选择比之前更合理，下一步可以训练传球后的继续移动。',
+        parentExplanation: '这次传球说明蒋皓博开始观察队友位置，不只是自己处理球。团队意识正在形成。',
+      },
+    ],
+  },
+
+  // rpt-002: 蒋皓博 5/10 训练 — VIP, reviewed
+  {
+    id: 'rpt-002', studentId: 'stu-001', coachId: 'cch-001', videoId: 'vid-002',
+    reportType: 'vip', scene: 'training',
+    title: '蒋皓博 5月10日训练成长记录',
+    summary: '这次训练最让我印象深刻的，是蒋皓博在防守端的专注。之前他在防守时容易分心，但这次训练里有两次关键的协防补位，说明他开始用大局观打球了。',
+    strengths: ['防守专注度明显提升，有效完成两次协防补位', '传球出手更果断，减少了犹豫期'],
+    weaknesses: ['协防后的快速归位还需加强', '对抗强度下的传球稳定性仍有提升空间'],
+    suggestions: ['练习协防后快速归位的脚步', '加强对抗中传球的稳定性', '巩固防守专注度，延伸到比赛场景'],
+    coachComment: '本次训练防守端进步明显，是本周训练的最大亮点。建议下周专项训练协防归位的速度，同时继续在对抗中练习传球节奏。',
+    radarData: { shooting: 60, dribbling: 65, passing: 58, defense: 72, positioning: 60, decisionMaking: 58, physicality: 63, focus: 71, teamwork: 53 },
+    metrics: { assists: 3, turnovers: 2, rebounds: 5, steals: 3, defensiveInvolvement: 15, passingInvolvement: 10 },
+    status: 'reviewed', createdAt: '2026-05-10', updatedAt: '2026-05-11',
+    badge: { name: '最佳回防', icon: '🛡️' },
+    clips: [
+      {
+        id: 'clip-002-a', title: '关键协防补位', videoUrl: '/videos/jhb4.mp4', thumbnail: '/videos/jhb4_thumb.jpg',
+        timestamp: '08:22', dimension: '比赛状态', tag: '快速回防', level: 'L2',
+        coachComment: '协防时机判断准确，移动速度也快。下一步可以练习协防后如何快速归位，形成完整的防守轮转。',
+        parentExplanation: '这次协防说明蒋皓博不只在盯自己的人，还在关注整个防守端。这是很重要的防守意识提升，很多成年球员都未必能做到。',
+      },
+      {
+        id: 'clip-002-b', title: '稳定传球出球', videoUrl: '/videos/jhb5.mp4', thumbnail: '/videos/jhb5_thumb.jpg',
+        timestamp: '19:45', dimension: '团队协作', tag: '主动传球', level: 'L2',
+        coachComment: '传球出手时机越来越果断，不再犹豫。建议继续强化接球即传的节奏，减少多余的运球。',
+        parentExplanation: '训练中的传球比比赛更稳定了，说明他在安全环境下已经建立了这个习惯，下一步就是把它迁移到比赛压力下。',
+      },
+    ],
+  },
+
+  // rpt-003: 小杰 5/20 训练 — basic, sent
+  {
+    id: 'rpt-003', studentId: 'stu-003', coachId: 'cch-001', videoId: 'vid-002',
+    reportType: 'basic', scene: 'training',
+    title: '小杰 5月20日训练报告',
+    summary: '小杰今天的训练状态很棒！他始终保持专注，整个训练下来都在努力完成每一个动作。能看出来他对篮球的热爱在不断增加，这让人感到非常欣慰。',
+    strengths: ['训练专注度高，全程投入', '基础运球动作稳定性提升', '与同伴的互动更加主动'],
+    weaknesses: ['投篮姿势还需要继续纠正', '左手运球仍不够稳定'],
+    suggestions: ['每天坚持左手运球基础练习', '投篮时注意手腕跟进动作'],
+    coachComment: '小杰今天的表现让我印象深刻，他的认真和努力是最大的优点。篮球是一项需要长期坚持的运动，像他这样每次都全力投入的孩子，进步只是时间问题。继续加油！',
+    status: 'sent', createdAt: '2026-05-20', updatedAt: '2026-05-21',
+    badge: null,
+  },
+
+  // rpt-004: 小然 5/15 训练 — basic, sent
+  {
+    id: 'rpt-004', studentId: 'stu-004', coachId: 'cch-001', videoId: 'vid-002',
+    reportType: 'basic', scene: 'training',
+    title: '小然 5月15日训练报告',
+    summary: '小然今天在传球练习中展现了很好的配合意识，能够主动为队友创造机会。虽然体力分配还需要改善，但他积极的态度和团队精神让人印象深刻。',
+    strengths: ['传球配合意识较好', '团队精神积极', '对训练指令响应及时'],
+    weaknesses: ['训练后半段体力下降明显', '对抗中的身体平衡感需加强'],
+    suggestions: ['加强体能基础训练', '每天做10分钟核心力量练习'],
+    coachComment: '小然是个很有团队意识的孩子，这一点非常难得。接下来我们会在体能方面多加关注，帮助他在训练全程保持高质量的表现。家长平时也可以鼓励他多做些户外活动增强体能。',
+    status: 'sent', createdAt: '2026-05-15', updatedAt: '2026-05-16',
+    badge: null,
+  },
+
+  // rpt-005: 浩然 5/24 阶段总结 — supervip, reviewed
+  {
+    id: 'rpt-005', studentId: 'stu-005', coachId: 'cch-001',
+    reportType: 'supervip', scene: 'period_summary',
+    title: '浩然 5月阶段成长总结',
+    summary: '浩然本月在内线攻防两端均有显著提升。他的背打技术日趋成熟，协防判断更加果断，得分效率明显提高。在精英班中已展现出稳定的领袖气质，对队友有积极带动作用。',
+    strengths: ['内线背打技术成熟度提升', '协防判断果断，补位意识强', '得分效率大幅提升', '领袖气质初现，对队友带动明显'],
+    weaknesses: ['外线投篮命中率仍需提升', '面对快速小个子球员时移动速度有待改善'],
+    suggestions: ['每周专项练习中远距离投篮', '加强横移步伐训练，提升防守覆盖范围', '继续培养领袖意识，多在场上鼓励队友'],
+    coachComment: '浩然本月的成长令我非常欣喜。他已经不只是在执行教练要求，而是开始用自己的理解打球。下一阶段我们会为他制定更有针对性的精英训练计划。',
+    internalCoachNotes: '建议推荐参加市级青少年篮球选拔，目前综合实力在同级别中排名靠前。',
+    radarData: { shooting: 72, dribbling: 75, passing: 70, defense: 82, positioning: 78, decisionMaking: 74, physicality: 80, focus: 77, teamwork: 76 },
+    metrics: { shootingAttempts: 42, shootingMade: 22, assists: 18, turnovers: 6, rebounds: 35, steals: 12, defensiveInvolvement: 48, passingInvolvement: 28 },
+    trendData: {
+      labels: ['3月', '4月', '5月初', '5月末'],
+      shooting: [60, 65, 68, 72], defense: [68, 72, 78, 82],
+      decisionMaking: [62, 67, 71, 74], teamwork: [65, 68, 73, 76], focus: [70, 72, 75, 77],
+    },
+    status: 'reviewed', createdAt: '2026-05-24', updatedAt: '2026-05-24',
+    badge: { name: '内线之王', icon: '👑' },
+  },
+
+  // rpt-006: 子轩 5/22 训练 — supervip, draft
+  {
+    id: 'rpt-006', studentId: 'stu-006', coachId: 'cch-001', videoId: 'vid-002',
+    reportType: 'supervip', scene: 'training',
+    title: '子轩 5月22日训练报告',
+    summary: '子轩今天在控卫位置上展现了出色的全场组织能力，多次精准分球创造得分机会。AI初步分析显示其决策速度在同龄组中处于较高水平。',
+    strengths: ['全场组织能力突出', '传球视野宽广，分球精准', '场上阅读比赛能力强'],
+    weaknesses: ['个人突破得分手段较单一', '需要加强身体对抗'],
+    suggestions: ['专项训练个人突破技术', '加强核心力量和身体对抗训练'],
+    coachComment: '子轩是一个天赋型的组织后卫，他的篮球智商很高。接下来我们要在他的个人得分手段上下功夫，让他成为真正全面的控卫。',
+    radarData: { shooting: 58, dribbling: 72, passing: 83, defense: 60, positioning: 78, decisionMaking: 80, physicality: 55, focus: 76, teamwork: 82 },
+    metrics: { shootingAttempts: 6, shootingMade: 2, assists: 8, turnovers: 2, rebounds: 2, steals: 3, defensiveInvolvement: 8, passingInvolvement: 22 },
+    trendData: {
+      labels: ['3月', '4月', '5月初', '5月末'],
+      shooting: [50, 53, 56, 58], defense: [52, 55, 58, 60],
+      decisionMaking: [70, 74, 78, 80], teamwork: [72, 75, 79, 82], focus: [68, 71, 74, 76],
+    },
+    status: 'draft', createdAt: '2026-05-22', updatedAt: '2026-05-22',
+    badge: null,
+  },
+];
 
 export const mockGrowthHistory = [
   {

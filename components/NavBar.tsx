@@ -8,12 +8,16 @@ import RoleSwitcher from "./RoleSwitcher";
 const navItems = {
   parent: [
     { href: "/parent", label: "首页" },
-    { href: "/parent/reports/rpt-001", label: "成长报告" },
+    { href: "/parent/reports", label: "报告" },
     { href: "/parent/profile/stu-001", label: "成长档案" },
+    { href: "/parent/plans", label: "版本权益" },
   ],
   coach: [
-    { href: "/coach", label: "待处理" },
-    { href: "/coach/annotate/sess-001", label: "标注工作台" },
+    { href: "/coach", label: "工作台" },
+    { href: "/coach/students", label: "学员" },
+    { href: "/coach/videos", label: "视频" },
+    { href: "/coach/reports", label: "报告" },
+    { href: "/coach/plans", label: "套餐" },
   ],
   org: [
     { href: "/org", label: "运营看板" },

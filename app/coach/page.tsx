@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { mockPendingReports } from "@/lib/mock-data";
+import { mockPendingReports, mockReports, mockStudents } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
 
 const statusMap: Record<string, { label: string; color: string }> = {
@@ -7,6 +7,15 @@ const statusMap: Record<string, { label: string; color: string }> = {
   in_review: { label: "确认中", color: "bg-blue-100 text-blue-700" },
   draft: { label: "草稿", color: "bg-slate-100 text-slate-600" },
 };
+
+const planCount = {
+  basic: mockStudents.filter((s) => s.plan === "basic").length,
+  vip: mockStudents.filter((s) => s.plan === "vip").length,
+  supervip: mockStudents.filter((s) => s.plan === "supervip").length,
+};
+
+const pendingCount = mockReports.filter((r) => r.status === "draft" || r.status === "generated").length;
+const sentCount = mockReports.filter((r) => r.status === "sent").length;
 
 export default function CoachPage() {
   const pending = mockPendingReports.filter((r) => r.status === "awaiting_review");
@@ -16,8 +25,8 @@ export default function CoachPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">待处理报告</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">PAB U10提高班 · 5月24日比赛</p>
+          <h1 className="text-xl font-bold">教练工作台</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">PAB篮球馆 · 2026年5月</p>
         </div>
         <div className="bg-orange-100 text-orange-700 text-sm font-bold px-3 py-1.5 rounded-xl">
           {pending.length} 待确认
@@ -27,15 +36,59 @@ export default function CoachPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "待确认", value: pending.length, color: "text-orange-600" },
-          { label: "已完成", value: 12, color: "text-green-600" },
-          { label: "本月报告", value: 18, color: "text-blue-600" },
+          { label: "学员总数", value: mockStudents.length, color: "text-gray-700" },
+          { label: "待处理报告", value: pendingCount, color: "text-orange-600" },
+          { label: "本月已发送", value: sentCount, color: "text-green-600" },
         ].map((s) => (
           <div key={s.label} className="rounded-xl border border-border bg-white p-3 text-center">
             <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
             <div className="text-xs text-muted-foreground mt-0.5">{s.label}</div>
           </div>
         ))}
+      </div>
+
+      {/* Plan breakdown */}
+      <div className="rounded-2xl border border-border bg-white p-4">
+        <h2 className="text-sm font-semibold mb-3">学员套餐分布</h2>
+        <div className="flex gap-3">
+          <div className="flex-1 bg-slate-50 rounded-xl p-3 text-center">
+            <div className="text-lg font-bold text-slate-600">{planCount.basic}</div>
+            <div className="text-xs text-muted-foreground">基础版</div>
+          </div>
+          <div className="flex-1 bg-blue-50 rounded-xl p-3 text-center">
+            <div className="text-lg font-bold text-blue-600">{planCount.vip}</div>
+            <div className="text-xs text-muted-foreground">专业版</div>
+          </div>
+          <div className="flex-1 bg-amber-50 rounded-xl p-3 text-center">
+            <div className="text-lg font-bold text-amber-600">{planCount.supervip}</div>
+            <div className="text-xs text-muted-foreground">高阶版</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick actions */}
+      <div>
+        <h2 className="text-sm font-semibold mb-3">快捷操作</h2>
+        <div className="grid grid-cols-3 gap-3">
+          <Link href="/coach/videos">
+            <div className="rounded-2xl border border-border bg-white p-4 text-center hover:shadow-md transition-shadow cursor-pointer">
+              <div className="text-2xl mb-1">📹</div>
+              <div className="text-xs font-medium text-gray-700">上传视频</div>
+            </div>
+          </Link>
+          <Link href="/coach/reports/generate">
+            <div className="rounded-2xl border border-border bg-white p-4 text-center hover:shadow-md transition-shadow cursor-pointer">
+              <div className="text-2xl mb-1">✨</div>
+              <div className="text-xs font-medium text-gray-700">生成报告</div>
+            </div>
+          </Link>
+          <Link href="/coach/students">
+            <div className="rounded-2xl border border-border bg-white p-4 text-center hover:shadow-md transition-shadow cursor-pointer">
+              <div className="text-2xl mb-1">👥</div>
+              <div className="text-xs font-medium text-gray-700">查看学员</div>
+            </div>
+          </Link>
+        </div>
       </div>
 
       {/* Pending list */}
@@ -55,9 +108,7 @@ export default function CoachPage() {
                         <span className="text-xs text-muted-foreground ml-auto">{r.date}</span>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" className="text-xs">
-                          {r.type}
-                        </Badge>
+                        <Badge variant="secondary" className="text-xs">{r.type}</Badge>
                         <span className="text-xs text-muted-foreground">{r.clipCount}个片段</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2 leading-snug">{r.aiSummary}</p>
