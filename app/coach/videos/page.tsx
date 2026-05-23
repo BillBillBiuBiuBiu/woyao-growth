@@ -1,25 +1,55 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { mockVideos } from "@/lib/mock-data";
+import type { TrackingData } from "@/components/TrackingViewer";
+
+const TrackingViewer = dynamic(() => import("@/components/TrackingViewer"), { ssr: false });
 
 const typeLabel: Record<string, { label: string; color: string }> = {
-  training:  { label: "训练",   color: "bg-blue-100 text-blue-700" },
-  match:     { label: "比赛",   color: "bg-orange-100 text-orange-700" },
+  training:  { label: "训练",    color: "bg-blue-100 text-blue-700" },
+  match:     { label: "比赛",    color: "bg-orange-100 text-orange-700" },
   highlight: { label: "精彩集锦", color: "bg-purple-100 text-purple-700" },
 };
 
 const statusConfig: Record<string, { label: string; dot: string }> = {
-  uploaded:   { label: "已上传",   dot: "bg-gray-400" },
-  processing: { label: "处理中",   dot: "bg-yellow-400" },
-  analyzed:   { label: "已分析",   dot: "bg-green-400" },
-  failed:     { label: "失败",     dot: "bg-red-400" },
+  uploaded:   { label: "已上传", dot: "bg-gray-400" },
+  processing: { label: "处理中", dot: "bg-yellow-400" },
+  analyzed:   { label: "已分析", dot: "bg-green-400" },
+  failed:     { label: "失败",   dot: "bg-red-400" },
 };
 
-function formatDuration(min: number) {
-  return `${min}分钟`;
-}
+// 真实分析数据映射（已用 player_tracker.py 分析过的视频）
+const ANALYZED_VIDEO_IDS = new Set(["vid-001"]);
+const TRACKING_DATA_MAP: Record<string, string> = {
+  "vid-001": "/videos/jhb1_tracking.json",
+};
 
 export default function CoachVideosPage() {
+  const [analyzing, setAnalyzing] = useState<string | null>(null);
+  const [trackingData, setTrackingData] = useState<Record<string, TrackingData>>({});
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  async function handleAnalyze(videoId: string) {
+    const jsonPath = TRACKING_DATA_MAP[videoId];
+    if (!jsonPath) {
+      alert("该视频暂无分析数据，请先用 player_tracker.py 处理视频。");
+      return;
+    }
+    setAnalyzing(videoId);
+    try {
+      const res = await fetch(jsonPath);
+      const data: TrackingData = await res.json();
+      setTrackingData((prev) => ({ ...prev, [videoId]: data }));
+      setExpanded(videoId);
+    } catch {
+      alert("加载分析数据失败");
+    } finally {
+      setAnalyzing(null);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -36,35 +66,39 @@ export default function CoachVideosPage() {
         {mockVideos.map((video) => {
           const typeCfg = typeLabel[video.type] || typeLabel.training;
           const statusCfg = statusConfig[video.status] || statusConfig.uploaded;
+          const hasAnalysis = ANALYZED_VIDEO_IDS.has(video.id);
+          const isExpanded = expanded === video.id;
+          const data = trackingData[video.id];
 
           return (
             <div key={video.id} className="rounded-2xl border border-border bg-white overflow-hidden">
               {/* Thumbnail */}
               <div className="aspect-video bg-slate-900 relative">
                 {video.thumbnailUrl ? (
-                  <img
-                    src={video.thumbnailUrl}
-                    alt={video.title}
-                    className="w-full h-full object-cover opacity-80"
-                  />
+                  <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover opacity-80" />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <span className="text-white/30 text-4xl">▶</span>
                   </div>
                 )}
-                <div className="absolute top-2 left-2">
+                <div className="absolute top-2 left-2 flex gap-1.5">
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeCfg.color}`}>
                     {typeCfg.label}
                   </span>
+                  {hasAnalysis && (
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">
+                      ✓ 可分析
+                    </span>
+                  )}
                 </div>
                 <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">
-                  {formatDuration(video.duration)}
+                  {video.duration}分钟
                 </div>
               </div>
 
               {/* Info */}
               <div className="p-4">
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-gray-800 truncate mb-1">{video.title}</div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -77,17 +111,53 @@ export default function CoachVideosPage() {
                     </div>
                   </div>
                 </div>
-                <div className="mt-3">
-                  <Link href={`/coach/reports/generate?videoId=${video.id}`}>
+
+                <div className="flex gap-2">
+                  {/* 视频分析按钮 */}
+                  <button
+                    onClick={() => isExpanded ? setExpanded(null) : handleAnalyze(video.id)}
+                    disabled={analyzing === video.id}
+                    className={`flex-1 rounded-xl text-sm font-medium py-2 transition-colors ${
+                      hasAnalysis
+                        ? isExpanded
+                          ? "bg-green-500 text-white hover:bg-green-600"
+                          : "border border-green-500 text-green-700 hover:bg-green-50"
+                        : "border border-gray-200 text-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    {analyzing === video.id ? "加载中..." : isExpanded ? "▲ 收起分析" : "📊 视频分析"}
+                  </button>
+                  <Link href={`/coach/reports/generate?videoId=${video.id}`} className="flex-1">
                     <button className="w-full rounded-xl border border-orange-200 text-orange-600 text-sm font-medium py-2 hover:bg-orange-50 transition-colors">
                       生成报告
                     </button>
                   </Link>
                 </div>
               </div>
+
+              {/* 分析结果展开区 */}
+              {isExpanded && data && (
+                <div className="px-4 pb-4 border-t border-gray-100 pt-4 bg-gray-50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-1 h-4 rounded-full bg-green-500" />
+                    <span className="text-sm font-semibold text-gray-800">真实视频分析结果</span>
+                    <span className="text-xs text-gray-400 ml-1">YOLOv8 + ByteTrack · {data.sourceVideo}</span>
+                  </div>
+                  <TrackingViewer data={data} />
+                </div>
+              )}
             </div>
           );
         })}
+      </div>
+
+      {/* 说明 */}
+      <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/50 p-4">
+        <div className="text-sm font-medium text-orange-700 mb-1">关于视频分析</div>
+        <div className="text-xs text-orange-600 leading-relaxed">
+          视频分析使用 YOLOv8 人体检测 + ByteTrack 多目标跟踪算法，可提取球员移动轨迹、移动距离（进攻/防守）、上场时间及球的运动轨迹。
+          新视频分析请在本地运行：<code className="bg-white px-1 rounded">python3 player_tracker.py &lt;视频路径&gt; &lt;输出目录&gt;</code>
+        </div>
       </div>
     </div>
   );
