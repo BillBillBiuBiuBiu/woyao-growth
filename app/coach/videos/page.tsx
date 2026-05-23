@@ -21,6 +21,25 @@ interface PossessionManifest {
   sourceVideo: string; duration: number;
   possessionCount: number; possessions: Possession[];
 }
+interface PlayerStat {
+  label: string; team: string; jerseyNumber: string | null;
+  onCourtSeconds: number; totalDistanceM: number;
+  offenseDistanceM: number; defenseDistanceM: number;
+  holdCount: number; holdSeconds: number;
+  passCount: number; receiveCount: number;
+  stealCount: number; turnoverCount: number;
+  driveCount: number; shotCount: number;
+}
+interface TeamStat {
+  possessionSeconds: number; possessionPct: number;
+  passCount: number; stealCount: number;
+  driveCount: number; shotCount: number; playerCount: number;
+}
+interface StatsSummary {
+  sourceVideo: string; duration: number;
+  teamStats: Record<string, TeamStat>;
+  playerStats: PlayerStat[];
+}
 
 const typeLabel: Record<string, { label: string; color: string }> = {
   training:  { label: "训练",    color: "bg-blue-100 text-blue-700" },
@@ -36,15 +55,17 @@ const statusConfig: Record<string, { label: string; dot: string }> = {
 };
 
 const ANALYZED_VIDEO_IDS = new Set(["vid-001"]);
-const TRACKING_DATA_MAP: Record<string, string> = { "vid-001": "/videos/jhb1_tracking.json" };
+const TRACKING_DATA_MAP: Record<string, string>   = { "vid-001": "/videos/jhb1_tracking.json" };
 const POSSESSION_DATA_MAP: Record<string, string> = { "vid-001": "/videos/jhb1_possessions.json" };
+const STATS_DATA_MAP: Record<string, string>      = { "vid-001": "/videos/jhb1_stats.json" };
 
 export default function CoachVideosPage() {
   const [analyzing, setAnalyzing] = useState<string | null>(null);
   const [trackingData, setTrackingData] = useState<Record<string, TrackingData>>({});
   const [possessionData, setPossessionData] = useState<Record<string, PossessionManifest>>({});
+  const [statsData, setStatsData] = useState<Record<string, StatsSummary>>({});
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<Record<string, "tracking" | "possessions">>({});
+  const [activeTab, setActiveTab] = useState<Record<string, "tracking" | "possessions" | "stats">>({});
 
   async function handleAnalyze(videoId: string) {
     const jsonPath = TRACKING_DATA_MAP[videoId];
@@ -54,9 +75,10 @@ export default function CoachVideosPage() {
     }
     setAnalyzing(videoId);
     try {
-      const [trackRes, possRes] = await Promise.all([
+      const [trackRes, possRes, statsRes] = await Promise.all([
         fetch(jsonPath),
         fetch(POSSESSION_DATA_MAP[videoId] || ""),
+        fetch(STATS_DATA_MAP[videoId] || ""),
       ]);
       const data: TrackingData = await trackRes.json();
       setTrackingData((prev) => ({ ...prev, [videoId]: data }));
@@ -64,8 +86,12 @@ export default function CoachVideosPage() {
         const poss: PossessionManifest = await possRes.json();
         setPossessionData((prev) => ({ ...prev, [videoId]: poss }));
       }
+      if (statsRes.ok) {
+        const stats: StatsSummary = await statsRes.json();
+        setStatsData((prev) => ({ ...prev, [videoId]: stats }));
+      }
       setExpanded(videoId);
-      setActiveTab((prev) => ({ ...prev, [videoId]: "tracking" }));
+      setActiveTab((prev) => ({ ...prev, [videoId]: "stats" }));
     } catch {
       alert("加载分析数据失败");
     } finally {
@@ -168,26 +194,106 @@ export default function CoachVideosPage() {
                   </div>
 
                   {/* 子tab */}
-                  <div className="flex gap-2 mb-3">
-                    {(["tracking", "possessions"] as const).map((t) => (
+                  <div className="flex gap-2 mb-3 flex-wrap">
+                    {(["stats", "tracking", "possessions"] as const).map((t) => (
                       <button key={t} onClick={() => setActiveTab((prev) => ({ ...prev, [video.id]: t }))}
                         className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                          (activeTab[video.id] || "tracking") === t
+                          (activeTab[video.id] || "stats") === t
                             ? "bg-green-500 text-white" : "bg-white border border-gray-200 text-gray-600"
                         }`}>
-                        {t === "tracking" ? "📊 运动轨迹" : "⚡ 回合切片"}
+                        {t === "stats" ? "📈 技术统计" : t === "tracking" ? "🗺️ 运动轨迹" : "⚡ 回合切片"}
                         {t === "possessions" && possessionData[video.id] &&
-                          <span className="ml-1 bg-white/30 px-1 rounded-full">
-                            {possessionData[video.id].possessionCount}
-                          </span>
-                        }
+                          <span className="ml-1 opacity-75">({possessionData[video.id].possessionCount})</span>}
                       </button>
                     ))}
                   </div>
 
-                  {(activeTab[video.id] || "tracking") === "tracking" && <TrackingViewer data={data} />}
+                  {/* 技术统计 tab */}
+                  {(activeTab[video.id] || "stats") === "stats" && statsData[video.id] && (() => {
+                    const s = statsData[video.id];
+                    const statCols = [
+                      { key: "holdCount",      label: "持球次" },
+                      { key: "holdSeconds",    label: "持球秒" },
+                      { key: "passCount",      label: "传球" },
+                      { key: "receiveCount",   label: "接球" },
+                      { key: "stealCount",     label: "抢断" },
+                      { key: "turnoverCount",  label: "失误" },
+                      { key: "driveCount",     label: "突破" },
+                      { key: "shotCount",      label: "投篮" },
+                      { key: "totalDistanceM", label: "移动(m)" },
+                      { key: "offenseDistanceM",label:"进攻(m)" },
+                      { key: "defenseDistanceM",label:"防守(m)" },
+                    ];
+                    return (
+                      <div className="flex flex-col gap-3">
+                        {/* 队伍汇总 */}
+                        <div className="rounded-xl bg-white border border-gray-100 overflow-hidden">
+                          <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-600">队伍对比</div>
+                          <div className="grid grid-cols-2 divide-x divide-gray-100">
+                            {Object.entries(s.teamStats).map(([team, ts]) => (
+                              <div key={team} className="p-3">
+                                <div className={`text-sm font-bold mb-2 ${team === "红队" ? "text-red-600" : "text-gray-700"}`}>{team}</div>
+                                <div className="flex flex-col gap-1 text-xs">
+                                  <div className="flex justify-between"><span className="text-gray-500">球权时间</span><span className="font-semibold">{ts.possessionSeconds}s</span></div>
+                                  <div className="flex justify-between"><span className="text-gray-500">球权占比</span><span className="font-semibold">{ts.possessionPct}%</span></div>
+                                  {/* 占比条 */}
+                                  <div className="h-1.5 rounded-full bg-gray-100 mt-1 overflow-hidden">
+                                    <div className={`h-full rounded-full ${team==="红队"?"bg-red-400":"bg-gray-600"}`} style={{width:`${ts.possessionPct}%`}}/>
+                                  </div>
+                                  <div className="flex justify-between mt-1"><span className="text-gray-500">传球</span><span className="font-semibold">{ts.passCount}</span></div>
+                                  <div className="flex justify-between"><span className="text-gray-500">抢断</span><span className="font-semibold">{ts.stealCount}</span></div>
+                                  <div className="flex justify-between"><span className="text-gray-500">突破</span><span className="font-semibold">{ts.driveCount}</span></div>
+                                  <div className="flex justify-between"><span className="text-gray-500">投篮</span><span className="font-semibold">{ts.shotCount}</span></div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
 
-                  {(activeTab[video.id] || "tracking") === "possessions" && (
+                        {/* 球员详细统计 */}
+                        <div className="rounded-xl bg-white border border-gray-100 overflow-hidden">
+                          <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-600">球员统计</div>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-xs min-w-[600px]">
+                              <thead>
+                                <tr className="border-b border-gray-100">
+                                  <th className="px-3 py-2 text-left font-semibold text-gray-600 sticky left-0 bg-white">球员</th>
+                                  {statCols.map(c => (
+                                    <th key={c.key} className="px-2 py-2 text-right font-semibold text-gray-500 whitespace-nowrap">{c.label}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {s.playerStats.map((ps, i) => (
+                                  <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
+                                    <td className="px-3 py-2 sticky left-0 bg-white">
+                                      <div className="flex items-center gap-1.5">
+                                        <div className={`w-2 h-2 rounded-full shrink-0 ${ps.team==="红队"?"bg-red-400":"bg-gray-600"}`}/>
+                                        <span className="font-medium text-gray-800 whitespace-nowrap">{ps.label}</span>
+                                      </div>
+                                    </td>
+                                    {statCols.map(c => {
+                                      const val = (ps as unknown as Record<string,number>)[c.key];
+                                      const isZero = val === 0;
+                                      return (
+                                        <td key={c.key} className={`px-2 py-2 text-right font-mono ${isZero?"text-gray-300":"text-gray-800 font-semibold"}`}>
+                                          {c.key==="holdSeconds" ? `${val}s` : c.key.includes("Distance") ? `${val}` : val}
+                                        </td>
+                                      );
+                                    })}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {(activeTab[video.id] || "stats") === "tracking" && <TrackingViewer data={data} />}
+
+                  {(activeTab[video.id] || "stats") === "possessions" && (
                     <div className="flex flex-col gap-2">
                       {possessionData[video.id] ? (
                         possessionData[video.id].possessions.map((p) => (
