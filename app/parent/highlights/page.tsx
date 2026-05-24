@@ -241,29 +241,44 @@ function analyzeFrame(
     }
   }
 
-  // ballNear scores 3× higher than "player visible" — ensures key moments dominate
-  return {t:0,hasPlayer:true,ballNear,playerX,playerY,score:ballNear?3.0:0.3};
+  // Confidence: how well the best blob matched all features (0–1)
+  const confidence = Math.min(1, Math.max(0, bestScore) / 150);
+  const baseScore = ballNear ? 3.0 : 0.3;
+  return {t:0,hasPlayer:true,ballNear,playerX,playerY,score:baseScore*(0.5+confidence*0.5)};
 }
 
 function findBestWindow(scores:FrameScore[], totalDuration:number, bgmBpm=0):[number,number] {
   if (scores.length === 0) return [0, Math.min(totalDuration, HIGHLIGHT_S)];
 
-  let peakIdx = 0, peakScore = -Infinity;
-  for (let i = 0; i < scores.length; i++) {
-    if (scores[i].score > peakScore) { peakScore = scores[i].score; peakIdx = i; }
+  const n = scores.length;
+  const windowFrames = Math.min(n, Math.max(1, Math.round(HIGHLIGHT_S * SAMPLE_FPS)));
+
+  // Sliding window: pick the contiguous window with highest cumulative score.
+  // Favors sustained player+ball activity over lucky single-frame matches.
+  const cumSum = new Array(n + 1).fill(0);
+  for (let i = 0; i < n; i++) cumSum[i + 1] = cumSum[i] + scores[i].score;
+
+  let bestWinStart = 0, bestWinScore = -Infinity;
+  for (let i = 0; i <= n - windowFrames; i++) {
+    const ws = cumSum[i + windowFrames] - cumSum[i];
+    if (ws > bestWinScore) { bestWinScore = ws; bestWinStart = i; }
   }
 
-  const peakT = scores[peakIdx].t;
-  const before = HIGHLIGHT_S * 0.6;
-  let startT = Math.max(0, peakT - before);
+  // Peak frame within best window (reference point for beat-sync)
+  const winEnd = Math.min(bestWinStart + windowFrames, n);
+  let peakIdx = bestWinStart;
+  for (let i = bestWinStart + 1; i < winEnd; i++) {
+    if (scores[i].score > scores[peakIdx].score) peakIdx = i;
+  }
 
-  // Beat-sync: nudge startT so the peak action lands on a BGM measure downbeat.
-  // BGM is 120 BPM → measures every 2s; BGM playback starts at clip offset 0.
+  let startT = scores[bestWinStart].t;
+
+  // Beat-sync: nudge startT so peak frame lands on a BGM measure downbeat (120 BPM → 2s measures)
   if (bgmBpm > 0) {
-    const measureLen = (60 / bgmBpm) * 4;           // 2.0s at 120 BPM
-    const peakInClip = peakT - startT;
+    const measureLen = (60 / bgmBpm) * 4;
+    const peakInClip = scores[peakIdx].t - startT;
     const nearestDownbeat = Math.round(peakInClip / measureLen) * measureLen;
-    const shift = nearestDownbeat - peakInClip;      // >0 means peak needs to move forward
+    const shift = nearestDownbeat - peakInClip;
     if (Math.abs(shift) <= measureLen / 2) startT = Math.max(0, startT - shift);
   }
 
@@ -316,27 +331,45 @@ export default function HighlightsPage() {
       setStatusMsg("加载视频处理引擎…（首次需30–60秒，请耐心等待）");
 
       if (!ffmpegRef.current) {
-        const ff = new FFmpeg();
-
-        // Animate progress 2→11% while WASM compiles, so it doesn't look frozen
+        // Animate progress 2→11% while WASM downloads
         let fake = 2;
         const ticker = setInterval(() => {
-          fake = Math.min(11, fake + 0.25);
+          fake = Math.min(11, fake + 0.4);
           setProgress(Math.round(fake));
         }, 1000);
 
         try {
-          await Promise.race([
-            ff.load({ coreURL:"/ffmpeg/ffmpeg-core.js", wasmURL:"/ffmpeg/ffmpeg-core.wasm" }),
-            new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error("视频引擎加载超时（90秒），请在Safari中打开后重试")), 90_000)
-            ),
-          ]);
+          // Try jsDelivr CDN first: global edge nodes make 31MB WASM download in <20s vs 90s+ from Railway origin
+          let ff: FFmpeg | null = null;
+          try {
+            const ffCdn = new FFmpeg();
+            await Promise.race([
+              ffCdn.load({
+                coreURL: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
+                wasmURL: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm",
+              }),
+              new Promise<never>((_, rej) => setTimeout(() => rej(new Error("cdn_timeout")), 30_000)),
+            ]);
+            ff = ffCdn;
+          } catch {}
+
+          if (!ff) {
+            // Fall back to self-hosted (WeChat or restricted networks block CDN)
+            setStatusMsg("加载视频处理引擎…（请保持WiFi连接，首次需30–60秒）");
+            const ffLocal = new FFmpeg();
+            await Promise.race([
+              ffLocal.load({ coreURL: "/ffmpeg/ffmpeg-core.js", wasmURL: "/ffmpeg/ffmpeg-core.wasm" }),
+              new Promise<never>((_, rej) =>
+                setTimeout(() => rej(new Error("视频引擎加载超时，请在WiFi环境下重试")), 60_000)
+              ),
+            ]);
+            ff = ffLocal;
+          }
+
+          ffmpegRef.current = ff;
         } finally {
           clearInterval(ticker);
         }
-
-        ffmpegRef.current = ff;
       }
       setProgress(12);
 
@@ -508,7 +541,7 @@ export default function HighlightsPage() {
       setError(msg || "未知错误，请在Safari浏览器中打开后重试");
       setStage("error");
     }
-  }, [videoFile, photoFile]);
+  }, [videoFile, photoFile, bgmEnabled]);
 
   const isProcessing = ["loading_ffmpeg","extracting_color","writing","analyzing","cutting"].includes(stage);
   const canRun = !!(videoFile && photoFile && !isProcessing);
