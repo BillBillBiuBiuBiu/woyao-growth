@@ -338,6 +338,40 @@ function findBestWindow(scores:FrameScore[], totalDuration:number, bgmBpm=0):[nu
   return [Math.max(0, endT - HIGHLIGHT_S), endT];
 }
 
+// ── Multi-segment event finder ────────────────────────────────────────────────
+// Collects all runs where the player has the ball, merges nearby runs, pads them.
+// Returns empty array when detection was too sparse — caller falls back to findBestWindow.
+function findHighlightSegments(
+  scores: FrameScore[], totalDuration: number
+): Array<[number, number]> {
+  const events: Array<[number, number]> = [];
+  let runStart = -1;
+  for (let i = 0; i < scores.length; i++) {
+    const active = scores[i].hasPlayer && scores[i].ballNear;
+    if (active  && runStart < 0) runStart = i;
+    if (!active && runStart >= 0) {
+      events.push([scores[runStart].t, scores[i - 1].t]);
+      runStart = -1;
+    }
+  }
+  if (runStart >= 0) events.push([scores[runStart].t, scores[scores.length - 1].t]);
+  if (events.length === 0) return [];
+
+  // Merge events within 3s of each other
+  const merged: Array<[number, number]> = [[events[0][0], events[0][1]]];
+  for (let i = 1; i < events.length; i++) {
+    const last = merged[merged.length - 1];
+    if (events[i][0] - last[1] <= 3.0) { last[1] = events[i][1]; }
+    else { merged.push([events[i][0], events[i][1]]); }
+  }
+
+  // Add 0.8s padding on each side, clip to video bounds
+  return merged.map(([s, e]) => [
+    Math.max(0, s - 0.8),
+    Math.min(totalDuration, e + 0.8),
+  ] as [number, number]);
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function HighlightsPage() {
@@ -529,43 +563,87 @@ export default function HighlightsPage() {
         setProgress(33 + Math.round(((i+1) / totalFrames) * 43));
       }
 
-      setProgress(76); setStatusMsg("计算最佳片段…");
+      setProgress(76); setStatusMsg("计算精彩片段…");
 
-      // ── 6. Find best window ───────────────────────────────────────────────
-      const [startT, endT] = findBestWindow(scores, duration, bgmEnabled ? 120 : 0);
-      setProgress(78); setStatusMsg(`精彩片段：${startT.toFixed(1)}s – ${endT.toFixed(1)}s，正在剪辑…`);
+      // ── 6. Find highlight segments ────────────────────────────────────────
+      // Primary: collect all player-has-ball events; fallback: single best window.
+      const segs = findHighlightSegments(scores, duration);
+      const totalSegDur = segs.reduce((s, [a, b]) => s + (b - a), 0);
+      const useMultiSeg = segs.length >= 2 && totalSegDur >= 4 && segs.length <= 10;
+
+      const [fallbackStart, fallbackEnd] = findBestWindow(scores, duration, bgmEnabled ? 120 : 0);
+      const totalClipDur = useMultiSeg ? totalSegDur : (fallbackEnd - fallbackStart);
 
       // ── 7. Cut video — optionally mix BGM ────────────────────────────────
       setStage("cutting");
       let hasBgm = false;
       if (bgmEnabled) {
         setStatusMsg("生成BGM…");
-        const bgmWav = generateBeatWAV(Math.ceil(endT - startT) + 2);
+        const bgmWav = generateBeatWAV(Math.ceil(totalClipDur) + 2);
         await ff.writeFile("bgm.wav", bgmWav);
         hasBgm = true;
       }
 
-      setStatusMsg(`精彩片段：${startT.toFixed(1)}s – ${endT.toFixed(1)}s，正在剪辑…`);
-      const clipDur = (endT - startT).toFixed(3);
-      const onProgress = ({progress:p}:{progress:number}) => setProgress(78+Math.round(p*20));
+      const onProgress = ({progress:p}: {progress:number}) => setProgress(78 + Math.round(p * 20));
       ff.on("progress", onProgress);
-      await ff.exec(hasBgm ? [
-        "-ss", startT.toFixed(3), "-i", "input.mp4",
-        "-i", "bgm.wav",
-        "-t", clipDur,
-        "-map", "0:v", "-map", "1:a",
-        "-c:v","libx264","-preset","ultrafast","-crf","28",
-        "-vf", "scale=720:-2",
-        "-c:a","aac","-b:a","96k","-shortest","-movflags","+faststart",
-        "-y","highlight.mp4",
-      ] : [
-        "-ss", startT.toFixed(3), "-i","input.mp4",
-        "-t", clipDur,
-        "-c:v","libx264","-preset","ultrafast","-crf","28",
-        "-vf", "scale=720:-2",
-        "-c:a","aac","-b:a","96k","-movflags","+faststart",
-        "-y","highlight.mp4",
-      ]);
+
+      if (useMultiSeg) {
+        setStatusMsg(`找到 ${segs.length} 个精彩片段（共 ${totalSegDur.toFixed(0)}s），正在剪辑…`);
+
+        // Multiple -ss -t -i inputs + filter_complex concat (single FFmpeg pass)
+        const args: string[] = [];
+        for (const [s, e] of segs) {
+          args.push("-ss", s.toFixed(3), "-t", (e - s).toFixed(3), "-i", "input.mp4");
+        }
+        if (hasBgm) args.push("-i", "bgm.wav");
+
+        const n = segs.length;
+        const concatInputs = segs.map((_, i) => `[${i}:v][${i}:a]`).join("");
+        const filterParts = [
+          `${concatInputs}concat=n=${n}:v=1:a=1[rawv][ca]`,
+          `[rawv]scale=720:-2[cv]`,
+        ];
+        let mapArgs: string[];
+        if (hasBgm) {
+          filterParts.push(`[${n}:a]asetpts=PTS-STARTPTS[bgm]`);
+          filterParts.push(`[ca][bgm]amix=inputs=2:weights=0.3 0.7[fa]`);
+          mapArgs = ["-map", "[cv]", "-map", "[fa]"];
+        } else {
+          mapArgs = ["-map", "[cv]", "-map", "[ca]"];
+        }
+
+        args.push(
+          "-filter_complex", filterParts.join(";"),
+          ...mapArgs,
+          "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
+          "-c:a", "aac", "-b:a", "96k",
+          ...(hasBgm ? ["-shortest"] : []),
+          "-movflags", "+faststart",
+          "-y", "highlight.mp4",
+        );
+        await ff.exec(args);
+      } else {
+        setStatusMsg(`精彩片段：${fallbackStart.toFixed(1)}s – ${fallbackEnd.toFixed(1)}s，正在剪辑…`);
+        const clipDur = (fallbackEnd - fallbackStart).toFixed(3);
+        await ff.exec(hasBgm ? [
+          "-ss", fallbackStart.toFixed(3), "-i", "input.mp4",
+          "-i", "bgm.wav",
+          "-t", clipDur,
+          "-map", "0:v", "-map", "1:a",
+          "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
+          "-vf", "scale=720:-2",
+          "-c:a", "aac", "-b:a", "96k", "-shortest", "-movflags", "+faststart",
+          "-y", "highlight.mp4",
+        ] : [
+          "-ss", fallbackStart.toFixed(3), "-i", "input.mp4",
+          "-t", clipDur,
+          "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
+          "-vf", "scale=720:-2",
+          "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart",
+          "-y", "highlight.mp4",
+        ]);
+      }
+
       ff.off("progress", onProgress);
 
       const data = await ff.readFile("highlight.mp4");
@@ -577,7 +655,10 @@ export default function HighlightsPage() {
 
       setResultUrl(URL.createObjectURL(blob));
       setResultName(videoFile.name.replace(/\.[^.]+$/,"")+"_highlight.mp4");
-      setStage("done"); setProgress(100); setStatusMsg("集锦生成完成！");
+      setStage("done"); setProgress(100);
+      setStatusMsg(useMultiSeg
+        ? `集锦生成完成！共 ${segs.length} 个片段，总时长 ${totalSegDur.toFixed(0)}s`
+        : "集锦生成完成！");
 
     } catch(e) {
       console.error(e);
