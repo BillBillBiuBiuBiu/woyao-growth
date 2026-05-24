@@ -659,7 +659,14 @@ export default function HighlightsPage() {
         hasBgm = true;
       }
 
+      const encodeLog: string[] = [];
+      const onEncodeLog = ({ message }: { message: string }) => {
+        if (message.includes("Error") || message.includes("error") || message.includes("Invalid") || message.includes("Failed")) {
+          encodeLog.push(message);
+        }
+      };
       const onProgress = ({progress:p}: {progress:number}) => setProgress(78 + Math.round(p * 20));
+      ff.on("log", onEncodeLog);
       ff.on("progress", onProgress);
       try {
         if (useMultiSeg) {
@@ -697,7 +704,7 @@ export default function HighlightsPage() {
             "-y", "highlight.mp4",
           );
           const ret1 = await ff.exec(args);
-          if (ret1 !== 0) throw new Error(`FFmpeg 编码失败 (exit ${ret1})，可能是内存不足或视频格式不支持`);
+          if (ret1 !== 0) throw new Error(`FFmpeg 编码失败 (exit ${ret1}) ${encodeLog.slice(-2).join(" | ")}`);
         } else {
           setStatusMsg(`精彩片段：${fallbackStart.toFixed(1)}s – ${fallbackEnd.toFixed(1)}s，正在剪辑…`);
           const clipDur = (fallbackEnd - fallbackStart).toFixed(3);
@@ -719,10 +726,11 @@ export default function HighlightsPage() {
             "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart",
             "-y", "highlight.mp4",
           ]);
-          if (ret2 !== 0) throw new Error(`FFmpeg 编码失败 (exit ${ret2})，可能是内存不足或视频格式不支持`);
+          if (ret2 !== 0) throw new Error(`FFmpeg 编码失败 (exit ${ret2}) ${encodeLog.slice(-2).join(" | ")}`);
         }
       } finally {
         ff.off("progress", onProgress);
+        ff.off("log", onEncodeLog);
       }
 
       const data = await ff.readFile("highlight.mp4");
