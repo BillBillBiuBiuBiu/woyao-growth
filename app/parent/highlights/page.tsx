@@ -578,6 +578,7 @@ export default function HighlightsPage() {
 
       const scores: FrameScore[] = [];
       let prevFrame: ImageData|null = null;
+      let canvasReady = false; // true once canvas dimensions are sized to actual video aspect ratio
       const track: TrackState = {x:-1,y:-1,vx:0,vy:0,framesSinceSeen:999,lastExitX:-1};
       // Cap analysis frames so long videos (>10min at 1FPS = 600 frames) don't hang on mobile.
       // Proportional sampling: for videos shorter than MAX frames, interval stays at 1s; for
@@ -624,9 +625,12 @@ export default function HighlightsPage() {
         } catch {
           continue; // skip corrupt/undecodable frame — don't abort entire generation
         }
-        if (i === 0) {
+        if (!canvasReady) {
+          // Size canvas to actual video aspect ratio on first decoded frame.
+          // Must not use i===0 because frame 0 may have been skipped via continue above.
           sampleH = Math.round(SAMPLE_W * frameImg.naturalHeight / Math.max(frameImg.naturalWidth, 1));
           canvas.height = sampleH;
+          canvasReady = true;
         }
 
         ctx.drawImage(frameImg, 0, 0, SAMPLE_W, sampleH);
