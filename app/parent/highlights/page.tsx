@@ -540,9 +540,11 @@ export default function HighlightsPage() {
       // ── 4. Probe duration via FFmpeg log ──────────────────────────────────
       setStage("analyzing"); setStatusMsg("读取视频信息…");
       let duration = 0;
+      let hasAudio = false;
       const onLog = ({ message }: { message: string }) => {
         const m = message.match(/Duration:\s+(\d+):(\d+):([\d.]+)/);
         if (m) duration = parseInt(m[1])*3600 + parseInt(m[2])*60 + parseFloat(m[3]);
+        if (/Stream.*Audio:/.test(message)) hasAudio = true;
       };
       ff.on("log", onLog);
       try { await ff.exec(["-i", "input.mp4", "-t", "0", "-f", "null", "probe"]); } catch {}
@@ -649,7 +651,7 @@ export default function HighlightsPage() {
       // Guard: if total segment duration exceeds 2× highlight length, the player
       // was detected in most frames (same-team color matching). Fall back to
       // findBestWindow so the output stays short and WASM heap stays sane with BGM.
-      const useMultiSeg = segs.length >= 2 && totalSegDur >= 4 && segs.length <= 10 && totalSegDur <= HIGHLIGHT_S * 2;
+      const useMultiSeg = segs.length >= 2 && totalSegDur >= 4 && segs.length <= 10 && totalSegDur <= HIGHLIGHT_S * 2 && hasAudio;
 
       const [fallbackStart, fallbackEnd] = findBestWindow(scores, duration, bgmEnabled ? 120 : 0);
       const totalClipDur = useMultiSeg ? totalSegDur : (fallbackEnd - fallbackStart);
@@ -746,12 +748,22 @@ export default function HighlightsPage() {
         } else {
           setStatusMsg(`精彩片段：${fallbackStart.toFixed(1)}s – ${fallbackEnd.toFixed(1)}s，正在剪辑…`);
           const clipDur = (fallbackEnd - fallbackStart).toFixed(3);
-          const ret2 = await ff.exec(hasBgm ? [
+          // 3-way: (1) BGM + source audio → amix, (2) BGM + no source audio → BGM only, (3) no BGM
+          const singleArgs = hasBgm && hasAudio ? [
             "-ss", fallbackStart.toFixed(3), "-i", "input.mp4",
             "-i", bgmFile,
             "-t", clipDur,
             "-filter_complex", "[0:a][1:a]amix=inputs=2:weights=0.3|0.7[fa]",
             "-map", "0:v", "-map", "[fa]",
+            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
+            "-vf", "scale=720:-2",
+            "-c:a", "aac", "-b:a", "96k", "-shortest", "-movflags", "+faststart",
+            "-y", "highlight.mp4",
+          ] : hasBgm ? [
+            "-ss", fallbackStart.toFixed(3), "-i", "input.mp4",
+            "-i", bgmFile,
+            "-t", clipDur,
+            "-map", "0:v", "-map", "1:a",
             "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
             "-vf", "scale=720:-2",
             "-c:a", "aac", "-b:a", "96k", "-shortest", "-movflags", "+faststart",
@@ -763,7 +775,8 @@ export default function HighlightsPage() {
             "-vf", "scale=720:-2",
             "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart",
             "-y", "highlight.mp4",
-          ]);
+          ];
+          const ret2 = await ff.exec(singleArgs);
           if (ret2 !== 0) throw new Error(`FFmpeg 编码失败 (exit ${ret2}) ${encodeLog.slice(-2).join(" | ")}`);
         }
       } finally {
