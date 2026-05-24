@@ -826,6 +826,12 @@ export default function HighlightsPage() {
             <span className="text-xs text-gray-400">支持 MP4、MOV 等格式</span></>
           )}
         </label>
+        {videoFile && videoFile.size > 100 * 1024 * 1024 && (
+          <div className="mt-2 flex items-start gap-1 text-xs text-amber-600">
+            <span className="shrink-0">⚠️</span>
+            <span>视频较大（{(videoFile.size/1024/1024).toFixed(0)}MB），分析预计需要 1–2 分钟，请耐心等待</span>
+          </div>
+        )}
       </div>
 
       <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
