@@ -281,6 +281,7 @@ export default function HighlightsPage() {
   const [feedbackRating, setFeedbackRating] = useState<number>(0);
   const [feedbackTypes,  setFeedbackTypes]  = useState<string[]>([]);
   const [feedbackDone,   setFeedbackDone]   = useState(false);
+  const [bgmEnabled,     setBgmEnabled]     = useState(false);
   const ffmpegRef = useRef<FFmpeg|null>(null);
 
   // Revoke blob URLs on change/unmount to prevent memory leaks
@@ -439,13 +440,34 @@ export default function HighlightsPage() {
       const [startT, endT] = findBestWindow(scores, duration);
       setProgress(78); setStatusMsg(`精彩片段：${startT.toFixed(1)}s – ${endT.toFixed(1)}s，正在剪辑…`);
 
-      // ── 7. Cut video (file already in FS) ────────────────────────────────
+      // ── 7. Cut video — optionally mix BGM ────────────────────────────────
       setStage("cutting");
+      let hasBgm = false;
+      if (bgmEnabled) {
+        try {
+          setStatusMsg("加载BGM…");
+          const bgmData = await fetchFile("/bgm/sport1.mp3");
+          await ff.writeFile("bgm.mp3", bgmData);
+          hasBgm = true;
+        } catch { /* BGM fetch failed — proceed without it */ }
+      }
+
+      setStatusMsg(`精彩片段：${startT.toFixed(1)}s – ${endT.toFixed(1)}s，正在剪辑…`);
+      const clipDur = (endT - startT).toFixed(3);
       const onProgress = ({progress:p}:{progress:number}) => setProgress(78+Math.round(p*20));
       ff.on("progress", onProgress);
-      await ff.exec([
+      await ff.exec(hasBgm ? [
+        "-ss", startT.toFixed(3), "-i", "input.mp4",
+        "-i", "bgm.mp3",
+        "-t", clipDur,
+        "-map", "0:v", "-map", "1:a",
+        "-c:v","libx264","-preset","ultrafast","-crf","28",
+        "-vf", "scale=720:-2",
+        "-c:a","aac","-b:a","96k","-shortest","-movflags","+faststart",
+        "-y","highlight.mp4",
+      ] : [
         "-ss", startT.toFixed(3), "-i","input.mp4",
-        "-t",  (endT-startT).toFixed(3),
+        "-t", clipDur,
         "-c:v","libx264","-preset","ultrafast","-crf","28",
         "-vf", "scale=720:-2",
         "-c:a","aac","-b:a","96k","-movflags","+faststart",
@@ -458,6 +480,7 @@ export default function HighlightsPage() {
       const copy = new Uint8Array(raw.length); copy.set(raw);
       const blob = new Blob([copy.buffer],{type:"video/mp4"});
       await ff.deleteFile("input.mp4"); await ff.deleteFile("highlight.mp4");
+      if (hasBgm) { try { await ff.deleteFile("bgm.mp3"); } catch {} }
 
       setResultUrl(URL.createObjectURL(blob));
       setResultName(videoFile.name.replace(/\.[^.]+$/,"")+"_highlight.mp4");
@@ -469,6 +492,7 @@ export default function HighlightsPage() {
         try { await ffmpegRef.current.deleteFile("input.mp4"); } catch {}
         try { await ffmpegRef.current.deleteFile("frame.png"); } catch {}
         try { await ffmpegRef.current.deleteFile("highlight.mp4"); } catch {}
+        try { await ffmpegRef.current.deleteFile("bgm.mp3"); } catch {}
       }
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg || "未知错误，请在Safari浏览器中打开后重试");
@@ -522,6 +546,19 @@ export default function HighlightsPage() {
             </div>
           )}
         </label>
+      </div>
+
+      <div className="rounded-2xl bg-white border border-gray-100 shadow-sm px-4 py-3">
+        <button onClick={()=>setBgmEnabled(v=>!v)} disabled={isProcessing}
+          className="flex items-center gap-3 w-full text-left">
+          <div className={`w-11 h-6 rounded-full transition-colors shrink-0 relative ${bgmEnabled?"bg-orange-500":"bg-gray-200"}`}>
+            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${bgmEnabled?"translate-x-5":"translate-x-0.5"}`}/>
+          </div>
+          <div>
+            <div className="text-sm font-bold text-gray-700">添加运动BGM 🎵</div>
+            <div className="text-xs text-gray-400">{bgmEnabled?"将替换原声，配上节奏感音乐":"保留视频原声"}</div>
+          </div>
+        </button>
       </div>
 
       <button onClick={run} disabled={!canRun}
