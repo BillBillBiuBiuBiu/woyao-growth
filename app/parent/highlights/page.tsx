@@ -339,33 +339,29 @@ export default function HighlightsPage() {
         }, 1000);
 
         try {
-          // Try jsDelivr CDN first: global edge nodes make 31MB WASM download in <20s vs 90s+ from Railway origin
-          let ff: FFmpeg | null = null;
+          // Probe CDN reachability with a cheap HEAD request (5s budget) BEFORE starting
+          // the 31MB WASM download. This avoids zombie FFmpeg instances and the bandwidth
+          // congestion that would result from two parallel large downloads competing.
+          // jsDelivr has China edge nodes — 5-10x faster than Railway origin for large files.
+          const CDN_JS   = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js";
+          const CDN_WASM = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm";
+          let coreURL = "/ffmpeg/ffmpeg-core.js";
+          let wasmURL = "/ffmpeg/ffmpeg-core.wasm";
           try {
-            const ffCdn = new FFmpeg();
-            await Promise.race([
-              ffCdn.load({
-                coreURL: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
-                wasmURL: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm",
-              }),
-              new Promise<never>((_, rej) => setTimeout(() => rej(new Error("cdn_timeout")), 30_000)),
+            const r = await Promise.race([
+              fetch(CDN_JS, { method: "HEAD" }),
+              new Promise<never>((_, rej) => setTimeout(() => rej(), 5000)),
             ]);
-            ff = ffCdn;
+            if (r.ok) { coreURL = CDN_JS; wasmURL = CDN_WASM; }
           } catch {}
 
-          if (!ff) {
-            // Fall back to self-hosted (WeChat or restricted networks block CDN)
-            setStatusMsg("加载视频处理引擎…（请保持WiFi连接，首次需30–60秒）");
-            const ffLocal = new FFmpeg();
-            await Promise.race([
-              ffLocal.load({ coreURL: "/ffmpeg/ffmpeg-core.js", wasmURL: "/ffmpeg/ffmpeg-core.wasm" }),
-              new Promise<never>((_, rej) =>
-                setTimeout(() => rej(new Error("视频引擎加载超时，请在WiFi环境下重试")), 60_000)
-              ),
-            ]);
-            ff = ffLocal;
-          }
-
+          const ff = new FFmpeg();
+          await Promise.race([
+            ff.load({ coreURL, wasmURL }),
+            new Promise<never>((_, rej) =>
+              setTimeout(() => rej(new Error("视频引擎加载超时，请在WiFi环境下重试")), 90_000)
+            ),
+          ]);
           ffmpegRef.current = ff;
         } finally {
           clearInterval(ticker);
@@ -377,9 +373,18 @@ export default function HighlightsPage() {
       setStage("extracting_color"); setStatusMsg("提取球员外观特征…");
       const photoUrl = URL.createObjectURL(photoFile);
       const img = new Image();
-      await new Promise<void>((res,rej)=>{ img.onload=()=>res(); img.onerror=()=>rej(new Error("无法加载照片")); img.src=photoUrl; });
+      try {
+        // Timeout guards against WKWebView never firing onload/onerror
+        await new Promise<void>((res, rej) => {
+          const t = setTimeout(() => rej(new Error("照片加载超时")), 10_000);
+          img.onload  = () => { clearTimeout(t); res(); };
+          img.onerror = () => { clearTimeout(t); rej(new Error("无法加载照片")); };
+          img.src = photoUrl;
+        });
+      } finally {
+        URL.revokeObjectURL(photoUrl); // revoke whether load succeeded or failed
+      }
       const sig = extractPlayerSignature(img);
-      URL.revokeObjectURL(photoUrl);
       setProgress(18);
 
       // ── 3. Write video to FFmpeg FS ───────────────────────────────────────
