@@ -247,6 +247,51 @@ function analyzeFrame(
   return {t:0,hasPlayer:true,ballNear,playerX,playerY,score:baseScore*(0.5+confidence*0.5)};
 }
 
+// ── In-browser beat WAV generator ────────────────────────────────────────────
+// Generates a simple 120BPM sport beat entirely in JS — no network request needed.
+// Frequencies chosen to survive phone speaker low-pass filter (>180Hz).
+function generateBeatWAV(durationSec: number): Uint8Array {
+  const SR = 44100;
+  const numSamples = Math.ceil(SR * durationSec);
+  const beatSamples = Math.round(SR * 60 / 120); // 22050 @ 120BPM
+  const pcm = new Int16Array(numSamples);
+
+  for (let i = 0; i < numSamples; i++) {
+    const t = i / SR;
+    const b  = i % beatSamples;
+    const b2 = i % (beatSamples * 2);
+    const hb = i % Math.round(beatSamples / 2);
+
+    const kick  = 0.45 * Math.sin(2 * Math.PI * 180 * t) * Math.exp(-10 * b  / SR);
+    const hhat  = 0.12 * Math.sin(2 * Math.PI * 900 * t) * Math.exp(-40 * hb / SR);
+    const snare = (b2 >= beatSamples && b2 < beatSamples + Math.round(beatSamples * 0.12))
+      ? 0.30 * Math.sin(2 * Math.PI * 350 * t) * Math.exp(-20 * (b2 - beatSamples) / SR)
+      : 0;
+    const synth = 0.06 * Math.sin(2 * Math.PI * 440 * t);
+
+    pcm[i] = Math.round(Math.max(-0.95, Math.min(0.95, kick + hhat + snare + synth)) * 32767);
+  }
+
+  const dataBytes = numSamples * 2;
+  const buf = new ArrayBuffer(44 + dataBytes);
+  const dv  = new DataView(buf);
+  const u8  = new Uint8Array(buf);
+
+  // RIFF/WAVE/fmt /data headers
+  [0x52,0x49,0x46,0x46].forEach((c,i)=>{ u8[i]=c; });
+  dv.setUint32(4, 36 + dataBytes, true);
+  [0x57,0x41,0x56,0x45].forEach((c,i)=>{ u8[8+i]=c; });
+  [0x66,0x6D,0x74,0x20].forEach((c,i)=>{ u8[12+i]=c; });
+  dv.setUint32(16, 16, true);  dv.setUint16(20, 1, true);  dv.setUint16(22, 1, true);
+  dv.setUint32(24, SR, true);  dv.setUint32(28, SR * 2, true);
+  dv.setUint16(32, 2, true);   dv.setUint16(34, 16, true);
+  [0x64,0x61,0x74,0x61].forEach((c,i)=>{ u8[36+i]=c; });
+  dv.setUint32(40, dataBytes, true);
+
+  new Int16Array(buf, 44).set(pcm);
+  return u8;
+}
+
 function findBestWindow(scores:FrameScore[], totalDuration:number, bgmBpm=0):[number,number] {
   if (scores.length === 0) return [0, Math.min(totalDuration, HIGHLIGHT_S)];
 
@@ -494,17 +539,10 @@ export default function HighlightsPage() {
       setStage("cutting");
       let hasBgm = false;
       if (bgmEnabled) {
-        try {
-          setStatusMsg("加载BGM…");
-          const bgmData = await Promise.race([
-            fetchFile("/bgm/sport1.mp3"),
-            new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error("BGM timeout")), 15_000)
-            ),
-          ]);
-          await ff.writeFile("bgm.mp3", bgmData);
-          hasBgm = true;
-        } catch { /* BGM fetch failed or timed out — proceed without it */ }
+        setStatusMsg("生成BGM…");
+        const bgmWav = generateBeatWAV(Math.ceil(endT - startT) + 2);
+        await ff.writeFile("bgm.wav", bgmWav);
+        hasBgm = true;
       }
 
       setStatusMsg(`精彩片段：${startT.toFixed(1)}s – ${endT.toFixed(1)}s，正在剪辑…`);
@@ -513,7 +551,7 @@ export default function HighlightsPage() {
       ff.on("progress", onProgress);
       await ff.exec(hasBgm ? [
         "-ss", startT.toFixed(3), "-i", "input.mp4",
-        "-i", "bgm.mp3",
+        "-i", "bgm.wav",
         "-t", clipDur,
         "-map", "0:v", "-map", "1:a",
         "-c:v","libx264","-preset","ultrafast","-crf","28",
@@ -535,7 +573,7 @@ export default function HighlightsPage() {
       const copy = new Uint8Array(raw.length); copy.set(raw);
       const blob = new Blob([copy.buffer],{type:"video/mp4"});
       await ff.deleteFile("input.mp4"); await ff.deleteFile("highlight.mp4");
-      if (hasBgm) { try { await ff.deleteFile("bgm.mp3"); } catch {} }
+      if (hasBgm) { try { await ff.deleteFile("bgm.wav"); } catch {} }
 
       setResultUrl(URL.createObjectURL(blob));
       setResultName(videoFile.name.replace(/\.[^.]+$/,"")+"_highlight.mp4");
@@ -547,7 +585,7 @@ export default function HighlightsPage() {
         try { await ffmpegRef.current.deleteFile("input.mp4"); } catch {}
         try { await ffmpegRef.current.deleteFile("frame.png"); } catch {}
         try { await ffmpegRef.current.deleteFile("highlight.mp4"); } catch {}
-        try { await ffmpegRef.current.deleteFile("bgm.mp3"); } catch {}
+        try { await ffmpegRef.current.deleteFile("bgm.wav"); } catch {}
       }
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg || "未知错误，请在Safari浏览器中打开后重试");
