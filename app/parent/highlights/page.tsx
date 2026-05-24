@@ -586,65 +586,66 @@ export default function HighlightsPage() {
 
       const onProgress = ({progress:p}: {progress:number}) => setProgress(78 + Math.round(p * 20));
       ff.on("progress", onProgress);
+      try {
+        if (useMultiSeg) {
+          setStatusMsg(`找到 ${segs.length} 个精彩片段（共 ${totalSegDur.toFixed(0)}s），正在剪辑…`);
 
-      if (useMultiSeg) {
-        setStatusMsg(`找到 ${segs.length} 个精彩片段（共 ${totalSegDur.toFixed(0)}s），正在剪辑…`);
+          // Multiple -ss -t -i inputs + filter_complex concat (single FFmpeg pass)
+          const args: string[] = [];
+          for (const [s, e] of segs) {
+            args.push("-ss", s.toFixed(3), "-t", (e - s).toFixed(3), "-i", "input.mp4");
+          }
+          if (hasBgm) args.push("-i", "bgm.wav");
 
-        // Multiple -ss -t -i inputs + filter_complex concat (single FFmpeg pass)
-        const args: string[] = [];
-        for (const [s, e] of segs) {
-          args.push("-ss", s.toFixed(3), "-t", (e - s).toFixed(3), "-i", "input.mp4");
-        }
-        if (hasBgm) args.push("-i", "bgm.wav");
+          const n = segs.length;
+          const concatInputs = segs.map((_, i) => `[${i}:v][${i}:a]`).join("");
+          const filterParts = [
+            `${concatInputs}concat=n=${n}:v=1:a=1[rawv][ca]`,
+            `[rawv]scale=720:-2[cv]`,
+          ];
+          let mapArgs: string[];
+          if (hasBgm) {
+            filterParts.push(`[${n}:a]asetpts=PTS-STARTPTS[bgm]`);
+            filterParts.push(`[ca][bgm]amix=inputs=2:weights=0.3 0.7[fa]`);
+            mapArgs = ["-map", "[cv]", "-map", "[fa]"];
+          } else {
+            mapArgs = ["-map", "[cv]", "-map", "[ca]"];
+          }
 
-        const n = segs.length;
-        const concatInputs = segs.map((_, i) => `[${i}:v][${i}:a]`).join("");
-        const filterParts = [
-          `${concatInputs}concat=n=${n}:v=1:a=1[rawv][ca]`,
-          `[rawv]scale=720:-2[cv]`,
-        ];
-        let mapArgs: string[];
-        if (hasBgm) {
-          filterParts.push(`[${n}:a]asetpts=PTS-STARTPTS[bgm]`);
-          filterParts.push(`[ca][bgm]amix=inputs=2:weights=0.3 0.7[fa]`);
-          mapArgs = ["-map", "[cv]", "-map", "[fa]"];
+          args.push(
+            "-filter_complex", filterParts.join(";"),
+            ...mapArgs,
+            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
+            "-c:a", "aac", "-b:a", "96k",
+            ...(hasBgm ? ["-shortest"] : []),
+            "-movflags", "+faststart",
+            "-y", "highlight.mp4",
+          );
+          await ff.exec(args);
         } else {
-          mapArgs = ["-map", "[cv]", "-map", "[ca]"];
+          setStatusMsg(`精彩片段：${fallbackStart.toFixed(1)}s – ${fallbackEnd.toFixed(1)}s，正在剪辑…`);
+          const clipDur = (fallbackEnd - fallbackStart).toFixed(3);
+          await ff.exec(hasBgm ? [
+            "-ss", fallbackStart.toFixed(3), "-i", "input.mp4",
+            "-i", "bgm.wav",
+            "-t", clipDur,
+            "-map", "0:v", "-map", "1:a",
+            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
+            "-vf", "scale=720:-2",
+            "-c:a", "aac", "-b:a", "96k", "-shortest", "-movflags", "+faststart",
+            "-y", "highlight.mp4",
+          ] : [
+            "-ss", fallbackStart.toFixed(3), "-i", "input.mp4",
+            "-t", clipDur,
+            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
+            "-vf", "scale=720:-2",
+            "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart",
+            "-y", "highlight.mp4",
+          ]);
         }
-
-        args.push(
-          "-filter_complex", filterParts.join(";"),
-          ...mapArgs,
-          "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
-          "-c:a", "aac", "-b:a", "96k",
-          ...(hasBgm ? ["-shortest"] : []),
-          "-movflags", "+faststart",
-          "-y", "highlight.mp4",
-        );
-        await ff.exec(args);
-      } else {
-        setStatusMsg(`精彩片段：${fallbackStart.toFixed(1)}s – ${fallbackEnd.toFixed(1)}s，正在剪辑…`);
-        const clipDur = (fallbackEnd - fallbackStart).toFixed(3);
-        await ff.exec(hasBgm ? [
-          "-ss", fallbackStart.toFixed(3), "-i", "input.mp4",
-          "-i", "bgm.wav",
-          "-t", clipDur,
-          "-map", "0:v", "-map", "1:a",
-          "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
-          "-vf", "scale=720:-2",
-          "-c:a", "aac", "-b:a", "96k", "-shortest", "-movflags", "+faststart",
-          "-y", "highlight.mp4",
-        ] : [
-          "-ss", fallbackStart.toFixed(3), "-i", "input.mp4",
-          "-t", clipDur,
-          "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
-          "-vf", "scale=720:-2",
-          "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart",
-          "-y", "highlight.mp4",
-        ]);
+      } finally {
+        ff.off("progress", onProgress);
       }
-
-      ff.off("progress", onProgress);
 
       const data = await ff.readFile("highlight.mp4");
       const raw  = data as Uint8Array;
