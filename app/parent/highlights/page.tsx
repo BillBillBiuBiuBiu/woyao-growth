@@ -442,6 +442,7 @@ export default function HighlightsPage() {
   const [feedbackTypes,  setFeedbackTypes]  = useState<string[]>([]);
   const [feedbackDone,   setFeedbackDone]   = useState(false);
   const [bgmEnabled,     setBgmEnabled]     = useState(false);
+  const [bgmUserFile,    setBgmUserFile]    = useState<File|null>(null);
   const ffmpegRef = useRef<FFmpeg|null>(null);
 
   // Revoke blob URLs on change/unmount to prevent memory leaks
@@ -459,6 +460,9 @@ export default function HighlightsPage() {
     const f=e.target.files?.[0]; if (!f) return;
     setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f));
   },[]);
+  const handleBgmFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setBgmUserFile(e.target.files?.[0] || null);
+  }, []);
 
   const run = useCallback(async () => {
     if (!videoFile||!photoFile) return;
@@ -642,19 +646,35 @@ export default function HighlightsPage() {
       if (bgmEnabled) {
         setStatusMsg("加载BGM…");
         let realMusicLoaded = false;
-        try {
-          // fetchFile() does not check HTTP status — a 404 would write HTML to WASM FS and
-          // crash FFmpeg with "Invalid argument". Use fetch() directly and gate on resp.ok.
-          const resp = await Promise.race([
-            fetch("/bgm/music.mp3"),
-            new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), 8000)),
-          ]);
-          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-          const data = new Uint8Array(await resp.arrayBuffer());
-          await ff.writeFile("bgm.mp3", data);
-          bgmFile = "bgm.mp3";
-          realMusicLoaded = true;
-        } catch {}
+
+        // Tier 1: user-provided file (max 3 MB to stay within 31 MB WASM heap)
+        if (bgmUserFile && bgmUserFile.size <= 3 * 1024 * 1024) {
+          try {
+            const data = new Uint8Array(await bgmUserFile.arrayBuffer());
+            await ff.writeFile("bgm.mp3", data);
+            bgmFile = "bgm.mp3";
+            realMusicLoaded = true;
+          } catch {}
+        }
+
+        // Tier 2: bundled music at /bgm/music.mp3 (404 on production until file is added)
+        if (!realMusicLoaded) {
+          try {
+            // fetchFile() does not check HTTP status — a 404 would write HTML to WASM FS and
+            // crash FFmpeg with "Invalid argument". Use fetch() directly and gate on resp.ok.
+            const resp = await Promise.race([
+              fetch("/bgm/music.mp3"),
+              new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), 8000)),
+            ]);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = new Uint8Array(await resp.arrayBuffer());
+            await ff.writeFile("bgm.mp3", data);
+            bgmFile = "bgm.mp3";
+            realMusicLoaded = true;
+          } catch {}
+        }
+
+        // Tier 3: synthesized 808-style beat WAV
         if (!realMusicLoaded) {
           const bgmWav = generateBeatWAV(Math.min(Math.ceil(totalClipDur) + 2, HIGHLIGHT_S + 5));
           await ff.writeFile("bgm.wav", bgmWav);
@@ -763,7 +783,7 @@ export default function HighlightsPage() {
       setError(msg || "未知错误，请在Safari浏览器中打开后重试");
       setStage("error");
     }
-  }, [videoFile, photoFile, bgmEnabled]);
+  }, [videoFile, photoFile, bgmEnabled, bgmUserFile]);
 
   const isProcessing = ["loading_ffmpeg","extracting_color","writing","analyzing","cutting"].includes(stage);
   const canRun = !!(videoFile && photoFile && !isProcessing);
@@ -814,7 +834,7 @@ export default function HighlightsPage() {
       </div>
 
       <div className="rounded-2xl bg-white border border-gray-100 shadow-sm px-4 py-3">
-        <button onClick={()=>setBgmEnabled(v=>!v)} disabled={isProcessing}
+        <button onClick={()=>{ if(bgmEnabled) setBgmUserFile(null); setBgmEnabled(v=>!v); }} disabled={isProcessing}
           className="flex items-center gap-3 w-full text-left">
           <div className={`w-11 h-6 rounded-full transition-colors shrink-0 relative ${bgmEnabled?"bg-orange-500":"bg-gray-200"}`}>
             <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${bgmEnabled?"translate-x-5":"translate-x-0.5"}`}/>
@@ -824,6 +844,20 @@ export default function HighlightsPage() {
             <div className="text-xs text-gray-400">{bgmEnabled?"将替换原声，配上节奏感音乐":"保留视频原声"}</div>
           </div>
         </button>
+        {bgmEnabled&&!isProcessing&&(
+          <label className="mt-3 flex items-center gap-2 cursor-pointer rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-2">
+            <input type="file" accept="audio/*,.mp3,.m4a,.aac" className="hidden" onChange={handleBgmFileChange}/>
+            <span className="text-base shrink-0">🎵</span>
+            {bgmUserFile
+              ? <span className="text-xs text-orange-600 font-medium truncate flex-1">{bgmUserFile.name}</span>
+              : <span className="text-xs text-gray-400 flex-1">自定义音乐（可选，≤3MB）· 留空用内置节拍</span>
+            }
+            {bgmUserFile&&(
+              <button type="button" onClick={e=>{e.preventDefault();e.stopPropagation();setBgmUserFile(null);}}
+                className="text-gray-400 text-sm shrink-0 leading-none">✕</button>
+            )}
+          </label>
+        )}
       </div>
 
       <button onClick={run} disabled={!canRun}
