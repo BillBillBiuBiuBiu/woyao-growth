@@ -992,16 +992,14 @@ export default function HighlightsPage() {
       )}
 
       {stage==="idle"&&(
-        <div className="rounded-2xl bg-blue-50 border border-blue-100 p-4">
-          <div className="text-xs font-bold text-blue-700 mb-2">识别原理（5类特征交叉验证）</div>
-          <ul className="flex flex-col gap-1 text-xs text-blue-600">
-            <li>👕 <b>外观</b>：球衣 + 裤子 + 袜子 + 鞋子颜色</li>
-            <li>📍 <b>位置</b>：速度矢量预测下一帧出现位置</li>
-            <li>⏱ <b>时间</b>：失踪越久，位置置信度越低</li>
-            <li>🏀 <b>球场</b>：超出物理速度极限的跳变会被惩罚</li>
-            <li>🖼 <b>帧提取</b>：由FFmpeg直接解码，兼容所有浏览器</li>
+        <div className="rounded-2xl bg-amber-50 border border-amber-100 p-4">
+          <div className="text-xs font-bold text-amber-800 mb-2">📸 拍照小贴士 · 效果更好</div>
+          <ul className="flex flex-col gap-1.5 text-xs text-amber-700">
+            <li>👕 <b>全身入镜</b>：要能看到球衣 + 短裤，颜色越完整识别越准</li>
+            <li>☀️ <b>光线充足</b>：避免逆光或阴影遮住球衣颜色</li>
+            <li>🧍 <b>单独一人</b>：不要和其他队员挤在一起，避免误识别</li>
+            <li>📅 <b>当天照片</b>：和比赛视频同一套队服，颜色最匹配</li>
           </ul>
-          <div className="mt-2 text-xs text-blue-500">提示：参考照片用全身照效果更好</div>
         </div>
       )}
     </div>
