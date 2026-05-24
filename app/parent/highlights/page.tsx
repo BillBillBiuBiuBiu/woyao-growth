@@ -283,11 +283,13 @@ export default function HighlightsPage() {
   const [feedbackDone,   setFeedbackDone]   = useState(false);
   const ffmpegRef = useRef<FFmpeg|null>(null);
 
-  // Revoke blob URL whenever resultUrl changes or component unmounts
-  // (prevents holding an entire encoded video in memory after user discards result)
+  // Revoke blob URLs on change/unmount to prevent memory leaks
   useEffect(() => {
     return () => { if (resultUrl) URL.revokeObjectURL(resultUrl); };
   }, [resultUrl]);
+  useEffect(() => {
+    return () => { if (photoPreview) URL.revokeObjectURL(photoPreview); };
+  }, [photoPreview]);
 
   const handleVideoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const f=e.target.files?.[0]; if (f) setVideoFile(f);
