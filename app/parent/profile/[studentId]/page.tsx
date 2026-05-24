@@ -3,6 +3,7 @@ import { mockStudent, mockGrowthHistory, mockBadges, mockAssessment } from "@/li
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 
 const GrowthRadarDual = dynamic(() => import("@/components/GrowthCharts").then((m) => m.GrowthRadarDual), { ssr: false });
 const GrowthCurve = dynamic(() => import("@/components/GrowthCharts").then((m) => m.GrowthCurve), { ssr: false });
@@ -28,6 +29,10 @@ function ScoreBoxes({ score, max }: { score: number; max: number }) {
 
 export default function StudentProfilePage() {
   const a = mockAssessment;
+  const [hasTesterBadge, setHasTesterBadge] = useState(false);
+  useEffect(() => {
+    setHasTesterBadge(localStorage.getItem("tester_badge") === "true");
+  }, []);
 
   return (
     <div
@@ -217,6 +222,15 @@ export default function StudentProfilePage() {
               </div>
             </div>
           ))}
+          {hasTesterBadge && (
+            <div className="flex items-center gap-2 p-3 rounded-2xl bg-white/90 border border-amber-100 shadow-sm">
+              <span className="text-2xl">🏅</span>
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-gray-800 truncate">内测员</div>
+                <div className="text-xs text-amber-500">集锦功能测试员</div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
