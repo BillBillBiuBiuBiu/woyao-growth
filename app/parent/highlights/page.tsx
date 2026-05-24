@@ -674,13 +674,13 @@ export default function HighlightsPage() {
           } catch {}
         }
 
-        // Tier 2: bundled music at /bgm/music.mp3 (404 on production until file is added)
+        // Tier 2: bundled sport track at /bgm/sport1.mp3 (~470KB)
         if (!realMusicLoaded) {
           try {
             // fetchFile() does not check HTTP status — a 404 would write HTML to WASM FS and
             // crash FFmpeg with "Invalid argument". Use fetch() directly and gate on resp.ok.
             const resp = await Promise.race([
-              fetch("/bgm/music.mp3"),
+              fetch("/bgm/sport1.mp3"),
               new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), 8000)),
             ]);
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
