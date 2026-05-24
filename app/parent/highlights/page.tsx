@@ -498,6 +498,9 @@ export default function HighlightsPage() {
       const canvas = document.createElement("canvas");
       canvas.width = SAMPLE_W;
       let sampleH = Math.round(SAMPLE_W * 9/16);
+      // Acquire context once before the loop — repeated getContext inside loop is wasteful.
+      // willReadFrequently keeps canvas in CPU memory so getImageData skips GPU readback.
+      const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
 
       const scores: FrameScore[] = [];
       let prevFrame: ImageData|null = null;
@@ -538,7 +541,6 @@ export default function HighlightsPage() {
           canvas.height = sampleH;
         }
 
-        const ctx = canvas.getContext("2d")!;
         ctx.drawImage(frameImg, 0, 0, SAMPLE_W, sampleH);
         const currFrame = ctx.getImageData(0, 0, SAMPLE_W, sampleH);
 
