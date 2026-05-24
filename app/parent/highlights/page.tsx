@@ -253,15 +253,22 @@ function findBestWindow(scores:FrameScore[], totalDuration:number, bgmBpm=0):[nu
   const n = scores.length;
   const windowFrames = Math.min(n, Math.max(1, Math.round(HIGHLIGHT_S * SAMPLE_FPS)));
 
-  // Sliding window: pick the contiguous window with highest cumulative score.
-  // Favors sustained player+ball activity over lucky single-frame matches.
-  const cumSum = new Array(n + 1).fill(0);
-  for (let i = 0; i < n; i++) cumSum[i + 1] = cumSum[i] + scores[i].score;
+  // Sliding window: pick contiguous window with highest cumulative score,
+  // weighted by player presence ratio to avoid "unrelated frames" in the clip.
+  const cumSum    = new Array(n + 1).fill(0);
+  const cumPlayer = new Array(n + 1).fill(0);
+  for (let i = 0; i < n; i++) {
+    cumSum[i + 1]    = cumSum[i]    + scores[i].score;
+    cumPlayer[i + 1] = cumPlayer[i] + (scores[i].hasPlayer ? 1 : 0);
+  }
 
   let bestWinStart = 0, bestWinScore = -Infinity;
   for (let i = 0; i <= n - windowFrames; i++) {
     const ws = cumSum[i + windowFrames] - cumSum[i];
-    if (ws > bestWinScore) { bestWinScore = ws; bestWinStart = i; }
+    const playerRatio = (cumPlayer[i + windowFrames] - cumPlayer[i]) / windowFrames;
+    // Penalize windows where the target player rarely appears — reduces unrelated frames
+    const adjusted = ws * (0.3 + playerRatio * 0.7);
+    if (adjusted > bestWinScore) { bestWinScore = adjusted; bestWinStart = i; }
   }
 
   // Peak frame within best window (reference point for beat-sync)
@@ -578,7 +585,7 @@ export default function HighlightsPage() {
 
       <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
         <div className="text-sm font-bold text-gray-700 mb-1">② 上传球员参考照片</div>
-        <div className="text-xs text-gray-400 mb-3">全身照效果最佳，会识别球衣、裤子、鞋袜颜色</div>
+        <div className="text-xs text-gray-400 mb-3">全身照效果最佳 · 按队服颜色识别（同队多人会同时追踪，号码识别暂不支持）</div>
         <label className={`flex gap-4 items-center rounded-xl border-2 border-dashed p-4 cursor-pointer ${photoFile?"border-orange-300 bg-orange-50":"border-gray-200 bg-gray-50"}`}>
           <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} disabled={isProcessing}/>
           {photoPreview?(
