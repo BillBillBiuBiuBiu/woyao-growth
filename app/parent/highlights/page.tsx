@@ -505,10 +505,15 @@ export default function HighlightsPage() {
       const scores: FrameScore[] = [];
       let prevFrame: ImageData|null = null;
       const track: TrackState = {x:-1,y:-1,vx:0,vy:0,framesSinceSeen:999,lastExitX:-1};
-      const totalFrames = Math.ceil(duration * SAMPLE_FPS);
+      // Cap analysis frames so long videos (>10min at 1FPS = 600 frames) don't hang on mobile.
+      // Proportional sampling: for videos shorter than MAX frames, interval stays at 1s; for
+      // longer videos the interval stretches so we always cover the full video uniformly.
+      const MAX_ANALYSIS_FRAMES = 90;
+      const totalFrames = Math.min(Math.ceil(duration * SAMPLE_FPS), MAX_ANALYSIS_FRAMES);
+      const frameInterval = duration / Math.max(totalFrames, 1);
 
       for (let i = 0; i < totalFrames; i++) {
-        const t = i / SAMPLE_FPS;
+        const t = i * frameInterval;
         setStatusMsg(`分析帧 ${i+1} / ${totalFrames}（${Math.round(t)}s）`);
 
         // Extract single frame at time t
