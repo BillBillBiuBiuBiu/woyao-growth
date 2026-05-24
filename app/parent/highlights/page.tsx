@@ -618,7 +618,12 @@ export default function HighlightsPage() {
           break;
         }
 
-        const frameImg = await loadImageFromBytes(pngBytes);
+        let frameImg: HTMLImageElement;
+        try {
+          frameImg = await loadImageFromBytes(pngBytes);
+        } catch {
+          continue; // skip corrupt/undecodable frame — don't abort entire generation
+        }
         if (i === 0) {
           sampleH = Math.round(SAMPLE_W * frameImg.naturalHeight / Math.max(frameImg.naturalWidth, 1));
           canvas.height = sampleH;
