@@ -569,8 +569,15 @@ export default function HighlightsPage() {
       const MAX_ANALYSIS_FRAMES = 90;
       const totalFrames = Math.min(Math.ceil(duration * SAMPLE_FPS), MAX_ANALYSIS_FRAMES);
       const frameInterval = duration / Math.max(totalFrames, 1);
+      // Wallclock guard: per-frame has 8s image-load timeout, so 90×8s=720s worst case.
+      // If analysis takes over 3 min total, break early and use whatever scores were collected.
+      const analysisDeadline = Date.now() + 180_000;
 
       for (let i = 0; i < totalFrames; i++) {
+        if (Date.now() > analysisDeadline) {
+          setStatusMsg(`分析超时，已处理 ${i}/${totalFrames} 帧，继续生成…`);
+          break;
+        }
         const t = i * frameInterval;
         setStatusMsg(`分析帧 ${i+1} / ${totalFrames}（${Math.round(t)}s）`);
 
