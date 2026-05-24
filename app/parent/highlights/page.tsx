@@ -741,6 +741,7 @@ export default function HighlightsPage() {
         try { await ffmpegRef.current.deleteFile("frame.png"); } catch {}
         try { await ffmpegRef.current.deleteFile("highlight.mp4"); } catch {}
         try { await ffmpegRef.current.deleteFile("bgm.wav"); } catch {}
+        try { await ffmpegRef.current.deleteFile("bgm.mp3"); } catch {}
       }
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg || "未知错误，请在Safari浏览器中打开后重试");
