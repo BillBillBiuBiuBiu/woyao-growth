@@ -950,7 +950,7 @@ export default function HighlightsPage() {
           <div className="text-sm font-bold text-gray-800">🎉 集锦已生成！</div>
           <video src={resultUrl} controls playsInline className="w-full rounded-xl bg-black" style={{maxHeight:280}}/>
           <a href={resultUrl} download={resultName} className="w-full py-3 rounded-xl bg-orange-500 text-white text-sm font-bold text-center block">下载集锦视频</a>
-          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setVideoFile(null);setPhotoFile(null);setPhotoPreview(null);}} className="text-sm text-gray-400 text-center">重新制作</button>
+          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);}} className="text-sm text-gray-400 text-center">重新制作</button>
           <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">
             {!feedbackDone ? (<>
               <div className="text-xs font-bold text-gray-600">集锦效果怎么样？</div>
