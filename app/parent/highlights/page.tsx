@@ -245,25 +245,30 @@ function analyzeFrame(
   return {t:0,hasPlayer:true,ballNear,playerX,playerY,score:ballNear?3.0:0.3};
 }
 
-function findBestWindow(scores:FrameScore[], totalDuration:number):[number,number] {
+function findBestWindow(scores:FrameScore[], totalDuration:number, bgmBpm=0):[number,number] {
   if (scores.length === 0) return [0, Math.min(totalDuration, HIGHLIGHT_S)];
 
-  // Find the single peak frame — the most important moment
   let peakIdx = 0, peakScore = -Infinity;
   for (let i = 0; i < scores.length; i++) {
     if (scores[i].score > peakScore) { peakScore = scores[i].score; peakIdx = i; }
   }
 
   const peakT = scores[peakIdx].t;
-
-  // Center 15s around the peak moment, biased slightly before
-  // (60% of window before peak so you see the build-up, 40% after)
   const before = HIGHLIGHT_S * 0.6;
-  const startT = Math.max(0, peakT - before);
-  const endT   = Math.min(totalDuration, startT + HIGHLIGHT_S);
-  // If we hit the end boundary, pull start back
-  const adjStart = Math.max(0, endT - HIGHLIGHT_S);
-  return [adjStart, endT];
+  let startT = Math.max(0, peakT - before);
+
+  // Beat-sync: nudge startT so the peak action lands on a BGM measure downbeat.
+  // BGM is 120 BPM → measures every 2s; BGM playback starts at clip offset 0.
+  if (bgmBpm > 0) {
+    const measureLen = (60 / bgmBpm) * 4;           // 2.0s at 120 BPM
+    const peakInClip = peakT - startT;
+    const nearestDownbeat = Math.round(peakInClip / measureLen) * measureLen;
+    const shift = nearestDownbeat - peakInClip;      // >0 means peak needs to move forward
+    if (Math.abs(shift) <= measureLen / 2) startT = Math.max(0, startT - shift);
+  }
+
+  const endT = Math.min(totalDuration, startT + HIGHLIGHT_S);
+  return [Math.max(0, endT - HIGHLIGHT_S), endT];
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -437,7 +442,7 @@ export default function HighlightsPage() {
       setProgress(76); setStatusMsg("计算最佳片段…");
 
       // ── 6. Find best window ───────────────────────────────────────────────
-      const [startT, endT] = findBestWindow(scores, duration);
+      const [startT, endT] = findBestWindow(scores, duration, bgmEnabled ? 120 : 0);
       setProgress(78); setStatusMsg(`精彩片段：${startT.toFixed(1)}s – ${endT.toFixed(1)}s，正在剪辑…`);
 
       // ── 7. Cut video — optionally mix BGM ────────────────────────────────
