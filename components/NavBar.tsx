@@ -48,6 +48,11 @@ export default function NavBar() {
     "运营看板": "📊", "转化线索": "🎯",
   };
 
+  // Longest-prefix match: find the most specific tab whose href is a prefix of the current path
+  const bestMatchHref = items
+    .filter(i => pathname === i.href || pathname.startsWith(i.href + "/"))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? "";
+
   return (
     <>
       <header className="sticky top-0 z-50 bg-white border-b border-border shadow-sm">
@@ -60,7 +65,7 @@ export default function NavBar() {
                   key={item.href}
                   href={item.href}
                   className={`text-sm transition-colors ${
-                    pathname === item.href
+                    item.href === bestMatchHref
                       ? "text-primary font-medium"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
@@ -77,21 +82,18 @@ export default function NavBar() {
       {/* Mobile bottom tab bar — only on small screens */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-border">
         <div className="flex items-stretch">
-          {items.map((item) => {
-            const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href) && item.href.split("/").length > 2);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-xs transition-colors ${
-                  active ? "text-primary" : "text-muted-foreground"
-                }`}
-              >
-                <span className="text-lg leading-none">{tabIcons[item.label] ?? "•"}</span>
-                <span className="font-medium leading-none">{item.label}</span>
-              </Link>
-            );
-          })}
+          {items.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-xs transition-colors ${
+                item.href === bestMatchHref ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              <span className="text-lg leading-none">{tabIcons[item.label] ?? "•"}</span>
+              <span className="font-medium leading-none">{item.label}</span>
+            </Link>
+          ))}
         </div>
       </nav>
     </>
