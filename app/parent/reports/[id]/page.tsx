@@ -346,7 +346,6 @@ function SupervipReportLayout({ report }: { report: Report }) {
 export default function ReportDetailPage() {
   const { id } = useParams<{ id: string }>();
   const report = mockReports.find((r) => r.id === id) ?? mockReports[0];
-  const [shared, setShared] = useState(false);
 
   return (
     <div className="-mx-4 -mt-6 pb-10" style={{ background: "linear-gradient(160deg, #fff3e0 0%, #ffe9cc 40%, #fff8ec 100%)" }}>
@@ -404,14 +403,15 @@ export default function ReportDetailPage() {
             <div className="text-xs font-normal opacity-80 mt-0.5">记录成长，珍藏美好</div>
           </button>
         </Link>
-        <button
-          onClick={() => setShared(true)}
-          className="flex-1 rounded-full py-4 text-sm font-bold text-white shadow-md active:scale-95 transition-transform"
-          style={{ background: "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)" }}
-        >
-          <div>{shared ? "✓ 已分享" : "📤 分享给朋友"}</div>
-          <div className="text-xs font-normal opacity-80 mt-0.5">一起见证成长的喜悦</div>
-        </button>
+        <Link href="/parent/highlights" className="flex-1">
+          <button
+            className="w-full rounded-full py-4 text-sm font-bold text-white shadow-md active:scale-95 transition-transform"
+            style={{ background: "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)" }}
+          >
+            <div>🎬 生成本场集锦</div>
+            <div className="text-xs font-normal opacity-80 mt-0.5">AI剪辑本场精彩片段</div>
+          </button>
+        </Link>
       </div>
     </div>
   );
