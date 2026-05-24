@@ -62,6 +62,26 @@ export default function ParentHome() {
       </div>
 
       <div className="flex flex-col gap-4 px-4">
+        {/* Highlight reel — core feature, first visible CTA after hero */}
+        <Link href="/parent/highlights">
+          <div
+            className="rounded-3xl p-5 active:scale-98 transition-transform shadow-md relative overflow-hidden"
+            style={{ background: "linear-gradient(135deg, #F97316 0%, #FB923C 50%, #FBBF24 100%)" }}
+          >
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-6xl opacity-20 select-none">🎬</div>
+            <div className="relative">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-xs font-bold text-orange-100 bg-white/20 px-2 py-0.5 rounded-full">AI 自动剪辑</span>
+              </div>
+              <div className="text-lg font-black text-white leading-tight">生成孩子的精彩集锦</div>
+              <div className="text-sm text-orange-100 mt-1">上传比赛视频 · AI识别有球片段 · 一键生成</div>
+              <div className="mt-3 inline-flex items-center gap-1 bg-white text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full">
+                立即体验 →
+              </div>
+            </div>
+          </div>
+        </Link>
+
         {/* Latest report */}
         <Link href="/parent/reports/rpt-001">
           <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-center justify-between active:scale-98 transition-transform">
@@ -76,7 +96,7 @@ export default function ParentHome() {
 
         {/* Clips */}
         <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4">
-          <div className="text-sm font-bold text-gray-800 mb-3">🎬 成长高光片段</div>
+          <div className="text-sm font-bold text-gray-800 mb-3">🎞️ 教练标注片段</div>
           <div className="grid grid-cols-3 gap-2">
             {mockReport.clips.map((clip) => (
               <Link key={clip.id} href="/parent/reports/rpt-001">
@@ -129,17 +149,6 @@ export default function ParentHome() {
             ))}
           </div>
         </div>
-
-        {/* Highlight reel */}
-        <Link href="/parent/highlights">
-          <div className="rounded-3xl shadow-sm p-4 flex items-center justify-between active:scale-98 transition-transform" style={{ background: "linear-gradient(135deg, #fff3e0, #ffe0b2)" }}>
-            <div>
-              <div className="font-bold text-sm text-gray-800">🎬 生成我的精彩集锦</div>
-              <div className="text-xs text-gray-500 mt-0.5">上传视频 + 照片，自动剪辑有球精彩片段</div>
-            </div>
-            <div className="text-2xl text-orange-300">›</div>
-          </div>
-        </Link>
 
         {/* Profile link */}
         <Link href="/parent/profile/stu-001">
