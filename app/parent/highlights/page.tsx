@@ -446,10 +446,15 @@ export default function HighlightsPage() {
       if (bgmEnabled) {
         try {
           setStatusMsg("加载BGM…");
-          const bgmData = await fetchFile("/bgm/sport1.mp3");
+          const bgmData = await Promise.race([
+            fetchFile("/bgm/sport1.mp3"),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error("BGM timeout")), 15_000)
+            ),
+          ]);
           await ff.writeFile("bgm.mp3", bgmData);
           hasBgm = true;
-        } catch { /* BGM fetch failed — proceed without it */ }
+        } catch { /* BGM fetch failed or timed out — proceed without it */ }
       }
 
       setStatusMsg(`精彩片段：${startT.toFixed(1)}s – ${endT.toFixed(1)}s，正在剪辑…`);
