@@ -125,8 +125,10 @@ function loadImageFromBytes(bytes: Uint8Array): Promise<HTMLImageElement> {
     const blob = new Blob([copy.buffer], { type: "image/png" });
     const url  = URL.createObjectURL(blob);
     const img  = new Image();
-    img.onload  = () => { URL.revokeObjectURL(url); resolve(img); };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("frame load failed")); };
+    const cleanup = () => URL.revokeObjectURL(url);
+    const timer = setTimeout(() => { cleanup(); reject(new Error("frame load timeout")); }, 8000);
+    img.onload  = () => { clearTimeout(timer); cleanup(); resolve(img); };
+    img.onerror = () => { clearTimeout(timer); cleanup(); reject(new Error("frame load failed")); };
     img.src = url;
   });
 }
@@ -427,7 +429,8 @@ export default function HighlightsPage() {
 
       // ── 7. Cut video (file already in FS) ────────────────────────────────
       setStage("cutting");
-      ff.on("progress", ({progress:p})=>setProgress(78+Math.round(p*20)));
+      const onProgress = ({progress:p}:{progress:number}) => setProgress(78+Math.round(p*20));
+      ff.on("progress", onProgress);
       await ff.exec([
         "-ss", startT.toFixed(3), "-i","input.mp4",
         "-t",  (endT-startT).toFixed(3),
@@ -436,6 +439,7 @@ export default function HighlightsPage() {
         "-c:a","aac","-b:a","96k","-movflags","+faststart",
         "-y","highlight.mp4",
       ]);
+      ff.off("progress", onProgress);
 
       const data = await ff.readFile("highlight.mp4");
       const raw  = data as Uint8Array;
@@ -449,6 +453,11 @@ export default function HighlightsPage() {
 
     } catch(e) {
       console.error(e);
+      if (ffmpegRef.current) {
+        try { await ffmpegRef.current.deleteFile("input.mp4"); } catch {}
+        try { await ffmpegRef.current.deleteFile("frame.png"); } catch {}
+        try { await ffmpegRef.current.deleteFile("highlight.mp4"); } catch {}
+      }
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg || "未知错误，请在Safari浏览器中打开后重试");
       setStage("error");
