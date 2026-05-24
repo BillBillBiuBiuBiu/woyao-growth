@@ -568,20 +568,17 @@ export default function HighlightsPage() {
         const t = i * frameInterval;
         setStatusMsg(`分析帧 ${i+1} / ${totalFrames}（${Math.round(t)}s）`);
 
-        // Extract single frame at time t
-        try {
-          await ff.exec([
-            "-ss", t.toFixed(3),
-            "-i", "input.mp4",
-            "-frames:v", "1",
-            "-vf", `scale=${SAMPLE_W}:-2`,
-            "-f", "image2",
-            "-update", "1",   // always overwrite same file
-            "frame.png",
-          ]);
-        } catch {
-          break; // seek past end of video
-        }
+        // Extract single frame at time t. ff.exec() returns exit code, never throws.
+        const frameRet = await ff.exec([
+          "-ss", t.toFixed(3),
+          "-i", "input.mp4",
+          "-frames:v", "1",
+          "-vf", `scale=${SAMPLE_W}:-2`,
+          "-f", "image2",
+          "-update", "1",   // always overwrite same file
+          "frame.png",
+        ]);
+        if (frameRet !== 0) break; // seek past end of video
 
         let pngBytes: Uint8Array;
         try {
