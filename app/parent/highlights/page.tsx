@@ -90,7 +90,7 @@ function extractPlayerSignature(img: HTMLImageElement): PlayerSignature {
   const scale = Math.min(1, 200/Math.max(img.naturalWidth,1));
   canvas.width  = Math.round(img.naturalWidth*scale);
   canvas.height = Math.round(img.naturalHeight*scale);
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   const W=canvas.width, H=canvas.height;
 
