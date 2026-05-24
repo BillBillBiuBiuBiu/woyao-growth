@@ -866,14 +866,17 @@ export default function HighlightsPage() {
               {feedbackRating>0&&(
                 <button onClick={()=>{
                   const entry={time:new Date().toISOString(),rating:feedbackRating,types:feedbackTypes,video:videoFile?.name||""};
-                  try{const prev=JSON.parse(localStorage.getItem("highlight_feedback")||"[]");localStorage.setItem("highlight_feedback",JSON.stringify([...prev,entry]));}catch{}
+                  try{const prev=JSON.parse(localStorage.getItem("highlight_feedback")||"[]");localStorage.setItem("highlight_feedback",JSON.stringify([...prev,entry]));localStorage.setItem("tester_badge","true");}catch{}
                   setFeedbackDone(true);
                 }} className="self-start px-3 py-1.5 rounded-lg bg-orange-100 text-orange-700 text-xs font-bold">
                   提交反馈
                 </button>
               )}
             </>) : (
-              <div className="text-xs text-center text-green-600 font-medium">✅ 感谢反馈，帮助我们持续改进！</div>
+              <div className="flex flex-col items-center gap-1">
+                <div className="text-xs text-center text-green-600 font-medium">✅ 感谢反馈，帮助我们持续改进！</div>
+                <div className="text-xs text-center text-orange-600 font-bold">🏅 测试员徽章已解锁</div>
+              </div>
             )}
           </div>
         </div>
