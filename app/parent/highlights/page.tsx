@@ -606,7 +606,7 @@ export default function HighlightsPage() {
           let mapArgs: string[];
           if (hasBgm) {
             filterParts.push(`[${n}:a]asetpts=PTS-STARTPTS[bgm]`);
-            filterParts.push(`[ca][bgm]amix=inputs=2:weights=0.3 0.7[fa]`);
+            filterParts.push(`[ca][bgm]amix=inputs=2:weights=0.3|0.7[fa]`);
             mapArgs = ["-map", "[cv]", "-map", "[fa]"];
           } else {
             mapArgs = ["-map", "[cv]", "-map", "[ca]"];
@@ -629,7 +629,7 @@ export default function HighlightsPage() {
             "-ss", fallbackStart.toFixed(3), "-i", "input.mp4",
             "-i", "bgm.wav",
             "-t", clipDur,
-            "-filter_complex", "[0:a][1:a]amix=inputs=2:weights=0.3 0.7[fa]",
+            "-filter_complex", "[0:a][1:a]amix=inputs=2:weights=0.3|0.7[fa]",
             "-map", "0:v", "-map", "[fa]",
             "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
             "-vf", "scale=720:-2",
