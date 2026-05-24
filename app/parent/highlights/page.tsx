@@ -44,6 +44,8 @@ const JERSEY_THRESH  = 55;
 const COLOR_THRESH   = 60;
 const HIGHLIGHT_S    = 15;
 const MOTION_THRESH  = 30;
+// Hoisted once — reused by both BFS loops in analyzeFrame every frame
+const DIRS4: ReadonlyArray<[number, number]> = [[-1,0],[1,0],[0,-1],[0,1]];
 
 // ── Color utilities ───────────────────────────────────────────────────────────
 
@@ -162,7 +164,7 @@ function analyzeFrame(
       sx+=bx; sy+=by; sz++;
       if (bx<minX)minX=bx; if (bx>maxX)maxX=bx;
       if (by<minY)minY=by; if (by>maxY)maxY=by;
-      for (const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+      for (const [dx,dy] of DIRS4) {
         const nx=bx+dx, ny=by+dy;
         if (nx<0||nx>=w||ny<0||ny>=h) continue;
         const ni=ny*w+nx;
@@ -226,7 +228,7 @@ function analyzeFrame(
       while (head<q2.length) {
         const idx=q2[head++], bx=idx%w, by=Math.floor(idx/w);
         sx+=bx; sy+=by; sz++;
-        for (const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+        for (const [dx,dy] of DIRS4) {
           const nx=bx+dx, ny=by+dy;
           if (nx<0||nx>=w||ny<0||ny>=h) continue;
           const ni=ny*w+nx;
