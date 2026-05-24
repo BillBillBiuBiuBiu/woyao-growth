@@ -472,7 +472,7 @@ export default function HighlightsPage() {
     try {
       // ── 1. Load FFmpeg ────────────────────────────────────────────────────
       setStage("loading_ffmpeg"); setProgress(2);
-      setStatusMsg("加载视频处理引擎…（首次需30–60秒，请耐心等待）");
+      setStatusMsg(ffmpegRef.current ? "视频引擎已就绪，开始处理…" : "加载视频处理引擎…（首次需30–60秒，请耐心等待）");
 
       if (!ffmpegRef.current) {
         // Animate progress 2→11% while WASM downloads
