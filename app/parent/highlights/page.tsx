@@ -628,7 +628,10 @@ export default function HighlightsPage() {
       // Primary: collect all player-has-ball events; fallback: single best window.
       const segs = findHighlightSegments(scores, duration);
       const totalSegDur = segs.reduce((s, [a, b]) => s + (b - a), 0);
-      const useMultiSeg = segs.length >= 2 && totalSegDur >= 4 && segs.length <= 10;
+      // Guard: if total segment duration exceeds 2× highlight length, the player
+      // was detected in most frames (same-team color matching). Fall back to
+      // findBestWindow so the output stays short and WASM heap stays sane with BGM.
+      const useMultiSeg = segs.length >= 2 && totalSegDur >= 4 && segs.length <= 10 && totalSegDur <= HIGHLIGHT_S * 2;
 
       const [fallbackStart, fallbackEnd] = findBestWindow(scores, duration, bgmEnabled ? 120 : 0);
       const totalClipDur = useMultiSeg ? totalSegDur : (fallbackEnd - fallbackStart);
@@ -650,7 +653,7 @@ export default function HighlightsPage() {
           realMusicLoaded = true;
         } catch {}
         if (!realMusicLoaded) {
-          const bgmWav = generateBeatWAV(Math.ceil(totalClipDur) + 2);
+          const bgmWav = generateBeatWAV(Math.min(Math.ceil(totalClipDur) + 2, HIGHLIGHT_S + 5));
           await ff.writeFile("bgm.wav", bgmWav);
         }
         hasBgm = true;
@@ -693,11 +696,12 @@ export default function HighlightsPage() {
             "-movflags", "+faststart",
             "-y", "highlight.mp4",
           );
-          await ff.exec(args);
+          const ret1 = await ff.exec(args);
+          if (ret1 !== 0) throw new Error(`FFmpeg 编码失败 (exit ${ret1})，可能是内存不足或视频格式不支持`);
         } else {
           setStatusMsg(`精彩片段：${fallbackStart.toFixed(1)}s – ${fallbackEnd.toFixed(1)}s，正在剪辑…`);
           const clipDur = (fallbackEnd - fallbackStart).toFixed(3);
-          await ff.exec(hasBgm ? [
+          const ret2 = await ff.exec(hasBgm ? [
             "-ss", fallbackStart.toFixed(3), "-i", "input.mp4",
             "-i", bgmFile,
             "-t", clipDur,
@@ -715,6 +719,7 @@ export default function HighlightsPage() {
             "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart",
             "-y", "highlight.mp4",
           ]);
+          if (ret2 !== 0) throw new Error(`FFmpeg 编码失败 (exit ${ret2})，可能是内存不足或视频格式不支持`);
         }
       } finally {
         ff.off("progress", onProgress);
