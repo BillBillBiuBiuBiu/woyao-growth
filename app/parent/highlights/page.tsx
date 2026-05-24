@@ -864,7 +864,9 @@ export default function HighlightsPage() {
             <input type="file" accept="audio/*,.mp3,.m4a,.aac" className="hidden" onChange={handleBgmFileChange}/>
             <span className="text-base shrink-0">🎵</span>
             {bgmUserFile
-              ? <span className="text-xs text-orange-600 font-medium truncate flex-1">{bgmUserFile.name}</span>
+              ? <span className={`text-xs font-medium truncate flex-1 ${bgmUserFile.size > 3*1024*1024 ? "text-red-500" : "text-orange-600"}`}>
+                  {bgmUserFile.name}{bgmUserFile.size > 3*1024*1024 ? `（${(bgmUserFile.size/1024/1024).toFixed(0)}MB 超限，将用内置节拍）` : ""}
+                </span>
               : <span className="text-xs text-gray-400 flex-1">自定义音乐（可选，≤3MB）· 留空用内置节拍</span>
             }
             {bgmUserFile&&(
