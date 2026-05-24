@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
 
@@ -279,6 +279,12 @@ export default function HighlightsPage() {
   const [resultName,   setResultName]   = useState("highlight.mp4");
   const [error,        setError]        = useState<string|null>(null);
   const ffmpegRef = useRef<FFmpeg|null>(null);
+
+  // Revoke blob URL whenever resultUrl changes or component unmounts
+  // (prevents holding an entire encoded video in memory after user discards result)
+  useEffect(() => {
+    return () => { if (resultUrl) URL.revokeObjectURL(resultUrl); };
+  }, [resultUrl]);
 
   const handleVideoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const f=e.target.files?.[0]; if (f) setVideoFile(f);
