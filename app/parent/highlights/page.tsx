@@ -634,6 +634,14 @@ export default function HighlightsPage() {
 
       setProgress(76); setStatusMsg("计算精彩片段…");
 
+      // Multi-frame voting: an isolated hasPlayer=true with both neighbors false is
+      // likely a same-jersey-color false positive. Suppress it (reduce score to 5%).
+      for (let i = 1; i < scores.length - 1; i++) {
+        if (scores[i].hasPlayer && !scores[i-1].hasPlayer && !scores[i+1].hasPlayer) {
+          scores[i] = { ...scores[i], hasPlayer: false, score: scores[i].score * 0.05 };
+        }
+      }
+
       // ── 6. Find highlight segments ────────────────────────────────────────
       // Primary: collect all player-has-ball events; fallback: single best window.
       const segs = findHighlightSegments(scores, duration);
