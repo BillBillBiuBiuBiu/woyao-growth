@@ -252,32 +252,85 @@ function analyzeFrame(
 // Frequencies chosen to survive phone speaker low-pass filter (>180Hz).
 function generateBeatWAV(durationSec: number): Uint8Array {
   const SR = 44100;
-  const numSamples = Math.ceil(SR * durationSec);
-  const beatSamples = Math.round(SR * 60 / 120); // 22050 @ 120BPM
-  const pcm = new Int16Array(numSamples);
+  const N   = Math.ceil(SR * durationSec);
+  const mix = new Float32Array(N);
 
-  for (let i = 0; i < numSamples; i++) {
-    const t = i / SR;
-    const b  = i % beatSamples;
-    const b2 = i % (beatSamples * 2);
-    const hb = i % Math.round(beatSamples / 2);
+  const beatSec = 60 / 120; // 0.5s @ 120 BPM
 
-    const kick  = 0.45 * Math.sin(2 * Math.PI * 180 * t) * Math.exp(-10 * b  / SR);
-    const hhat  = 0.12 * Math.sin(2 * Math.PI * 900 * t) * Math.exp(-40 * hb / SR);
-    const snare = (b2 >= beatSamples && b2 < beatSamples + Math.round(beatSamples * 0.12))
-      ? 0.30 * Math.sin(2 * Math.PI * 350 * t) * Math.exp(-20 * (b2 - beatSamples) / SR)
-      : 0;
-    const synth = 0.06 * Math.sin(2 * Math.PI * 440 * t);
+  // 808-style kick: frequency sweeps 180→50 Hz — the signature hip-hop thud
+  const renderKick = (startSec: number) => {
+    const s0 = Math.round(startSec * SR);
+    const len = Math.min(Math.round(0.55 * SR), N - s0);
+    let ph = 0;
+    for (let j = 0; j < len; j++) {
+      const t = j / SR;
+      const freq = 50 + 130 * Math.exp(-t * 22);
+      ph += (2 * Math.PI * freq) / SR;
+      mix[s0 + j] += 0.75 * Math.sin(ph) * Math.exp(-t * 7);
+    }
+  };
 
-    pcm[i] = Math.round(Math.max(-0.95, Math.min(0.95, kick + hhat + snare + synth)) * 32767);
+  // Snare: noise burst + tonal body — sounds like a real snare, not a beep
+  const renderSnare = (startSec: number) => {
+    const s0 = Math.round(startSec * SR);
+    const len = Math.min(Math.round(0.20 * SR), N - s0);
+    for (let j = 0; j < len; j++) {
+      const t = j / SR;
+      const body = Math.sin(2 * Math.PI * 200 * t);
+      mix[s0 + j] += 0.50 * ((Math.random() * 2 - 1) * 0.6 + body * 0.4) * Math.exp(-t * 25);
+    }
+  };
+
+  // Hi-hat: white noise, closed (short) or open (longer)
+  const renderHat = (startSec: number, open: boolean) => {
+    const s0  = Math.round(startSec * SR);
+    const dur = open ? 0.14 : 0.045;
+    const len = Math.min(Math.round(dur * SR), N - s0);
+    const amp = open ? 0.20 : 0.16;
+    const dec = open ? 18 : 100;
+    for (let j = 0; j < len; j++) {
+      const t = j / SR;
+      mix[s0 + j] += amp * (Math.random() * 2 - 1) * Math.exp(-t * dec);
+    }
+  };
+
+  // Sub-bass line: A-minor groove (A1–E2–D2), adds the hip-hop feel
+  const renderBass = (startSec: number, freq: number) => {
+    const s0  = Math.round(startSec * SR);
+    const len = Math.min(Math.round(beatSec * SR), N - s0);
+    let ph = 0;
+    for (let j = 0; j < len; j++) {
+      const t = j / SR;
+      ph += (2 * Math.PI * freq) / SR;
+      const env = Math.min(1, t * 40) * Math.exp(-t * 2);
+      mix[s0 + j] += 0.38 * (Math.sin(ph) + 0.25 * Math.sin(2 * ph)) * env;
+    }
+  };
+
+  // Schedule events: kick on 1+3, snare on 2+4, hats on every 8th note, bass groove
+  const bassLine = [55, 55, 82, 73]; // A1, A1, E2, D2
+  const totalBeats = Math.ceil(durationSec / beatSec) + 4;
+  for (let b = 0; b < totalBeats; b++) {
+    const t = b * beatSec;
+    const bib = b % 4; // beat-in-bar (0–3)
+    if (bib === 0 || bib === 2) renderKick(t);
+    if (bib === 1 || bib === 3) renderSnare(t);
+    renderHat(t, bib === 2);          // open hat on beat 3
+    renderHat(t + beatSec / 2, false); // offbeat closed hat
+    renderBass(t, bassLine[bib]);
   }
 
-  const dataBytes = numSamples * 2;
+  // Normalize to 0.9 peak so overlapping hits don't clip
+  let peak = 0;
+  for (let i = 0; i < N; i++) if (Math.abs(mix[i]) > peak) peak = Math.abs(mix[i]);
+  const gain = peak > 0 ? 0.9 / peak : 1;
+  const pcm = new Int16Array(N);
+  for (let i = 0; i < N; i++) pcm[i] = Math.round(Math.max(-1, Math.min(1, mix[i] * gain)) * 32767);
+
+  const dataBytes = N * 2;
   const buf = new ArrayBuffer(44 + dataBytes);
   const dv  = new DataView(buf);
   const u8  = new Uint8Array(buf);
-
-  // RIFF/WAVE/fmt /data headers
   [0x52,0x49,0x46,0x46].forEach((c,i)=>{ u8[i]=c; });
   dv.setUint32(4, 36 + dataBytes, true);
   [0x57,0x41,0x56,0x45].forEach((c,i)=>{ u8[8+i]=c; });
@@ -287,7 +340,6 @@ function generateBeatWAV(durationSec: number): Uint8Array {
   dv.setUint16(32, 2, true);   dv.setUint16(34, 16, true);
   [0x64,0x61,0x74,0x61].forEach((c,i)=>{ u8[36+i]=c; });
   dv.setUint32(40, dataBytes, true);
-
   new Int16Array(buf, 44).set(pcm);
   return u8;
 }
@@ -584,10 +636,23 @@ export default function HighlightsPage() {
       // ── 7. Cut video — optionally mix BGM ────────────────────────────────
       setStage("cutting");
       let hasBgm = false;
+      let bgmFile = "bgm.wav";
       if (bgmEnabled) {
-        setStatusMsg("生成BGM…");
-        const bgmWav = generateBeatWAV(Math.ceil(totalClipDur) + 2);
-        await ff.writeFile("bgm.wav", bgmWav);
+        setStatusMsg("加载BGM…");
+        let realMusicLoaded = false;
+        try {
+          const fetched = await Promise.race([
+            fetchFile("/bgm/music.mp3"),
+            new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), 8000)),
+          ]);
+          await ff.writeFile("bgm.mp3", fetched as Uint8Array);
+          bgmFile = "bgm.mp3";
+          realMusicLoaded = true;
+        } catch {}
+        if (!realMusicLoaded) {
+          const bgmWav = generateBeatWAV(Math.ceil(totalClipDur) + 2);
+          await ff.writeFile("bgm.wav", bgmWav);
+        }
         hasBgm = true;
       }
 
@@ -602,7 +667,7 @@ export default function HighlightsPage() {
           for (const [s, e] of segs) {
             args.push("-ss", s.toFixed(3), "-t", (e - s).toFixed(3), "-i", "input.mp4");
           }
-          if (hasBgm) args.push("-i", "bgm.wav");
+          if (hasBgm) args.push("-i", bgmFile);
 
           const n = segs.length;
           const concatInputs = segs.map((_, i) => `[${i}:v][${i}:a]`).join("");
@@ -634,7 +699,7 @@ export default function HighlightsPage() {
           const clipDur = (fallbackEnd - fallbackStart).toFixed(3);
           await ff.exec(hasBgm ? [
             "-ss", fallbackStart.toFixed(3), "-i", "input.mp4",
-            "-i", "bgm.wav",
+            "-i", bgmFile,
             "-t", clipDur,
             "-filter_complex", "[0:a][1:a]amix=inputs=2:weights=0.3|0.7[fa]",
             "-map", "0:v", "-map", "[fa]",
@@ -660,7 +725,7 @@ export default function HighlightsPage() {
       const copy = new Uint8Array(raw.length); copy.set(raw);
       const blob = new Blob([copy.buffer],{type:"video/mp4"});
       await ff.deleteFile("input.mp4"); await ff.deleteFile("highlight.mp4");
-      if (hasBgm) { try { await ff.deleteFile("bgm.wav"); } catch {} }
+      if (hasBgm) { try { await ff.deleteFile(bgmFile); } catch {} }
 
       setResultUrl(URL.createObjectURL(blob));
       setResultName(videoFile.name.replace(/\.[^.]+$/,"")+"_highlight.mp4");
