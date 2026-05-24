@@ -443,7 +443,45 @@ export default function HighlightsPage() {
   const [feedbackDone,   setFeedbackDone]   = useState(false);
   const [bgmEnabled,     setBgmEnabled]     = useState(false);
   const [bgmUserFile,    setBgmUserFile]    = useState<File|null>(null);
-  const ffmpegRef = useRef<FFmpeg|null>(null);
+  const ffmpegRef     = useRef<FFmpeg|null>(null);
+  const ffmpegInitRef = useRef<Promise<void>|null>(null);
+
+  // Deduplicated loader — safe to call concurrently; resolves once WASM is ready.
+  const ensureFFmpegLoaded = useCallback(async () => {
+    if (ffmpegRef.current) return;
+    if (!ffmpegInitRef.current) {
+      ffmpegInitRef.current = (async () => {
+        const CDN_JS   = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js";
+        const CDN_WASM = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm";
+        let coreURL = "/ffmpeg/ffmpeg-core.js";
+        let wasmURL = "/ffmpeg/ffmpeg-core.wasm";
+        try {
+          const r = await Promise.race([
+            fetch(CDN_JS, { method: "HEAD" }),
+            new Promise<never>((_, rej) => setTimeout(() => rej(), 5000)),
+          ]);
+          if (r.ok) { coreURL = CDN_JS; wasmURL = CDN_WASM; }
+        } catch {}
+        const ff = new FFmpeg();
+        await Promise.race([
+          ff.load({ coreURL, wasmURL }),
+          new Promise<never>((_, rej) =>
+            setTimeout(() => rej(new Error("视频引擎加载超时，请在WiFi环境下重试")), 90_000)
+          ),
+        ]);
+        ffmpegRef.current = ff;
+      })();
+    }
+    await ffmpegInitRef.current;
+  }, []);
+
+  // Start WASM download silently on mount — user won't wait when they click Generate.
+  useEffect(() => {
+    ensureFFmpegLoaded().catch(() => {
+      // preload failed; will retry inside run() with proper error handling
+      ffmpegInitRef.current = null;
+    });
+  }, [ensureFFmpegLoaded]);
 
   // Revoke blob URLs on change/unmount to prevent memory leaks
   useEffect(() => {
@@ -475,38 +513,14 @@ export default function HighlightsPage() {
       setStatusMsg(ffmpegRef.current ? "视频引擎已就绪，开始处理…" : "加载视频处理引擎…（首次需30–60秒，请耐心等待）");
 
       if (!ffmpegRef.current) {
-        // Animate progress 2→11% while WASM downloads
+        // Animate progress 2→11% while WASM downloads (or finishes preloading)
         let fake = 2;
         const ticker = setInterval(() => {
           fake = Math.min(11, fake + 0.4);
           setProgress(Math.round(fake));
         }, 1000);
-
         try {
-          // Probe CDN reachability with a cheap HEAD request (5s budget) BEFORE starting
-          // the 31MB WASM download. This avoids zombie FFmpeg instances and the bandwidth
-          // congestion that would result from two parallel large downloads competing.
-          // jsDelivr has China edge nodes — 5-10x faster than Railway origin for large files.
-          const CDN_JS   = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js";
-          const CDN_WASM = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm";
-          let coreURL = "/ffmpeg/ffmpeg-core.js";
-          let wasmURL = "/ffmpeg/ffmpeg-core.wasm";
-          try {
-            const r = await Promise.race([
-              fetch(CDN_JS, { method: "HEAD" }),
-              new Promise<never>((_, rej) => setTimeout(() => rej(), 5000)),
-            ]);
-            if (r.ok) { coreURL = CDN_JS; wasmURL = CDN_WASM; }
-          } catch {}
-
-          const ff = new FFmpeg();
-          await Promise.race([
-            ff.load({ coreURL, wasmURL }),
-            new Promise<never>((_, rej) =>
-              setTimeout(() => rej(new Error("视频引擎加载超时，请在WiFi环境下重试")), 90_000)
-            ),
-          ]);
-          ffmpegRef.current = ff;
+          await ensureFFmpegLoaded();
         } finally {
           clearInterval(ticker);
         }
@@ -811,7 +825,7 @@ export default function HighlightsPage() {
       setError(msg || "未知错误，请在Safari浏览器中打开后重试");
       setStage("error");
     }
-  }, [videoFile, photoFile, bgmEnabled, bgmUserFile]);
+  }, [videoFile, photoFile, bgmEnabled, bgmUserFile, ensureFFmpegLoaded]);
 
   const isProcessing = ["loading_ffmpeg","extracting_color","writing","analyzing","cutting"].includes(stage);
   const canRun = !!(videoFile && photoFile && !isProcessing);
