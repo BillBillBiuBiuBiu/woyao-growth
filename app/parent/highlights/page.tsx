@@ -644,11 +644,15 @@ export default function HighlightsPage() {
         setStatusMsg("加载BGM…");
         let realMusicLoaded = false;
         try {
-          const fetched = await Promise.race([
-            fetchFile("/bgm/music.mp3"),
+          // fetchFile() does not check HTTP status — a 404 would write HTML to WASM FS and
+          // crash FFmpeg with "Invalid argument". Use fetch() directly and gate on resp.ok.
+          const resp = await Promise.race([
+            fetch("/bgm/music.mp3"),
             new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), 8000)),
           ]);
-          await ff.writeFile("bgm.mp3", fetched as Uint8Array);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const data = new Uint8Array(await resp.arrayBuffer());
+          await ff.writeFile("bgm.mp3", data);
           bgmFile = "bgm.mp3";
           realMusicLoaded = true;
         } catch {}
