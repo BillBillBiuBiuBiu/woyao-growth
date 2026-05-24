@@ -278,6 +278,9 @@ export default function HighlightsPage() {
   const [resultUrl,    setResultUrl]    = useState<string|null>(null);
   const [resultName,   setResultName]   = useState("highlight.mp4");
   const [error,        setError]        = useState<string|null>(null);
+  const [feedbackRating, setFeedbackRating] = useState<number>(0);
+  const [feedbackTypes,  setFeedbackTypes]  = useState<string[]>([]);
+  const [feedbackDone,   setFeedbackDone]   = useState(false);
   const ffmpegRef = useRef<FFmpeg|null>(null);
 
   // Revoke blob URL whenever resultUrl changes or component unmounts
@@ -297,6 +300,7 @@ export default function HighlightsPage() {
   const run = useCallback(async () => {
     if (!videoFile||!photoFile) return;
     setError(null); setResultUrl(null);
+    setFeedbackRating(0); setFeedbackTypes([]); setFeedbackDone(false);
 
     try {
       // ── 1. Load FFmpeg ────────────────────────────────────────────────────
@@ -550,6 +554,40 @@ export default function HighlightsPage() {
           <video src={resultUrl} controls playsInline className="w-full rounded-xl bg-black" style={{maxHeight:280}}/>
           <a href={resultUrl} download={resultName} className="w-full py-3 rounded-xl bg-orange-500 text-white text-sm font-bold text-center block">下载集锦视频</a>
           <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setVideoFile(null);setPhotoFile(null);setPhotoPreview(null);}} className="text-sm text-gray-400 text-center">重新制作</button>
+          <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">
+            {!feedbackDone ? (<>
+              <div className="text-xs font-bold text-gray-600">集锦效果怎么样？</div>
+              <div className="flex gap-2">
+                {[1,2,3,4,5].map(s=>(
+                  <button key={s} onClick={()=>setFeedbackRating(s)}
+                    className={`text-xl transition-transform active:scale-90 ${feedbackRating>=s?"opacity-100":"opacity-30"}`}>⭐</button>
+                ))}
+              </div>
+              {feedbackRating>0&&feedbackRating<=3&&(
+                <div className="flex flex-col gap-1.5 mt-1">
+                  <div className="text-xs text-gray-500">哪里有问题？（可多选）</div>
+                  {["进度卡死","球员识别错误","剪辑位置不准","下载失败","其他"].map(t=>(
+                    <label key={t} className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+                      <input type="checkbox" checked={feedbackTypes.includes(t)}
+                        onChange={e=>setFeedbackTypes(p=>e.target.checked?[...p,t]:p.filter(x=>x!==t))}/>
+                      {t}
+                    </label>
+                  ))}
+                </div>
+              )}
+              {feedbackRating>0&&(
+                <button onClick={()=>{
+                  const entry={time:new Date().toISOString(),rating:feedbackRating,types:feedbackTypes,video:videoFile?.name||""};
+                  try{const prev=JSON.parse(localStorage.getItem("highlight_feedback")||"[]");localStorage.setItem("highlight_feedback",JSON.stringify([...prev,entry]));}catch{}
+                  setFeedbackDone(true);
+                }} className="self-start px-3 py-1.5 rounded-lg bg-orange-100 text-orange-700 text-xs font-bold">
+                  提交反馈
+                </button>
+              )}
+            </>) : (
+              <div className="text-xs text-center text-green-600 font-medium">✅ 感谢反馈，帮助我们持续改进！</div>
+            )}
+          </div>
         </div>
       )}
 
