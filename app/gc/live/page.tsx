@@ -349,30 +349,40 @@ export default function GcLivePage() {
         })}
       </div>
 
-      {/* 12 action buttons */}
-      <div className="grid grid-cols-4 gap-1.5 px-3 pt-3 shrink-0">
-        {ACTIONS.map((a) => {
-          const disabled = !selPlayer;
-          const isScore = a.pts > 0;
-          return (
-            <button
-              key={a.cat}
-              onClick={() => logEvent(a)}
-              disabled={disabled}
-              className="py-3 rounded-xl text-xs font-bold leading-tight transition-colors"
-              style={
-                disabled
-                  ? { background: "rgba(255,255,255,0.03)", color: "#374151" }
-                  : isScore
-                  ? { background: "rgba(249,115,22,0.85)", color: "#fff" }
-                  : { background: "rgba(255,255,255,0.1)", color: "#D1D5DB" }
-              }
-            >
-              {a.label}
-            </button>
-          );
-        })}
-      </div>
+      {/* Action buttons — 3-tier hierarchy */}
+      {(() => {
+        const disabled = !selPlayer;
+        const btn = (a: typeof ACTIONS[number], py: string, fontSize: string, activeBg: string, activeColor: string) => (
+          <button
+            key={a.cat}
+            onClick={() => logEvent(a)}
+            disabled={disabled}
+            className={`${py} rounded-xl font-bold leading-tight transition-colors ${fontSize}`}
+            style={disabled ? { background: "rgba(255,255,255,0.03)", color: "#374151" } : { background: activeBg, color: activeColor }}
+          >
+            {a.label}
+          </button>
+        );
+        const scoring = ACTIONS.filter((a) => a.pts > 0);
+        const misses  = ACTIONS.filter((a) => a.pts === 0 && a.cat.endsWith("_miss"));
+        const stats   = ACTIONS.filter((a) => a.pts === 0 && !a.cat.endsWith("_miss"));
+        return (
+          <>
+            {/* Row 1 — scoring: large orange */}
+            <div className="grid grid-cols-3 gap-1.5 px-3 pt-3 shrink-0">
+              {scoring.map((a) => btn(a, "py-5", "text-sm", "rgba(249,115,22,0.90)", "#fff"))}
+            </div>
+            {/* Row 2 — misses: medium red-tinted */}
+            <div className="grid grid-cols-3 gap-1.5 px-3 pt-1.5 shrink-0">
+              {misses.map((a) => btn(a, "py-3", "text-xs", "rgba(239,68,68,0.18)", "#F87171"))}
+            </div>
+            {/* Row 3 — stats: small neutral */}
+            <div className="grid grid-cols-3 gap-1.5 px-3 pt-1.5 shrink-0">
+              {stats.map((a) => btn(a, "py-2.5", "text-xs", "rgba(255,255,255,0.10)", "#D1D5DB"))}
+            </div>
+          </>
+        );
+      })()}
 
       {/* Event feed */}
       <div className="flex-1 overflow-y-auto px-3 pt-3 pb-4">
