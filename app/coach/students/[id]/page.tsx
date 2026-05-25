@@ -133,7 +133,7 @@ export default function CoachStudentDetailPage() {
             {reports.map((r) => {
               const s = statusLabel[r.status] || statusLabel.draft;
               return (
-                <div key={r.id} className="rounded-2xl border border-border bg-white p-4">
+                <Link key={r.id} href={`/coach/annotate/${r.id}`} className="block rounded-2xl border border-border bg-white p-4 hover:shadow-md transition-shadow active:scale-[0.99]">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -143,11 +143,9 @@ export default function CoachStudentDetailPage() {
                       </div>
                       <div className="text-sm font-medium text-gray-700 truncate">{r.title}</div>
                     </div>
-                    <Link href={`/coach/annotate/${r.id}`} className="text-xs text-orange-600 font-medium shrink-0 hover:text-orange-700">
-                      编辑 ›
-                    </Link>
+                    <span className="text-xs text-orange-600 font-medium shrink-0">编辑 ›</span>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
