@@ -4,12 +4,13 @@ import { useRole } from "@/lib/store";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import RoleSwitcher from "./RoleSwitcher";
+import { mockStudent } from "@/lib/mock-data";
 
 const navItems = {
   parent: [
     { href: "/parent", label: "首页" },
     { href: "/parent/reports", label: "报告" },
-    { href: "/parent/profile/stu-001", label: "成长档案" },
+    { href: `/parent/profile/${mockStudent.id}`, label: "成长档案" },
     { href: "/parent/plans", label: "版本权益" },
   ],
   coach: [
