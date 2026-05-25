@@ -478,7 +478,14 @@ export default function CoachVideosPage() {
                   })()}
 
                   {/* ── 运动轨迹 tab ── */}
-                  {(activeTab[video.id] || "stats") === "tracking" && <TrackingViewer data={data} />}
+                  {(activeTab[video.id] || "stats") === "tracking" && (() => {
+                    const ov = labelOverrides[video.id] ?? {};
+                    const tdata = Object.keys(ov).length === 0 ? data : {
+                      ...data,
+                      players: data.players.map(p => ({ ...p, label: ov[p.label] ?? p.label })),
+                    };
+                    return <TrackingViewer data={tdata} />;
+                  })()}
 
                   {/* ── 回合切片 tab ── */}
                   {(activeTab[video.id] || "stats") === "possessions" && (
