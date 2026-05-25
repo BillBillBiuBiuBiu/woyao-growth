@@ -115,7 +115,21 @@ export default function TrackingViewer({ data }: { data: TrackingData }) {
     });
   }
 
-  function px(norm: number, dim: number) { return norm * dim; }
+  // Auto-scale: compute actual data bounds across all routes + ball, then remap
+  // so tracks fill the SVG instead of clustering in a corner (camera-frame coords ≠ court coords)
+  const allX = data.players.flatMap(p => [...p.route.map(r => r.x), ...p.heatmapPoints.map(pt => pt.x)])
+    .concat(data.ballTrajectory.map(b => b.x));
+  const allY = data.players.flatMap(p => [...p.route.map(r => r.y), ...p.heatmapPoints.map(pt => pt.y)])
+    .concat(data.ballTrajectory.map(b => b.y));
+  const dMinX = allX.length ? Math.min(...allX) : 0;
+  const dMaxX = allX.length ? Math.max(...allX) : 1;
+  const dMinY = allY.length ? Math.min(...allY) : 0;
+  const dMaxY = allY.length ? Math.max(...allY) : 1;
+  const rX = (dMaxX - dMinX) || 1;
+  const rY = (dMaxY - dMinY) || 1;
+  const pX = rX * 0.07; const pY = rY * 0.07;
+  function mapPx(x: number) { return ((x - dMinX + pX) / (rX + pX * 2)) * W; }
+  function mapPy(y: number) { return ((y - dMinY + pY) / (rY + pY * 2)) * H; }
 
   const displayPlayers = selected !== null
     ? data.players.filter((p) => p.trackId === selected)
@@ -155,8 +169,8 @@ export default function TrackingViewer({ data }: { data: TrackingData }) {
                 return p.heatmapPoints.map((pt, j) => (
                   <circle
                     key={`h-${p.trackId}-${j}`}
-                    cx={px(pt.x, W)}
-                    cy={px(pt.y, H)}
+                    cx={mapPx(pt.x)}
+                    cy={mapPy(pt.y)}
                     r={3}
                     fill={color}
                     fillOpacity={0.12}
@@ -167,19 +181,17 @@ export default function TrackingViewer({ data }: { data: TrackingData }) {
               {/* Player routes */}
               {displayPlayers.map((p, i) => {
                 const color = COLORS[data.players.indexOf(p) % COLORS.length];
-                const pts = p.route.map((r) => `${px(r.x, W)},${px(r.y, H)}`).join(" ");
+                const pts = p.route.map((r) => `${mapPx(r.x)},${mapPy(r.y)}`).join(" ");
                 return (
                   <g key={p.trackId}>
                     <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeOpacity="0.85" strokeLinejoin="round" />
-                    {/* Start dot */}
                     {p.route[0] && (
-                      <circle cx={px(p.route[0].x, W)} cy={px(p.route[0].y, H)} r={3} fill={color} />
+                      <circle cx={mapPx(p.route[0].x)} cy={mapPy(p.route[0].y)} r={3} fill={color} />
                     )}
-                    {/* End arrow dot */}
                     {p.route[p.route.length - 1] && (
                       <circle
-                        cx={px(p.route[p.route.length - 1].x, W)}
-                        cy={px(p.route[p.route.length - 1].y, H)}
+                        cx={mapPx(p.route[p.route.length - 1].x)}
+                        cy={mapPy(p.route[p.route.length - 1].y)}
                         r={4} fill={color} stroke="white" strokeWidth="1"
                       />
                     )}
@@ -190,7 +202,7 @@ export default function TrackingViewer({ data }: { data: TrackingData }) {
               {/* Ball trajectory */}
               {showBall && (
                 <polyline
-                  points={data.ballTrajectory.map((b) => `${px(b.x, W)},${px(b.y, H)}`).join(" ")}
+                  points={data.ballTrajectory.map((b) => `${mapPx(b.x)},${mapPy(b.y)}`).join(" ")}
                   fill="none"
                   stroke="white"
                   strokeWidth="1.5"
