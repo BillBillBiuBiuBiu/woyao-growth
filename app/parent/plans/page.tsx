@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { PLAN_LABELS, PLAN_FEATURES } from "@/lib/plan-features";
 import type { PlanType } from "@/lib/types";
 
@@ -39,6 +40,8 @@ const featureRows: { key: string; label: string }[] = [
 const currentPlan: PlanType = "vip";
 
 export default function ParentPlansPage() {
+  const [expandedPlan, setExpandedPlan] = useState<PlanType | null>(null);
+
   return (
     <div
       className="-mx-4 -mt-6 pb-10 min-h-screen"
@@ -96,12 +99,23 @@ export default function ParentPlansPage() {
 
               {/* CTA */}
               {!isCurrent && (
-                <button
-                  className="mt-4 w-full rounded-full py-2.5 text-sm font-bold text-white"
-                  style={{ background: "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)" }}
-                >
-                  升级到{PLAN_LABELS[plan.type]}
-                </button>
+                <>
+                  <button
+                    onClick={() => setExpandedPlan(expandedPlan === plan.type ? null : plan.type)}
+                    className="mt-4 w-full rounded-full py-2.5 text-sm font-bold text-white"
+                    style={{ background: "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)" }}
+                  >
+                    升级到{PLAN_LABELS[plan.type]}
+                  </button>
+                  {expandedPlan === plan.type && (
+                    <div className="mt-3 rounded-2xl border border-orange-100 bg-orange-50 p-3">
+                      <div className="text-xs font-medium text-orange-700 mb-1">如需升级，请联系 PAB 球馆</div>
+                      <div className="text-xs text-orange-600 leading-relaxed">
+                        微信搜索 <span className="font-bold">PABbasketball</span> 或联系你的班级教练，告知希望升级至{PLAN_LABELS[plan.type]}，教练会协助办理。
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
               {isCurrent && (
                 <div className="mt-4 w-full rounded-full py-2.5 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-200 text-center">
