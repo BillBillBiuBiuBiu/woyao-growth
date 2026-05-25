@@ -55,7 +55,7 @@ function GenerateReportContent() {
   function handleGenerate() {
     setGenerating(true);
     setTimeout(() => {
-      setDraft(mockDraft[selectedType]);
+      if (draft.summary === "") setDraft(mockDraft[selectedType]);
       setGenerating(false);
       setStep(3);
     }, 1200);
@@ -271,7 +271,7 @@ function GenerateReportContent() {
               onClick={() => setStep(2)}
               className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              保存草稿
+              ← 上一步
             </button>
             <button
               onClick={() => setPublished(true)}
