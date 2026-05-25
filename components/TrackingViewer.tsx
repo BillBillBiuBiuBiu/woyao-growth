@@ -213,9 +213,9 @@ export default function TrackingViewer({ data }: { data: TrackingData }) {
                   <th className="px-3 py-2 text-left font-semibold text-orange-700">球员</th>
                   <th className="px-3 py-2 text-right font-semibold text-orange-700">上场时间</th>
                   <th className="px-3 py-2 text-right font-semibold text-orange-700">总移动</th>
-                  <th className="px-3 py-2 text-right font-semibold text-orange-700">进攻距离</th>
-                  <th className="px-3 py-2 text-right font-semibold text-orange-700">防守距离</th>
-                  <th className="px-3 py-2 text-right font-semibold text-orange-700">进攻占比</th>
+                  <th className="px-3 py-2 text-right font-semibold text-orange-700">前场</th>
+                  <th className="px-3 py-2 text-right font-semibold text-orange-700">后场</th>
+                  <th className="px-3 py-2 text-right font-semibold text-orange-700">前场占比</th>
                 </tr>
               </thead>
               <tbody>
