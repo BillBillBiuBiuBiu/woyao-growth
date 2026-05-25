@@ -66,6 +66,26 @@ export default function CoachPage() {
         </div>
       </div>
 
+      {/* Live scorekeeping CTA */}
+      <Link href="/gc">
+        <div
+          className="rounded-3xl p-5 relative overflow-hidden active:scale-98 transition-transform"
+          style={{ background: "linear-gradient(135deg, #1a1d27 0%, #0f1117 100%)", border: "1px solid rgba(249,115,22,0.3)" }}
+        >
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-6xl opacity-15 select-none">🏀</div>
+          <div className="relative">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-xs font-bold bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full">现场记录</span>
+            </div>
+            <div className="text-lg font-black text-white leading-tight">场边实时打点</div>
+            <div className="text-sm mt-1" style={{ color: "rgba(249,115,22,0.7)" }}>记录得分 · 同步时间戳 · 赛后自动生成集锦</div>
+            <div className="mt-3 inline-flex items-center gap-1 bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-full">
+              开始记录 →
+            </div>
+          </div>
+        </div>
+      </Link>
+
       {/* Quick actions */}
       <div>
         <h2 className="text-sm font-semibold mb-3">快捷操作</h2>
