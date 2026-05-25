@@ -346,6 +346,9 @@ function SupervipReportLayout({ report }: { report: Report }) {
 export default function ReportDetailPage() {
   const { id } = useParams<{ id: string }>();
   const report = mockReports.find((r) => r.id === id) ?? mockReports[0];
+  const [liked, setLiked] = useState(() => {
+    try { return localStorage.getItem(`report_liked_${id}`) === "1"; } catch { return false; }
+  });
 
   return (
     <div className="-mx-4 -mt-6 pb-10" style={{ background: "linear-gradient(160deg, #fff3e0 0%, #ffe9cc 40%, #fff8ec 100%)" }}>
@@ -391,6 +394,24 @@ export default function ReportDetailPage() {
       {report.reportType === "basic" && <BasicReportLayout report={report} />}
       {report.reportType === "vip" && <VipReportLayout report={report} />}
       {report.reportType === "supervip" && <SupervipReportLayout report={report} />}
+
+      {/* Coach appreciation */}
+      <div className="px-4 pt-3">
+        <button
+          onClick={() => {
+            setLiked(true);
+            try { localStorage.setItem(`report_liked_${id}`, "1"); } catch {}
+          }}
+          disabled={liked}
+          className={`w-full rounded-3xl py-4 text-base font-bold transition-all active:scale-95 ${
+            liked
+              ? "bg-orange-50 text-orange-500 border border-orange-200 cursor-default"
+              : "bg-white border border-orange-200 text-orange-600 hover:bg-orange-50"
+          }`}
+        >
+          {liked ? "已回应 ❤️ 谢谢教练！" : "❤️ 谢谢教练，看到啦！"}
+        </button>
+      </div>
 
       {/* Action buttons */}
       <div className="flex gap-3 pt-4 px-4">
