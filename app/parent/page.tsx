@@ -83,7 +83,7 @@ export default function ParentHome() {
         </Link>
 
         {/* Latest report */}
-        <Link href="/parent/reports/rpt-001">
+        <Link href={`/parent/reports/${mockReport.id}`}>
           <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-center justify-between active:scale-98 transition-transform">
             <div>
               <div className="text-xs text-orange-500 mb-1 font-medium">📋 最新成长报告</div>
@@ -99,7 +99,7 @@ export default function ParentHome() {
           <div className="text-sm font-bold text-gray-800 mb-3">🎞️ 教练标注片段</div>
           <div className="grid grid-cols-3 gap-2">
             {mockReport.clips.map((clip) => (
-              <Link key={clip.id} href="/parent/reports/rpt-001">
+              <Link key={clip.id} href={`/parent/reports/${mockReport.id}`}>
                 <div className="aspect-video rounded-2xl overflow-hidden relative cursor-pointer bg-slate-900">
                   {clip.thumbnail && (
                     <img src={clip.thumbnail} alt={clip.title} className="w-full h-full object-cover opacity-80" />
@@ -151,7 +151,7 @@ export default function ParentHome() {
         </div>
 
         {/* Profile link */}
-        <Link href="/parent/profile/stu-001">
+        <Link href={`/parent/profile/${mockStudent.id}`}>
           <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-center justify-between active:scale-98 transition-transform">
             <div>
               <div className="font-bold text-sm text-gray-800">查看完整成长档案</div>
