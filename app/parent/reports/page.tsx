@@ -39,7 +39,7 @@ function ReportCard({ r }: { r: Report }) {
 }
 
 export default function ParentReportsPage() {
-  const reports = mockReports.filter((r) => r.studentId === "stu-001");
+  const reports = mockReports.filter((r) => r.studentId === mockStudent.id);
 
   return (
     <div
