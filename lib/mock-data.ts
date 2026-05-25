@@ -14,6 +14,7 @@ export const mockStudent = {
   currentStage: "L2 稳定阶段",
   organization: "PAB球馆",
   joinedAt: "2025-09-01",
+  plan: "vip" as const,
 };
 
 export const mockBadges = [
