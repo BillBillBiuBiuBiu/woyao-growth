@@ -54,6 +54,12 @@ export default function AnnotatePage() {
         <div className="text-5xl">✅</div>
         <div className="text-xl font-bold text-green-600">报告已发布！</div>
         <div className="text-sm text-muted-foreground">家长将收到通知，正在返回...</div>
+        <button
+          onClick={() => { if (timerRef.current) clearTimeout(timerRef.current); setPublished(false); }}
+          className="text-sm text-muted-foreground underline underline-offset-2"
+        >
+          撤销发布
+        </button>
       </div>
     );
   }
