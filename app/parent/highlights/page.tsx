@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
+import Link from "next/link";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
+import { mockStudent } from "@/lib/mock-data";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -951,6 +953,9 @@ export default function HighlightsPage() {
           <video src={resultUrl} controls playsInline className="w-full rounded-xl bg-black" style={{maxHeight:280}}/>
           <a href={resultUrl} download={resultName} className="w-full py-3 rounded-xl bg-orange-500 text-white text-sm font-bold text-center block">下载集锦视频</a>
           <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);}} className="text-sm text-gray-400 text-center">重新制作</button>
+          <Link href={`/parent/profile/${mockStudent.id}`} className="w-full py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-bold text-center block active:scale-95 transition-transform">
+            📊 查看孩子的成长档案
+          </Link>
           <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">
             {!feedbackDone ? (<>
               <div className="text-xs font-bold text-gray-600">集锦效果怎么样？</div>
