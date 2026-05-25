@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
 import { mockReports, mockStudent } from "@/lib/mock-data";
 import PlanBadge from "@/components/PlanBadge";
@@ -18,6 +19,10 @@ const sceneLabel: Record<string, string> = {
 };
 
 function ReportCard({ r }: { r: Report }) {
+  const [isRead] = useState(() => {
+    try { return localStorage.getItem(`report_read_${r.id}`) === "1"; } catch { return false; }
+  });
+  const showDot = !isRead && r.status === "sent";
   const s = statusLabel[r.status] || statusLabel.draft;
   return (
     <Link href={`/parent/reports/${r.id}`}>
@@ -32,7 +37,10 @@ function ReportCard({ r }: { r: Report }) {
           <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">{r.summary}</p>
           <div className="text-xs text-orange-400 mt-2">{r.createdAt}</div>
         </div>
-        <span className="text-2xl text-orange-300 shrink-0 mt-1">›</span>
+        <div className="shrink-0 mt-1 flex flex-col items-center gap-1">
+          {showDot && <span className="w-2 h-2 rounded-full bg-orange-500 block" />}
+          <span className="text-2xl text-orange-300 leading-none">›</span>
+        </div>
       </div>
     </Link>
   );

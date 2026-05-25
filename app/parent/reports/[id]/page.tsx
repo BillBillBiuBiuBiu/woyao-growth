@@ -1,6 +1,6 @@
 "use client";
 import { mockReports, mockStudent, mockRadarData } from "@/lib/mock-data";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
@@ -349,6 +349,9 @@ export default function ReportDetailPage() {
   const [liked, setLiked] = useState(() => {
     try { return localStorage.getItem(`report_liked_${id}`) === "1"; } catch { return false; }
   });
+  useEffect(() => {
+    try { localStorage.setItem(`report_read_${id}`, "1"); } catch {}
+  }, [id]);
 
   return (
     <div className="-mx-4 -mt-6 pb-10" style={{ background: "linear-gradient(160deg, #fff3e0 0%, #ffe9cc 40%, #fff8ec 100%)" }}>
