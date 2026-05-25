@@ -55,7 +55,7 @@ function GenerateReportContent() {
   function handleGenerate() {
     setGenerating(true);
     setTimeout(() => {
-      if (draft.summary === "") setDraft(mockDraft[selectedType]);
+      setDraft(mockDraft[selectedType]);
       setGenerating(false);
       setStep(3);
     }, 1200);
@@ -268,7 +268,7 @@ function GenerateReportContent() {
 
           <div className="flex gap-3">
             <button
-              onClick={() => { setStep(2); setDraft({ summary: "", strengths: "", weaknesses: "", coachComment: "" }); }}
+              onClick={() => setStep(2)}
               className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
               ← 上一步
