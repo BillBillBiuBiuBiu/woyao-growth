@@ -248,17 +248,24 @@ export default function GcLivePage() {
         )}
 
         {/* Navigation footer */}
-        <div className="flex gap-3 px-4 pt-2 pb-8">
-          <Link href="/coach" className="flex-1">
+        <div className="flex flex-col gap-3 px-4 pt-2 pb-8">
+          <Link href="/coach/reports/generate" className="block">
             <div className="bg-orange-500 text-white text-center font-bold text-sm rounded-xl py-3 active:opacity-80">
-              返回教练台
+              📋 生成本场报告 →
             </div>
           </Link>
-          <Link href="/gc" className="flex-1">
-            <div className="border border-white/20 text-white text-center font-bold text-sm rounded-xl py-3 active:opacity-80">
-              再来一场
-            </div>
-          </Link>
+          <div className="flex gap-3">
+            <Link href="/coach" className="flex-1">
+              <div className="border border-white/20 text-white text-center font-bold text-sm rounded-xl py-3 active:opacity-80">
+                返回教练台
+              </div>
+            </Link>
+            <Link href="/gc" className="flex-1">
+              <div className="border border-white/20 text-white text-center font-bold text-sm rounded-xl py-3 active:opacity-80">
+                再来一场
+              </div>
+            </Link>
+          </div>
         </div>
       </div>
     );
