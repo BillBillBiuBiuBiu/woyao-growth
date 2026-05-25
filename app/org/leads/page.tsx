@@ -45,10 +45,10 @@ export default function LeadsPage() {
   }
 
   function handleCopy(id: string, text: string) {
-    navigator.clipboard.writeText(text).then(() => {
+    navigator.clipboard?.writeText(text).then(() => {
       setCopied(id);
       setTimeout(() => setCopied(null), 2000);
-    });
+    }).catch(() => {});
   }
 
   return (
