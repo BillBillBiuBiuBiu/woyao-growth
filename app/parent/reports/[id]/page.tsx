@@ -116,7 +116,7 @@ function BasicReportLayout({ report }: { report: Report }) {
             </div>
             <div>
               <div className="text-xs text-gray-500">教练寄语 ♡</div>
-              <div className="text-sm font-bold text-gray-800">王教练</div>
+              <div className="text-sm font-bold text-gray-800">{mockStudent.coach}</div>
             </div>
           </div>
           <p className="text-sm text-gray-700 leading-relaxed">{report.coachComment}</p>
