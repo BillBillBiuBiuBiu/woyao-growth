@@ -180,17 +180,26 @@ export default function AnnotatePage() {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 pb-6">
-        <button
-          onClick={() => setActiveClip((i) => Math.min(i + 1, mockReport.clips.length - 1))}
-          className="flex-1 rounded-xl border border-border bg-white py-3 text-sm font-medium hover:bg-slate-50 transition-colors"
-          disabled={activeClip === mockReport.clips.length - 1}
-        >
-          下一片段 →
-        </button>
+      <div className="flex flex-col gap-2 pb-6">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveClip((i) => Math.max(i - 1, 0))}
+            disabled={activeClip === 0}
+            className="flex-1 rounded-xl border border-border bg-white py-3 text-sm font-medium hover:bg-slate-50 transition-colors disabled:opacity-40"
+          >
+            ← 上一片段
+          </button>
+          <button
+            onClick={() => setActiveClip((i) => Math.min(i + 1, mockReport.clips.length - 1))}
+            disabled={activeClip === mockReport.clips.length - 1}
+            className="flex-1 rounded-xl border border-border bg-white py-3 text-sm font-medium hover:bg-slate-50 transition-colors disabled:opacity-40"
+          >
+            下一片段 →
+          </button>
+        </div>
         <button
           onClick={handlePublish}
-          className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
+          className="w-full rounded-xl bg-primary py-3 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
         >
           发布报告
         </button>
