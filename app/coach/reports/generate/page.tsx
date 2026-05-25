@@ -207,7 +207,7 @@ function GenerateReportContent() {
 
           <div className="flex gap-3">
             <button
-              onClick={() => setStep(1)}
+              onClick={() => { setStep(1); setDraft({ summary: "", strengths: "", weaknesses: "", coachComment: "" }); }}
               className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
               ← 上一步
@@ -268,7 +268,7 @@ function GenerateReportContent() {
 
           <div className="flex gap-3">
             <button
-              onClick={() => setStep(2)}
+              onClick={() => { setStep(2); setDraft({ summary: "", strengths: "", weaknesses: "", coachComment: "" }); }}
               className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
               ← 上一步
