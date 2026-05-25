@@ -31,7 +31,9 @@ export default function StudentProfilePage() {
   const a = mockAssessment;
   const [hasTesterBadge, setHasTesterBadge] = useState(false);
   useEffect(() => {
-    setHasTesterBadge(localStorage.getItem("tester_badge") === "true");
+    try {
+      setHasTesterBadge(localStorage.getItem("tester_badge") === "true");
+    } catch {}
   }, []);
 
   return (
