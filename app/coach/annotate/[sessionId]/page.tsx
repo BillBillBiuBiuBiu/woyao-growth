@@ -1,6 +1,6 @@
 "use client";
 import { mockReport } from "@/lib/mock-data";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 
@@ -20,7 +20,10 @@ const levels = [
 
 export default function AnnotatePage() {
   const router = useRouter();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeClip, setActiveClip] = useState(0);
+
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
   const [annotations, setAnnotations] = useState(
     mockReport.clips.map((c) => ({
       tag: c.tag,
@@ -42,7 +45,7 @@ export default function AnnotatePage() {
 
   function handlePublish() {
     setPublished(true);
-    setTimeout(() => router.push("/coach"), 1500);
+    timerRef.current = setTimeout(() => router.push("/coach"), 1500);
   }
 
   if (published) {
