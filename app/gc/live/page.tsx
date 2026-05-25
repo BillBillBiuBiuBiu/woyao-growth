@@ -376,11 +376,20 @@ export default function GcLivePage() {
 
       {/* Event feed */}
       <div className="flex-1 overflow-y-auto px-3 pt-3 pb-4">
-        <div className="text-xs text-gray-600 mb-2">
-          事件记录 ({events.length})
-          {!selPlayer && events.length === 0 && (
-            <span className="ml-1.5 text-gray-700">← 先选择球员</span>
-          )}
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs text-gray-600">
+            事件记录 ({events.length})
+            {!selPlayer && events.length === 0 && (
+              <span className="ml-1.5 text-gray-700">← 先选择球员</span>
+            )}
+          </span>
+          <button
+            onClick={() => setEvents((prev) => prev.slice(1))}
+            disabled={events.length === 0}
+            className={`text-xs font-bold ${events.length === 0 ? "text-gray-700" : "text-orange-400"}`}
+          >
+            撤销
+          </button>
         </div>
         {events.map((e) => {
           const team = TEAMS.find((t) => t.id === e.teamId);
