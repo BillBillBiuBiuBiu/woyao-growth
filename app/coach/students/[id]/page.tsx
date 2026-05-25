@@ -143,7 +143,7 @@ export default function CoachStudentDetailPage() {
                       </div>
                       <div className="text-sm font-medium text-gray-700 truncate">{r.title}</div>
                     </div>
-                    <Link href={`/coach/annotate/sess-001`} className="text-xs text-orange-600 font-medium shrink-0 hover:text-orange-700">
+                    <Link href={`/coach/annotate/${r.id}`} className="text-xs text-orange-600 font-medium shrink-0 hover:text-orange-700">
                       编辑 ›
                     </Link>
                   </div>
