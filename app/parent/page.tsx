@@ -46,7 +46,7 @@ export default function ParentHome() {
             {/* Today's growth */}
             <div className="rounded-2xl p-3 text-white shadow-sm" style={{ background: "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)" }}>
               <div className="text-xs font-medium text-yellow-100 mb-1">✨ 今日成长</div>
-              <div className="text-sm font-bold leading-snug" style={{ color: "#7C3810" }}>他开始敢在对抗中主动突破了。</div>
+              <div className="text-sm font-bold leading-snug" style={{ color: "#7C3810" }}>{mockBadges[0].description}</div>
             </div>
 
             {/* Badge */}
