@@ -41,6 +41,37 @@ interface StatsSummary {
   playerStats: PlayerStat[];
 }
 
+function dedupeByJersey(stats: PlayerStat[]): PlayerStat[] {
+  const merged = new Map<string, PlayerStat>();
+  const order: string[] = [];
+  for (const ps of stats) {
+    const key = ps.jerseyNumber ? `${ps.team}#${ps.jerseyNumber}` : `__${ps.label}`;
+    const existing = merged.get(key);
+    if (!existing) {
+      merged.set(key, { ...ps });
+      order.push(key);
+    } else {
+      if (ps.jerseyNumber && !existing.jerseyNumber) {
+        existing.label = ps.label;
+        existing.jerseyNumber = ps.jerseyNumber;
+      }
+      existing.totalDistanceM   = +((existing.totalDistanceM   + ps.totalDistanceM  ).toFixed(1));
+      existing.offenseDistanceM = +((existing.offenseDistanceM + ps.offenseDistanceM).toFixed(1));
+      existing.defenseDistanceM = +((existing.defenseDistanceM + ps.defenseDistanceM).toFixed(1));
+      existing.onCourtSeconds   = Math.max(existing.onCourtSeconds, ps.onCourtSeconds);
+      existing.holdCount    += ps.holdCount;
+      existing.holdSeconds   = +((existing.holdSeconds + ps.holdSeconds).toFixed(1));
+      existing.passCount    += ps.passCount;
+      existing.receiveCount += ps.receiveCount;
+      existing.stealCount   += ps.stealCount;
+      existing.turnoverCount+= ps.turnoverCount;
+      existing.driveCount   += ps.driveCount;
+      existing.shotCount    += ps.shotCount;
+    }
+  }
+  return order.map(k => merged.get(k)!);
+}
+
 const LS_KEY = "woyao_label_overrides";
 
 const typeLabel: Record<string, { label: string; color: string }> = {
@@ -324,6 +355,10 @@ export default function CoachVideosPage() {
                   {/* ── 技术统计 tab ── */}
                   {(activeTab[video.id] || "stats") === "stats" && statsData[video.id] && (() => {
                     const s = statsData[video.id];
+                    const dedupedPlayers = dedupeByJersey(s.playerStats);
+                    const visibleCols = statCols.filter(c =>
+                      dedupedPlayers.some(ps => (ps as unknown as Record<string, number>)[c.key] !== 0)
+                    );
                     return (
                       <div className="flex flex-col gap-3">
                         {/* 队伍对比 */}
@@ -365,7 +400,7 @@ export default function CoachVideosPage() {
                               <thead>
                                 <tr className="border-b border-gray-100">
                                   <th className="px-3 py-2 text-left font-semibold text-gray-600 sticky left-0 bg-white">球员</th>
-                                  {statCols.map(c => (
+                                  {visibleCols.map(c => (
                                     <th key={c.key} className="px-2 py-2 text-right font-semibold text-gray-500 whitespace-nowrap">
                                       {c.label}
                                     </th>
@@ -373,7 +408,7 @@ export default function CoachVideosPage() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {s.playerStats.map((ps, i) => {
+                                {dedupedPlayers.map((ps, i) => {
                                   const hasOverride = !!labelOverrides[video.id]?.[ps.label];
                                   const displayName = applyLabel(video.id, ps.label);
                                   const isEditing   = editingCell?.videoId === video.id && editingCell?.label === ps.label;
@@ -422,7 +457,7 @@ export default function CoachVideosPage() {
                                           )}
                                         </div>
                                       </td>
-                                      {statCols.map(c => {
+                                      {visibleCols.map(c => {
                                         const val    = (ps as unknown as Record<string, number>)[c.key];
                                         const isZero = val === 0;
                                         return (

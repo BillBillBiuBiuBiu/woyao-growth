@@ -125,23 +125,6 @@
       "shotCount": 0
     },
     {
-      "label": "白队#150",
-      "team": "白队",
-      "jerseyNumber": null,
-      "onCourtSeconds": 79.6,
-      "totalDistanceM": 50.2,
-      "offenseDistanceM": 0.0,
-      "defenseDistanceM": 50.2,
-      "holdCount": 0,
-      "holdSeconds": 0.0,
-      "passCount": 0,
-      "receiveCount": 0,
-      "stealCount": 0,
-      "turnoverCount": 0,
-      "driveCount": 0,
-      "shotCount": 0
-    },
-    {
       "label": "红队30号",
       "team": "红队",
       "jerseyNumber": "30",
