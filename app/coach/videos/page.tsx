@@ -100,6 +100,7 @@ export default function CoachVideosPage() {
   const [editingCell, setEditingCell] = useState<{ videoId: string; label: string } | null>(null);
   const [editValue, setEditValue]     = useState("");
   const [playingClip, setPlayingClip] = useState<string | null>(null);
+  const [showUploadGuide, setShowUploadGuide] = useState(false);
 
   useEffect(() => {
     try {
@@ -192,10 +193,26 @@ export default function CoachVideosPage() {
           <h1 className="text-xl font-bold">视频管理</h1>
           <p className="text-sm text-muted-foreground mt-0.5">共 {mockVideos.length} 个视频</p>
         </div>
-        <button className="bg-orange-500 text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-orange-600 transition-colors">
+        <button
+          onClick={() => setShowUploadGuide(v => !v)}
+          className="bg-orange-500 text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-orange-600 transition-colors"
+        >
           + 上传视频
         </button>
       </div>
+
+      {showUploadGuide && (
+        <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4">
+          <div className="text-sm font-medium text-orange-700 mb-2">如何添加新视频</div>
+          <div className="text-xs text-orange-600 leading-relaxed mb-2">
+            视频分析需在本地运行追踪脚本，处理完成后数据自动同步至系统：
+          </div>
+          <code className="block bg-white border border-orange-100 rounded-xl px-3 py-2 text-xs text-gray-700 font-mono mb-2">
+            python3 player_tracker.py &lt;视频路径&gt; &lt;输出目录&gt;
+          </code>
+          <div className="text-xs text-orange-500">脚本会输出 tracking.json / possessions.json / stats.json，放入 public/videos/ 后刷新页面即可看到分析结果。</div>
+        </div>
+      )}
 
       <div className="flex flex-col gap-3">
         {mockVideos.map((video) => {
