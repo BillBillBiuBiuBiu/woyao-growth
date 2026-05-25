@@ -80,7 +80,7 @@ export default function CoachReportsPage() {
           const badge = statusBadge[r.status] || statusBadge.draft;
 
           return (
-            <div key={r.id} className="rounded-2xl border border-border bg-white p-4">
+            <Link key={r.id} href={`/coach/annotate/${r.id}`} className="block rounded-2xl border border-border bg-white p-4 hover:shadow-md transition-shadow active:scale-[0.99]">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1.5">
@@ -92,14 +92,11 @@ export default function CoachReportsPage() {
                   <div className="text-sm text-gray-700 truncate mb-1">{r.title}</div>
                   <div className="text-xs text-gray-400">{r.createdAt}</div>
                 </div>
-                <Link
-                  href={`/coach/annotate/${r.id}`}
-                  className="shrink-0 text-xs text-orange-600 font-medium border border-orange-200 rounded-lg px-2.5 py-1.5 hover:bg-orange-50 transition-colors"
-                >
-                  编辑
-                </Link>
+                <span className="shrink-0 text-xs text-orange-600 font-medium border border-orange-200 rounded-lg px-2.5 py-1.5">
+                  编辑 ›
+                </span>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
