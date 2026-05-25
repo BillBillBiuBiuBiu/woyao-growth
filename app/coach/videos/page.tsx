@@ -101,6 +101,7 @@ export default function CoachVideosPage() {
   const [editValue, setEditValue]     = useState("");
   const [playingClip, setPlayingClip] = useState<string | null>(null);
   const [showUploadGuide, setShowUploadGuide] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -143,10 +144,11 @@ export default function CoachVideosPage() {
   async function handleAnalyze(videoId: string) {
     const jsonPath = TRACKING_DATA_MAP[videoId];
     if (!jsonPath) {
-      alert("该视频暂无分析数据，请先用 player_tracker.py 处理视频。");
+      setAnalyzeError("该视频暂无分析数据，请先用 player_tracker.py 处理");
       return;
     }
     setAnalyzing(videoId);
+    setAnalyzeError(null);
     try {
       const [trackRes, possRes, statsRes] = await Promise.all([
         fetch(jsonPath),
@@ -166,7 +168,7 @@ export default function CoachVideosPage() {
       setExpanded(videoId);
       setActiveTab(prev => ({ ...prev, [videoId]: "stats" }));
     } catch {
-      alert("加载分析数据失败");
+      setAnalyzeError("加载分析数据失败，请检查网络后重试");
     } finally {
       setAnalyzing(null);
     }
@@ -211,6 +213,13 @@ export default function CoachVideosPage() {
             python3 player_tracker.py &lt;视频路径&gt; &lt;输出目录&gt;
           </code>
           <div className="text-xs text-orange-500">脚本会输出 tracking.json / possessions.json / stats.json，放入 public/videos/ 后刷新页面即可看到分析结果。</div>
+        </div>
+      )}
+
+      {analyzeError && (
+        <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+          <span className="flex-1">{analyzeError}</span>
+          <button onClick={() => setAnalyzeError(null)} className="text-red-400 hover:text-red-600 shrink-0 leading-none">✕</button>
         </div>
       )}
 
