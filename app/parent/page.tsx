@@ -88,7 +88,7 @@ export default function ParentHome() {
             <div>
               <div className="text-xs text-orange-500 mb-1 font-medium">📋 最新成长报告</div>
               <div className="font-bold text-gray-800">{mockReport.title}</div>
-              <div className="text-xs text-gray-400 mt-1">3个成长证据 · 教练已确认 ✓</div>
+              <div className="text-xs text-gray-400 mt-1">{mockReport.clips.length}个成长证据 · 教练已确认 ✓</div>
             </div>
             <div className="text-2xl text-orange-300 ml-2">›</div>
           </div>
