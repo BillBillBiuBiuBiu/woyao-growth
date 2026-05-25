@@ -5,10 +5,10 @@ import PlanBadge from "@/components/PlanBadge";
 import type { Report } from "@/lib/types";
 
 const statusLabel: Record<string, { label: string; color: string }> = {
-  draft:     { label: "草稿",   color: "bg-slate-100 text-slate-500" },
-  generated: { label: "已生成", color: "bg-blue-100 text-blue-600" },
-  reviewed:  { label: "已审核", color: "bg-amber-100 text-amber-700" },
-  sent:      { label: "已发送", color: "bg-green-100 text-green-700" },
+  draft:     { label: "准备中",   color: "bg-slate-100 text-slate-400" },
+  generated: { label: "准备中",   color: "bg-slate-100 text-slate-400" },
+  reviewed:  { label: "教练已确认", color: "bg-amber-100 text-amber-700" },
+  sent:      { label: "已发送",   color: "bg-green-100 text-green-700" },
 };
 
 const sceneLabel: Record<string, string> = {
