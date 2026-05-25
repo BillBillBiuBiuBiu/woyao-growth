@@ -28,73 +28,14 @@ const COLORS = [
   "#F472B4","#34D399",
 ];
 
-// Full court SVG: 360×192 px (matches 28.65m × 15.24m ratio)
-// Scale: ~12.6 px/m
+// SVG canvas: 360×192 px. Tracking coords are video-frame based (not court coords),
+// so only an outer border is drawn — no court geometry that would imply false precision.
 const W = 360, H = 192;
-const S = W / 28.65;  // px per meter
 
-function CourtLines() {
-  const cy = H / 2;
-  // left basket at x=20,cy  right basket at x=340,cy
-  const lbx = 20, rbx = W - 20;
-  const lftx = lbx + 5.8 * S;   // left free throw line x
-  const rftx = rbx - 5.8 * S;   // right free throw line x
-  const laneH = 4.9 * S / 2;    // half lane width
-
+function CourtBorder() {
   return (
-    <g stroke="rgba(255,255,255,0.55)" strokeWidth="1" fill="none">
-      {/* Court border */}
-      <rect x="1" y="1" width={W - 2} height={H - 2} rx="2" />
-      {/* Half court line */}
-      <line x1={W / 2} y1="0" x2={W / 2} y2={H} />
-      {/* Center circle */}
-      <circle cx={W / 2} cy={cy} r={1.8 * S} />
-
-      {/* Left paint (lane) */}
-      <rect x={lbx} y={cy - laneH} width={5.8 * S} height={laneH * 2} />
-      {/* Left free throw circle */}
-      <circle cx={lftx} cy={cy} r={1.8 * S} strokeDasharray="4 3" />
-      {/* Left backboard */}
-      <line x1={lbx} y1={cy - 10} x2={lbx} y2={cy + 10} strokeWidth="2.5" stroke="white" />
-      {/* Left basket */}
-      <circle cx={lbx + 4} cy={cy} r={3} stroke="#F97316" strokeWidth="1.5" />
-      {/* Left 3pt arc */}
-      <path
-        d={`M ${lbx} ${cy - 6.75 * S}
-            A ${6.75 * S} ${6.75 * S} 0 0 1 ${lbx} ${cy + 6.75 * S}`}
-        clipPath="url(#courtClip)"
-      />
-      {/* Left corner 3pt lines */}
-      <line x1={lbx} y1={cy - 6.75 * S} x2={lbx + 3 * S} y2={cy - 6.75 * S} />
-      <line x1={lbx} y1={cy + 6.75 * S} x2={lbx + 3 * S} y2={cy + 6.75 * S} />
-
-      {/* Right paint */}
-      <rect x={rbx - 5.8 * S} y={cy - laneH} width={5.8 * S} height={laneH * 2} />
-      {/* Right free throw circle */}
-      <circle cx={rftx} cy={cy} r={1.8 * S} strokeDasharray="4 3" />
-      {/* Right backboard */}
-      <line x1={rbx} y1={cy - 10} x2={rbx} y2={cy + 10} strokeWidth="2.5" stroke="white" />
-      {/* Right basket */}
-      <circle cx={rbx - 4} cy={cy} r={3} stroke="#F97316" strokeWidth="1.5" />
-      {/* Right 3pt arc */}
-      <path
-        d={`M ${rbx} ${cy - 6.75 * S}
-            A ${6.75 * S} ${6.75 * S} 0 0 0 ${rbx} ${cy + 6.75 * S}`}
-        clipPath="url(#courtClip)"
-      />
-      <line x1={rbx} y1={cy - 6.75 * S} x2={rbx - 3 * S} y2={cy - 6.75 * S} />
-      <line x1={rbx} y1={cy + 6.75 * S} x2={rbx - 3 * S} y2={cy + 6.75 * S} />
-
-      {/* Restricted area arcs */}
-      <path d={`M ${lbx} ${cy - 1.25 * S} A ${1.25 * S} ${1.25 * S} 0 0 1 ${lbx} ${cy + 1.25 * S}`} strokeOpacity="0.4" />
-      <path d={`M ${rbx} ${cy - 1.25 * S} A ${1.25 * S} ${1.25 * S} 0 0 0 ${rbx} ${cy + 1.25 * S}`} strokeOpacity="0.4" />
-
-      <defs>
-        <clipPath id="courtClip">
-          <rect x="0" y="0" width={W} height={H} />
-        </clipPath>
-      </defs>
-    </g>
+    <rect x="1" y="1" width={W - 2} height={H - 2} rx="2"
+      stroke="rgba(255,255,255,0.25)" strokeWidth="1" fill="none" />
   );
 }
 
@@ -161,7 +102,7 @@ export default function TrackingViewer({ data }: { data: TrackingData }) {
           {/* Court SVG */}
           <div className="rounded-2xl overflow-hidden border border-gray-700 shadow-lg bg-[#1a5c2a]">
             <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
-              <CourtLines />
+              <CourtBorder />
 
               {/* Heatmap points */}
               {showHeat && displayPlayers.map((p, i) => {
