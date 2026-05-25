@@ -190,8 +190,10 @@ export default function TrackingViewer({ data }: { data: TrackingData }) {
                 <button
                   key={p.trackId}
                   onClick={() => setSelected(selected === p.trackId ? null : p.trackId)}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs border transition-colors ${
+                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs border transition-all ${
                     active ? "border-transparent text-white" : "border-gray-200 text-gray-400 bg-gray-50"
+                  } ${selected !== null && selected !== p.trackId ? "opacity-35" : ""} ${
+                    selected === p.trackId ? "ring-2 ring-white/50 ring-offset-1 ring-offset-gray-900" : ""
                   }`}
                   style={active ? { background: color } : {}}
                 >
