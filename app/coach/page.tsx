@@ -95,7 +95,7 @@ export default function CoachPage() {
       <div>
         <h2 className="text-sm font-semibold mb-3">需要你确认的报告</h2>
         <div className="flex flex-col gap-3">
-          {mockPendingReports.map((r) => {
+          {pending.map((r) => {
             const s = statusMap[r.status] || statusMap.draft;
             return (
               <Link key={r.id} href={`/coach/annotate/${r.id}`}>
