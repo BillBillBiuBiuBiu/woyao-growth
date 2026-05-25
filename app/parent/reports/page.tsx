@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { mockReports } from "@/lib/mock-data";
+import { mockReports, mockStudent } from "@/lib/mock-data";
 import PlanBadge from "@/components/PlanBadge";
 import type { Report } from "@/lib/types";
 
@@ -53,7 +53,7 @@ export default function ParentReportsPage() {
         >
           成长报告
         </h1>
-        <p className="text-sm text-orange-600">蒋皓博的所有成长记录</p>
+        <p className="text-sm text-orange-600">{mockStudent.name}的所有成长记录</p>
       </div>
 
       <div className="flex flex-col gap-3 px-4">
