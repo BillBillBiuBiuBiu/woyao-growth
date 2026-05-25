@@ -30,6 +30,7 @@ function ScoreBoxes({ score, max }: { score: number; max: number }) {
 export default function StudentProfilePage() {
   const a = mockAssessment;
   const [hasTesterBadge, setHasTesterBadge] = useState(false);
+  const [timelineFilter, setTimelineFilter] = useState<"all"|"match"|"training">("all");
   useEffect(() => {
     try {
       setHasTesterBadge(localStorage.getItem("tester_badge") === "true");
@@ -238,12 +239,27 @@ export default function StudentProfilePage() {
 
       {/* ── TIMELINE ────────────────────────────────── */}
       <div className="px-4 pt-4">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(to bottom, #FCD34D, #F97316)" }} />
-          <span className="text-sm font-bold text-gray-800">成长时间线</span>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(to bottom, #FCD34D, #F97316)" }} />
+            <span className="text-sm font-bold text-gray-800">成长时间线</span>
+          </div>
+          <div className="flex gap-1">
+            {(["all","match","training"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setTimelineFilter(f)}
+                className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${timelineFilter === f ? "bg-orange-100 text-orange-600" : "text-gray-400"}`}
+              >
+                {f === "all" ? "全部" : f === "match" ? "比赛" : "训练"}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="flex flex-col gap-2">
-          {mockGrowthHistory.map((h) => {
+          {mockGrowthHistory.filter((h) =>
+            timelineFilter === "all" || (timelineFilter === "match" ? h.type === "match" : h.type !== "match")
+          ).map((h) => {
             const hasReport = mockReports.some((r) => r.id === h.id && r.studentId === mockStudent.id);
             const inner = (
               <div className={`flex gap-3 p-3 rounded-2xl bg-white/90 border border-orange-100 shadow-sm ${hasReport ? "hover:bg-orange-50 transition-colors cursor-pointer" : ""}`}>
