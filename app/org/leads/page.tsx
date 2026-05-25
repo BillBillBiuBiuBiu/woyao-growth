@@ -162,7 +162,7 @@ export default function LeadsPage() {
                   </div>
                   {lead.coachConfirmed && (
                     <div className="mt-2 text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-1.5">
-                      🏀 王教练已确认推荐
+                      🏀 教练已确认推荐
                     </div>
                   )}
                 </div>
