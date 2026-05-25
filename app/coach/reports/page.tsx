@@ -93,7 +93,7 @@ export default function CoachReportsPage() {
                   <div className="text-xs text-gray-400">{r.createdAt}</div>
                 </div>
                 <Link
-                  href="/coach/annotate/sess-001"
+                  href={`/coach/annotate/${r.id}`}
                   className="shrink-0 text-xs text-orange-600 font-medium border border-orange-200 rounded-lg px-2.5 py-1.5 hover:bg-orange-50 transition-colors"
                 >
                   编辑
