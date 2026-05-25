@@ -45,10 +45,34 @@ export default function LeadsPage() {
   }
 
   function handleCopy(id: string, text: string) {
-    navigator.clipboard?.writeText(text).then(() => {
+    function onSuccess() {
       setCopied(id);
       setTimeout(() => setCopied(null), 2000);
-    }).catch(() => {});
+    }
+    function onFail() {
+      setCopied(`err-${id}`);
+      setTimeout(() => setCopied(null), 2500);
+    }
+    function execFallback() {
+      const el = document.createElement("textarea");
+      el.value = text;
+      el.style.cssText = "position:fixed;opacity:0;top:0;left:0";
+      document.body.appendChild(el);
+      el.focus();
+      el.select();
+      try {
+        document.execCommand("copy") ? onSuccess() : onFail();
+      } catch {
+        onFail();
+      } finally {
+        document.body.removeChild(el);
+      }
+    }
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(onSuccess).catch(execFallback);
+    } else {
+      execFallback();
+    }
   }
 
   return (
@@ -117,7 +141,7 @@ export default function LeadsPage() {
                       onClick={() => handleCopy(lead.id, lead.suggestedMessage)}
                       className="flex-1 text-xs py-2 rounded-lg border border-border bg-white hover:bg-slate-50 transition-colors"
                     >
-                      {copied === lead.id ? "✓ 已复制" : "复制话术"}
+                      {copied === lead.id ? "✓ 已复制" : copied === `err-${lead.id}` ? "复制失败，请手动选取" : "复制话术"}
                     </button>
                     <button
                       onClick={() => updateStatus(lead.id, "contacted")}
