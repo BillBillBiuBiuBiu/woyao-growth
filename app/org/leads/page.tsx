@@ -165,6 +165,21 @@ export default function LeadsPage() {
                       🏀 教练已确认推荐
                     </div>
                   )}
+                  {status !== "dismissed" ? (
+                    <button
+                      onClick={() => updateStatus(lead.id, "dismissed")}
+                      className="mt-2 text-xs text-slate-400 hover:text-slate-600 w-full text-right transition-colors"
+                    >
+                      忽略此线索
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => updateStatus(lead.id, "new")}
+                      className="mt-2 text-xs text-blue-500 hover:text-blue-700 w-full text-right transition-colors"
+                    >
+                      ↺ 恢复跟进
+                    </button>
+                  )}
                 </div>
               )}
             </div>
