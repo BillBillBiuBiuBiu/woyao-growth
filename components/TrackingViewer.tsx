@@ -236,7 +236,7 @@ export default function TrackingViewer({ data }: { data: TrackingData }) {
               return (
                 <button
                   key={p.trackId}
-                  onClick={() => { setSelected(selected === p.trackId ? null : p.trackId); toggle(p.trackId); }}
+                  onClick={() => setSelected(selected === p.trackId ? null : p.trackId)}
                   className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs border transition-colors ${
                     active ? "border-transparent text-white" : "border-gray-200 text-gray-400 bg-gray-50"
                   }`}
