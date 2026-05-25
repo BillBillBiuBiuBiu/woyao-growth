@@ -1,5 +1,5 @@
 "use client";
-import { mockStudent, mockGrowthHistory, mockBadges, mockAssessment } from "@/lib/mock-data";
+import { mockStudent, mockGrowthHistory, mockBadges, mockAssessment, mockReports } from "@/lib/mock-data";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
@@ -241,9 +241,10 @@ export default function StudentProfilePage() {
           <span className="text-sm font-bold text-gray-800">成长时间线</span>
         </div>
         <div className="flex flex-col gap-2">
-          {mockGrowthHistory.map((h) => (
-            <Link key={h.id} href={`/parent/reports/${h.id}`}>
-              <div className="flex gap-3 p-3 rounded-2xl bg-white/90 border border-orange-100 hover:bg-orange-50 transition-colors cursor-pointer shadow-sm">
+          {mockGrowthHistory.map((h) => {
+            const hasReport = mockReports.some((r) => r.id === h.id && r.studentId === mockStudent.id);
+            const inner = (
+              <div className={`flex gap-3 p-3 rounded-2xl bg-white/90 border border-orange-100 shadow-sm ${hasReport ? "hover:bg-orange-50 transition-colors cursor-pointer" : ""}`}>
                 <div className="flex flex-col items-center pt-1">
                   <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${h.type === "match" ? "bg-orange-400" : "bg-amber-400"}`} />
                   <div className="flex-1 w-px bg-orange-100 mt-1" />
@@ -264,10 +265,13 @@ export default function StudentProfilePage() {
                     <span className="text-xs text-gray-400">{h.clipCount}个片段</span>
                   </div>
                 </div>
-                <div className="text-orange-300 text-xl self-center">›</div>
+                {hasReport && <div className="text-orange-300 text-xl self-center">›</div>}
               </div>
-            </Link>
-          ))}
+            );
+            return hasReport
+              ? <Link key={h.id} href={`/parent/reports/${h.id}`}>{inner}</Link>
+              : <div key={h.id}>{inner}</div>;
+          })}
         </div>
       </div>
     </div>
