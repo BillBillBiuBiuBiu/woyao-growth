@@ -241,9 +241,15 @@ export default function ParentHome() {
                     <span className="text-gray-300 mx-1">—</span>
                     <span style={{ color: "#F97316" }}>{game.awayScore}</span> {game.awayTeam}
                   </div>
-                  <div className="text-xs text-gray-400 mt-0.5">{game.eventCount}个打点 · {fmtMatchDate(game.ts)}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{fmtMatchDate(game.ts)}</div>
                 </div>
-                <div className="text-orange-300 ml-2 shrink-0">›</div>
+                <div className="flex items-center gap-2 ml-2 shrink-0">
+                  {game.eventCount > 0
+                    ? <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-medium">● 有打点</span>
+                    : <span className="text-xs text-gray-400">暂无记录</span>
+                  }
+                  <span className="text-orange-300">›</span>
+                </div>
               </button>
               );
             })}
