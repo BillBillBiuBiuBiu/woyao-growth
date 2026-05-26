@@ -429,11 +429,13 @@ export default function ParentHome() {
                           </tr>
                         </thead>
                         <tbody>
-                          {gameDetail.stats.map((p, i) => (
+                          {gameDetail.stats.map((p, i) => {
+                            const isMyChild = childName && p.name === childName;
+                            return (
                             <tr
                               key={`${p.team}-${p.name}-${i}`}
-                              className="border-t border-gray-50"
-                              style={{ background: i % 2 === 0 ? "white" : "#FFFBF5" }}
+                              className={`border-t ${isMyChild ? "border-l-2 border-amber-400 bg-amber-50" : "border-gray-50"}`}
+                              style={isMyChild ? undefined : { background: i % 2 === 0 ? "white" : "#FFFBF5" }}
                             >
                               <td className="px-3 py-2.5">
                                 <div className="flex items-center gap-1.5">
@@ -441,8 +443,8 @@ export default function ParentHome() {
                                     className="w-1.5 h-1.5 rounded-full shrink-0"
                                     style={{ background: p.team === "home" ? "#F97316" : "#3B82F6" }}
                                   />
-                                  <span className="font-medium text-gray-800">
-                                    {p.num && p.num !== "-" ? `#${p.num} ` : ""}{p.name}
+                                  <span className={`font-medium ${isMyChild ? "text-amber-700 font-bold" : "text-gray-800"}`}>
+                                    {p.num && p.num !== "-" ? `#${p.num} ` : ""}{p.name}{isMyChild ? " ⭐" : ""}
                                   </span>
                                 </div>
                               </td>
@@ -451,7 +453,8 @@ export default function ParentHome() {
                               <td className="px-2 py-2.5 text-center text-gray-500">{p.ast}</td>
                               <td className="px-2 py-2.5 text-center text-gray-500">{p.stl}</td>
                             </tr>
-                          ))}
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
