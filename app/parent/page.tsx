@@ -484,9 +484,15 @@ export default function ParentHome() {
                 {selectedGame && gameDetail.stats.length > 0 && (
                   <button
                     onClick={async () => {
-                      const top = gameDetail.stats.slice(0, 5);
-                      const lines = top.map(p => `  #${p.num || "-"} ${p.name}：${p.pts}分 ${p.reb}板 ${p.ast}助 ${p.stl}断`).join("\n");
-                      const msg = `🏀 ${fmtMatchDate(selectedGame.ts)} 比赛战报\n${selectedGame.homeTeam} ${selectedGame.homeScore} — ${selectedGame.awayScore} ${selectedGame.awayTeam}\n\n球员数据：\n${lines}\n\n来自「我耀成长」`;
+                      const childStat = childName ? gameDetail.stats.find(p => p.name === childName) : null;
+                      let msg: string;
+                      if (childStat) {
+                        msg = `🏀 ${childName}今天打得棒！\n${fmtMatchDate(selectedGame.ts)} · ${selectedGame.homeTeam} ${selectedGame.homeScore}—${selectedGame.awayScore} ${selectedGame.awayTeam}\n个人数据：${childStat.pts}分 ${childStat.reb}板 ${childStat.ast}助 ${childStat.stl}断\n来自「我耀成长」`;
+                      } else {
+                        const top = gameDetail.stats.slice(0, 5);
+                        const lines = top.map(p => `  #${p.num || "-"} ${p.name}：${p.pts}分 ${p.reb}板 ${p.ast}助 ${p.stl}断`).join("\n");
+                        msg = `🏀 ${fmtMatchDate(selectedGame.ts)} 比赛战报\n${selectedGame.homeTeam} ${selectedGame.homeScore} — ${selectedGame.awayScore} ${selectedGame.awayTeam}\n\n球员数据：\n${lines}\n\n来自「我耀成长」`;
+                      }
                       try {
                         await navigator.clipboard.writeText(msg);
                         setStatsCopied(true);
@@ -502,7 +508,7 @@ export default function ParentHome() {
                       background: statsCopied ? "rgba(34,197,94,0.06)" : "rgba(249,115,22,0.06)",
                     }}
                   >
-                    {statsCopied ? "✅ 战报已复制！" : "📤 复制战报 · 发给家人"}
+                    {statsCopied ? "✅ 战报已复制！" : childName && gameDetail.stats.some(p => p.name === childName) ? `📤 分享${childName}的战报` : "📤 复制战报 · 发给家人"}
                   </button>
                 )}
               </>
