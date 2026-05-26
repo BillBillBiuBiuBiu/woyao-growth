@@ -44,7 +44,8 @@ type CtxPrompt =
   | { type: "rebound";  shootingTeam: TeamId }
   | { type: "assist";   scoringTeam: TeamId; scorerId: string }
   | { type: "ft_count" }
-  | { type: "ft_seq";   total: number; current: number };
+  | { type: "ft_seq";   total: number; current: number }
+  | { type: "steal";    stealTeam: TeamId };
 
 const TEAM_PLAYER_ID = (teamId: TeamId) => `${teamId}-team`;
 
@@ -66,6 +67,7 @@ export default function GcLivePage() {
   const [ctxPrompt,     setCtxPrompt]     = useState<CtxPrompt | null>(null);
   const [detailPlayer,  setDetailPlayer]  = useState<string | null>(null); // postgame detail modal
   const [lastFlash,     setLastFlash]     = useState<string | null>(null);
+  const [timeouts,      setTimeouts]      = useState<{ home: number; away: number }>({ home: 5, away: 5 });
 
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
   const ctxTimerRef = useRef<ReturnType<typeof setTimeout>  | null>(null);
@@ -150,6 +152,9 @@ export default function GcLivePage() {
       setCtxTimed({ type: "rebound", shootingTeam: selTeam }, 6000);
     } else if (action.cat === "foul_drawn") {
       setCtxTimed({ type: "ft_count" }, 10000);
+    } else if (action.cat === "tov") {
+      const otherTeam: TeamId = selTeam === "home" ? "away" : "home";
+      setCtxTimed({ type: "steal", stealTeam: otherTeam }, 6000);
     }
   }
 
@@ -189,6 +194,22 @@ export default function GcLivePage() {
     setEvents(prev => [makeEvent(selTeam, player.id, player.name, player.num, action), ...prev]);
     if (current >= total) { clearCtx(); }
     else { setCtxPrompt({ type: "ft_seq", total, current: current + 1 }); }
+  }
+
+  function logSteal(playerId?: string) {
+    if (!ctxPrompt || ctxPrompt.type !== "steal") return;
+    const { stealTeam } = ctxPrompt;
+    clearCtx();
+    const p = playerId
+      ? resolvePlayer(stealTeam, playerId)
+      : resolvePlayer(stealTeam) ?? { id: TEAM_PLAYER_ID(stealTeam), name: "全队", num: "-" };
+    if (!p) return;
+    const action = ACTIONS.find(a => a.cat === "stl")!;
+    setEvents(prev => [makeEvent(stealTeam, p.id, p.name, p.num, action), ...prev]);
+  }
+
+  function useTimeout(side: TeamId) {
+    setTimeouts(prev => ({ ...prev, [side]: Math.max(0, prev[side] - 1) }));
   }
 
   function endGame() {
@@ -464,6 +485,14 @@ export default function GcLivePage() {
           <div className={`text-4xl font-black transition-all ${score.home >= score.away ? "text-orange-400" : "text-gray-500"}`}>
             {score.home}
           </div>
+          {/* Timeout dots — tap to use */}
+          <div className="flex justify-center gap-1 mt-1.5">
+            {Array.from({ length: 5 }, (_, i) => (
+              <button key={i} onClick={() => useTimeout("home")}
+                className="w-2 h-2 rounded-full transition-colors"
+                style={{ background: i < timeouts.home ? "#F97316" : "rgba(249,115,22,0.2)" }} />
+            ))}
+          </div>
         </div>
         <div className="px-4 text-center shrink-0">
           <div className="text-xs text-gray-600 mb-0.5">Q{quarter}</div>
@@ -476,6 +505,14 @@ export default function GcLivePage() {
           </div>
           <div className={`text-4xl font-black transition-all ${score.away > score.home ? "text-blue-400" : "text-gray-500"}`}>
             {score.away}
+          </div>
+          {/* Timeout dots — tap to use */}
+          <div className="flex justify-center gap-1 mt-1.5">
+            {Array.from({ length: 5 }, (_, i) => (
+              <button key={i} onClick={() => useTimeout("away")}
+                className="w-2 h-2 rounded-full transition-colors"
+                style={{ background: i < timeouts.away ? "#3B82F6" : "rgba(59,130,246,0.2)" }} />
+            ))}
           </div>
         </div>
         {/* Last-action flash */}
@@ -658,6 +695,35 @@ export default function GcLivePage() {
               </div>
               <button onClick={clearCtx} className="w-full text-xs text-gray-600 py-2 text-center">中止记录</button>
             </>)}
+
+            {/* STEAL */}
+            {ctxPrompt.type === "steal" && (() => {
+              const stealTeam = teams.find(t => t.id === ctxPrompt.stealTeam);
+              const isTeamMode = ctxPrompt.stealTeam === "away" && awayTrackMode === "team";
+              return (<>
+                <div className="text-xs text-gray-400 text-center mb-3 font-medium">
+                  {stealTeam?.name ?? "对方"} 谁抢断了？
+                </div>
+                <div className="flex flex-wrap gap-2 justify-center mb-3">
+                  {isTeamMode ? (
+                    <button onClick={() => logSteal()}
+                      className="px-4 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition-transform"
+                      style={{ background: `${stealTeam?.color ?? "#3B82F6"}33`, color: stealTeam?.color ?? "#60A5FA" }}>
+                      全队
+                    </button>
+                  ) : (
+                    stealTeam?.players.map(p => (
+                      <button key={p.id} onClick={() => logSteal(p.id)}
+                        className="px-3 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform"
+                        style={{ background: `${stealTeam.color}33`, color: stealTeam.color }}>
+                        #{p.num} {p.name}
+                      </button>
+                    ))
+                  )}
+                </div>
+                <button onClick={clearCtx} className="w-full text-xs text-gray-600 py-2 text-center">无抢断</button>
+              </>);
+            })()}
 
           </div>
         </div>
