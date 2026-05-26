@@ -504,6 +504,26 @@ export default function GcLivePage() {
                   </div>
                 ))}
               </div>
+              {(() => {
+                const hn = teams.find(t => t.id === "home")?.name ?? "主场";
+                const an = teams.find(t => t.id === "away")?.name ?? "客场";
+                const statParts = [
+                  `${detailStats.pts}分`,
+                  detailStats.reb > 0 && `${detailStats.reb}板`,
+                  detailStats.ast > 0 && `${detailStats.ast}助`,
+                  detailStats.stl > 0 && `${detailStats.stl}断`,
+                ].filter(Boolean).join(" · ");
+                const playerShareText = `🏀 ${detailStats.name}今天的比赛数据\n${hn} ${score.home} — ${score.away} ${an}\n\n${statParts}\n\n来自「我耀成长」`;
+                return (
+                  <button
+                    onClick={() => handleShare(playerShareText)}
+                    className="w-full mt-4 py-2.5 rounded-xl text-sm font-bold border active:opacity-80"
+                    style={{ borderColor: "rgba(249,115,22,0.4)", color: "#F97316", background: "rgba(249,115,22,0.08)" }}
+                  >
+                    {copyToast ? "✅ 已复制！" : `📤 发给${detailStats.name}的家长`}
+                  </button>
+                );
+              })()}
             </div>
           </div>
         )}
