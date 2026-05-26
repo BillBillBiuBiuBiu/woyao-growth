@@ -292,6 +292,22 @@ export default function StudentProfilePage() {
           })}
         </div>
       </div>
+
+      {/* ── HIGHLIGHTS CTA ─────────────────────────── */}
+      <div className="px-4 pt-4 pb-2">
+        <Link href="/parent/highlights">
+          <div
+            className="rounded-3xl p-4 flex items-center justify-between active:scale-98 transition-transform shadow-sm"
+            style={{ background: "linear-gradient(135deg, #F97316 0%, #FBBF24 100%)" }}
+          >
+            <div>
+              <div className="text-white font-black text-base leading-tight">🎬 生成本场集锦</div>
+              <div className="text-orange-100 text-xs mt-0.5">上传视频 · AI剪辑精彩片段</div>
+            </div>
+            <div className="text-white text-2xl font-black">›</div>
+          </div>
+        </Link>
+      </div>
     </div>
   );
 }
