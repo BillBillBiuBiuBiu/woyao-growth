@@ -112,8 +112,16 @@ export default function GcReviewPage() {
   const [error,      setError]      = useState<string | null>(null);
 
   const videoRef      = useRef<HTMLVideoElement | null>(null);
+  const replayRef     = useRef<HTMLVideoElement | null>(null);
   const ffmpegRef     = useRef<FFmpeg | null>(null);
   const ffmpegInitRef = useRef<Promise<void> | null>(null);
+
+  function seekTo(videoTs: number) {
+    const v = replayRef.current;
+    if (!v) return;
+    v.currentTime = Math.max(0, videoTs - PRE_S);
+    v.play().catch(() => {});
+  }
 
   // Revoke blob URLs on unmount
   useEffect(() => () => { if (resultUrl) URL.revokeObjectURL(resultUrl); }, [resultUrl]);
@@ -662,6 +670,49 @@ export default function GcReviewPage() {
         >
           ⬇️ 下载集锦视频
         </a>
+      )}
+
+      {/* Per-event replay using original video */}
+      {videoUrl && events.length > 0 && (
+        <div className="rounded-2xl bg-[#1a1d27] border border-white/10 overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-white/10 flex items-center gap-2">
+            <span className="text-sm font-bold text-white">🎯 打点回放</span>
+            <span className="text-xs text-gray-500">点击事件跳到对应时间点</span>
+          </div>
+          <video
+            ref={replayRef}
+            src={videoUrl}
+            controls
+            playsInline
+            className="w-full bg-black"
+            style={{ maxHeight: 200 }}
+          />
+          <div className="flex flex-col divide-y divide-white/5">
+            {[...events]
+              .sort((a, b) => a.videoTs - b.videoTs)
+              .map((e) => {
+                const team = TEAMS.find((t) => t.id === e.teamId);
+                return (
+                  <button
+                    key={e.id}
+                    onClick={() => seekTo(e.videoTs)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-left w-full hover:bg-white/5 active:bg-white/10"
+                  >
+                    <span className="text-orange-400 shrink-0">▶</span>
+                    <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: team?.color ?? "#6B7280" }} />
+                    <span className="text-xs font-mono text-gray-500 shrink-0 w-10">{fmt(e.videoTs)}</span>
+                    <span className="flex-1 text-sm text-gray-300 truncate">
+                      #{e.playerNum} {e.playerName}
+                      <span className="text-gray-500 ml-1">· {e.action}</span>
+                    </span>
+                    {e.pts > 0 && (
+                      <span className="text-xs font-bold text-orange-400 shrink-0">+{e.pts}</span>
+                    )}
+                  </button>
+                );
+              })}
+          </div>
+        </div>
       )}
 
       <button
