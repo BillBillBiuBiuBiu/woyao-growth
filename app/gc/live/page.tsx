@@ -56,6 +56,14 @@ function fmt(secs: number) {
   return `${m}:${s}`;
 }
 
+function actionColor(cat: string, pts: number): string {
+  return pts > 0 ? "#F97316"
+    : cat.endsWith("_miss") ? "#EF4444"
+    : cat === "foul" ? "#FBBF24"
+    : cat === "tov" ? "#EF4444"
+    : "#9CA3AF";
+}
+
 export default function GcLivePage() {
   const [teams,         setTeams]         = useState<RuntimeTeam[]>(() => teamsFromConfig(DEFAULT_TEAMS));
   const [awayTrackMode, setAwayTrackMode] = useState<"player" | "team">("team");
@@ -777,25 +785,37 @@ export default function GcLivePage() {
             事件记录 ({events.length})
             {!selPlayer && events.length === 0 && <span className="ml-1.5 text-gray-700">← 先选择球员</span>}
           </span>
-          <button onClick={() => setEvents(prev => prev.slice(1))} disabled={events.length === 0}
-            className={`text-xs font-bold ${events.length === 0 ? "text-gray-700" : "text-orange-400"}`}>
-            撤销
+          <button
+            onClick={() => setEvents(prev => prev.slice(1))}
+            disabled={events.length === 0}
+            className="text-xs font-bold flex items-center gap-0.5 max-w-[58%]"
+            style={{ opacity: events.length === 0 ? 0.35 : 1 }}
+          >
+            {events.length === 0 ? (
+              <span className="text-gray-600">↩ 撤销</span>
+            ) : (
+              <>
+                <span className="text-gray-600 shrink-0">↩ </span>
+                <span className="text-gray-400 shrink-0">
+                  {events[0].playerNum !== "-" ? `#${events[0].playerNum} ` : "全队 "}
+                </span>
+                <span className="truncate" style={{ color: actionColor(events[0].cat, events[0].pts) }}>
+                  {events[0].action}
+                </span>
+              </>
+            )}
           </button>
         </div>
         {events.map(e => {
           const team = teams.find(t => t.id === e.teamId);
-          const actionColor = e.pts > 0 ? "#F97316"
-            : e.cat.endsWith("_miss") ? "#EF4444"
-            : e.cat === "foul" ? "#FBBF24"
-            : e.cat === "tov" ? "#EF4444"
-            : "#9CA3AF";
+          const evtColor = actionColor(e.cat, e.pts);
           return (
             <div key={e.id} className="flex items-center gap-2 py-1.5 border-b border-white/5 last:border-0">
               <div className="w-1 h-4 rounded-full shrink-0" style={{ background: team?.color ?? "#6B7280" }} />
               <span className="text-xs font-mono text-gray-500 shrink-0 w-10">{fmt(e.videoTs)}</span>
               <span className="flex-1 text-xs truncate">
                 <span className="text-gray-400">{e.playerNum !== "-" ? `#${e.playerNum} ` : ""}{e.playerName} </span>
-                <span style={{ color: actionColor }}>{e.action}</span>
+                <span style={{ color: evtColor }}>{e.action}</span>
               </span>
               {e.pts > 0 && <span className="text-xs font-bold text-orange-400 shrink-0">+{e.pts}</span>}
               <button
