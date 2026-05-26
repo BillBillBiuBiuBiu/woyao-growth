@@ -51,8 +51,8 @@ export default function CoachPage() {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: "学员总数", value: mockStudents.length, color: "text-gray-700" },
-          { label: "待处理报告", value: pendingCount, color: "text-orange-600" },
-          { label: "本月已发送", value: sentCount, color: "text-green-600" },
+          { label: "场次记录", value: recentGames.length, color: "text-orange-600" },
+          { label: "打点总数", value: recentGames.reduce((s, g) => s + g.eventCount, 0), color: "text-green-600" },
         ].map((s) => (
           <div key={s.label} className="rounded-xl border border-border bg-white p-3 text-center">
             <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
