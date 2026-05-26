@@ -210,8 +210,25 @@ export default function ParentHome() {
         {/* Recent games list — each row clickable, opens detail sheet */}
         {recentGames.length > 0 && (
           <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm overflow-hidden">
-            <div className="px-4 pt-3 pb-2 text-sm font-bold text-gray-800">🏀 比赛记录</div>
-            {recentGames.map((game, i) => (
+            <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+              <div className="text-sm font-bold text-gray-800">🏀 比赛记录</div>
+              {recentGames.length >= 2 && (() => {
+                const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
+                const l = recentGames.filter(g => g.homeScore < g.awayScore).length;
+                const d = recentGames.filter(g => g.homeScore === g.awayScore).length;
+                return (
+                  <div className="text-xs text-gray-400">
+                    <span className="text-green-600 font-bold">{w}胜</span>
+                    {l > 0 && <span className="text-red-500 font-bold ml-1">{l}负</span>}
+                    {d > 0 && <span className="text-gray-400 ml-1">{d}平</span>}
+                  </div>
+                );
+              })()}
+            </div>
+            {recentGames.map((game, i) => {
+              const won  = game.homeScore > game.awayScore;
+              const lost = game.homeScore < game.awayScore;
+              return (
               <button
                 key={game.id}
                 onClick={() => openGameDetail(game)}
@@ -220,7 +237,7 @@ export default function ParentHome() {
               >
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold text-gray-800 text-sm">
-                    {game.homeTeam} <span style={{ color: "#F97316" }}>{game.homeScore}</span>
+                    {game.homeTeam} <span style={{ color: won ? "#16A34A" : lost ? "#EF4444" : "#F97316" }}>{game.homeScore}</span>
                     <span className="text-gray-300 mx-1">—</span>
                     <span style={{ color: "#F97316" }}>{game.awayScore}</span> {game.awayTeam}
                   </div>
@@ -228,7 +245,8 @@ export default function ParentHome() {
                 </div>
                 <div className="text-orange-300 ml-2 shrink-0">›</div>
               </button>
-            ))}
+              );
+            })}
           </div>
         )}
 
