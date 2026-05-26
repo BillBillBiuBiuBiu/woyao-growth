@@ -4,6 +4,13 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
+import {
+  DEFAULT_TEAMS,
+  loadTeamsConfig,
+  teamsFromConfig,
+  type TeamId,
+  type RuntimeTeam,
+} from "@/lib/gc-teams";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -23,34 +30,6 @@ const ACTIONS = [
 ] as const;
 
 type ActionCat = typeof ACTIONS[number]["cat"];
-type TeamId = "home" | "away";
-
-const TEAMS = [
-  {
-    id: "home" as TeamId,
-    name: "PAB篮球",
-    color: "#F97316",
-    players: [
-      { id: "p1", num: "3",  name: "蒋皓博" },
-      { id: "p2", num: "10", name: "王弘涛" },
-      { id: "p3", num: "7",  name: "李逸凡" },
-      { id: "p4", num: "14", name: "张博宇" },
-      { id: "p5", num: "25", name: "陈雨轩" },
-    ],
-  },
-  {
-    id: "away" as TeamId,
-    name: "STB铁骑",
-    color: "#3B82F6",
-    players: [
-      { id: "p6",  num: "25", name: "黄天翔" },
-      { id: "p7",  num: "88", name: "汤艺豪" },
-      { id: "p8",  num: "49", name: "杨光"   },
-      { id: "p9",  num: "0",  name: "范品维" },
-      { id: "p10", num: "97", name: "叶飞"   },
-    ],
-  },
-];
 
 // Clip buffer: 3s before the event, 5s after
 const PRE_S  = 3;
@@ -99,6 +78,7 @@ function mergeSegs(segs: [number, number][]): [number, number][] {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function GcReviewPage() {
+  const [teams,      setTeams]      = useState<RuntimeTeam[]>(() => teamsFromConfig(DEFAULT_TEAMS));
   const [phase,      setPhase]      = useState<Phase>("setup");
   const [videoFile,  setVideoFile]  = useState<File | null>(null);
   const [videoUrl,   setVideoUrl]   = useState<string | null>(null);
@@ -122,6 +102,10 @@ export default function GcReviewPage() {
     v.currentTime = Math.max(0, videoTs - PRE_S);
     v.play().catch(() => {});
   }
+
+  useEffect(() => {
+    try { setTeams(teamsFromConfig(loadTeamsConfig())); } catch {}
+  }, []);
 
   // Revoke blob URLs on unmount
   useEffect(() => () => { if (resultUrl) URL.revokeObjectURL(resultUrl); }, [resultUrl]);
@@ -172,7 +156,7 @@ export default function GcReviewPage() {
 
   function logEvent(action: typeof ACTIONS[number]) {
     if (!selPlayer) return;
-    const team   = TEAMS.find((t) => t.id === selTeam);
+    const team   = teams.find((t) => t.id === selTeam);
     const player = team?.players.find((p) => p.id === selPlayer);
     if (!team || !player) return;
     const videoTs = videoRef.current?.currentTime ?? 0;
@@ -303,7 +287,7 @@ export default function GcReviewPage() {
 
   // ── Render helpers ───────────────────────────────────────────────────────────
 
-  const currentTeam = TEAMS.find((t) => t.id === selTeam)!;
+  const currentTeam = teams.find((t) => t.id === selTeam)!;
 
   const actionBtn = (
     a: typeof ACTIONS[number],
@@ -446,7 +430,7 @@ export default function GcReviewPage() {
 
         {/* Team toggle */}
         <div className="flex gap-2 px-3 pt-2 shrink-0">
-          {TEAMS.map((t) => (
+          {teams.map((t) => (
             <button
               key={t.id}
               onClick={() => { setSelTeam(t.id); setSelPlayer(null); }}
@@ -497,7 +481,7 @@ export default function GcReviewPage() {
         {/* Recent events feed */}
         <div className="flex-1 overflow-y-auto px-3 pt-2 pb-4">
           {events.slice(0, 10).map((e) => {
-            const team = TEAMS.find((t) => t.id === e.teamId);
+            const team = teams.find((t) => t.id === e.teamId);
             return (
               <div key={e.id} className="flex items-center gap-2 py-1.5 border-b border-white/5 last:border-0">
                 <div className="w-1 h-4 rounded-full shrink-0" style={{ background: team?.color ?? "#6B7280" }} />
@@ -537,7 +521,7 @@ export default function GcReviewPage() {
 
         <div className="flex flex-col gap-1.5">
           {sorted.map((e) => {
-            const team = TEAMS.find((t) => t.id === e.teamId);
+            const team = teams.find((t) => t.id === e.teamId);
             return (
               <div
                 key={e.id}
@@ -691,7 +675,7 @@ export default function GcReviewPage() {
             {[...events]
               .sort((a, b) => a.videoTs - b.videoTs)
               .map((e) => {
-                const team = TEAMS.find((t) => t.id === e.teamId);
+                const team = teams.find((t) => t.id === e.teamId);
                 return (
                   <button
                     key={e.id}

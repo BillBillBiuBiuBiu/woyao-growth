@@ -1,6 +1,13 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
+import {
+  DEFAULT_TEAMS,
+  loadTeamsConfig,
+  teamsFromConfig,
+  type TeamId,
+  type RuntimeTeam,
+} from "@/lib/gc-teams";
 
 const ACTIONS = [
   { label: "2分命中", pts: 2, cat: "2pt" },
@@ -18,34 +25,6 @@ const ACTIONS = [
 ] as const;
 
 type ActionCat = typeof ACTIONS[number]["cat"];
-type TeamId = "home" | "away";
-
-const TEAMS = [
-  {
-    id: "home" as TeamId,
-    name: "PAB篮球",
-    color: "#F97316",
-    players: [
-      { id: "p1", num: "3",  name: "蒋皓博" },
-      { id: "p2", num: "10", name: "王弘涛" },
-      { id: "p3", num: "7",  name: "李逸凡" },
-      { id: "p4", num: "14", name: "张博宇" },
-      { id: "p5", num: "25", name: "陈雨轩" },
-    ],
-  },
-  {
-    id: "away" as TeamId,
-    name: "STB铁骑",
-    color: "#3B82F6",
-    players: [
-      { id: "p6",  num: "25", name: "黄天翔" },
-      { id: "p7",  num: "88", name: "汤艺豪" },
-      { id: "p8",  num: "49", name: "杨光"   },
-      { id: "p9",  num: "0",  name: "范品维" },
-      { id: "p10", num: "97", name: "叶飞"   },
-    ],
-  },
-];
 
 interface GameEvent {
   id: string;
@@ -66,6 +45,7 @@ function fmt(secs: number) {
 }
 
 export default function GcLivePage() {
+  const [teams, setTeams] = useState<RuntimeTeam[]>(() => teamsFromConfig(DEFAULT_TEAMS));
   const [phase, setPhase] = useState<"live" | "postgame">("live");
   const [quarter, setQuarter] = useState(1);
   const [recSecs, setRecSecs] = useState(0);
@@ -75,13 +55,17 @@ export default function GcLivePage() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    try { setTeams(teamsFromConfig(loadTeamsConfig())); } catch {}
+  }, []);
+
+  useEffect(() => {
     timerRef.current = setInterval(() => setRecSecs((s) => s + 1), 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
 
   function logEvent(action: typeof ACTIONS[number]) {
     if (!selPlayer) return;
-    const team = TEAMS.find((t) => t.id === selTeam);
+    const team = teams.find((t) => t.id === selTeam);
     const player = team?.players.find((p) => p.id === selPlayer);
     if (!team || !player) return;
     setEvents((prev) => [
@@ -110,15 +94,15 @@ export default function GcLivePage() {
     away: events.filter((e) => e.teamId === "away").reduce((s, e) => s + e.pts, 0),
   };
 
-  const currentTeam = TEAMS.find((t) => t.id === selTeam)!;
+  const currentTeam = teams.find((t) => t.id === selTeam)!;
 
   // ── POST-GAME SUMMARY ──────────────────────────────────────
   if (phase === "postgame") {
     const winner: TeamId | null =
       score.home > score.away ? "home" : score.away > score.home ? "away" : null;
-    const winnerTeam = TEAMS.find((t) => t.id === winner);
+    const winnerTeam = teams.find((t) => t.id === winner);
 
-    const playerStats = TEAMS.flatMap((t) =>
+    const playerStats = teams.flatMap((t) =>
       t.players.map((p) => {
         const pe = events.filter((e) => e.playerId === p.id);
         return {
@@ -319,7 +303,7 @@ export default function GcLivePage() {
 
       {/* Team toggle */}
       <div className="flex gap-2 px-3 pt-3 shrink-0">
-        {TEAMS.map((t) => (
+        {teams.map((t) => (
           <button
             key={t.id}
             onClick={() => { setSelTeam(t.id); setSelPlayer(null); }}
@@ -409,7 +393,7 @@ export default function GcLivePage() {
           </button>
         </div>
         {events.map((e) => {
-          const team = TEAMS.find((t) => t.id === e.teamId);
+          const team = teams.find((t) => t.id === e.teamId);
           return (
             <div key={e.id} className="flex items-center gap-2 py-1.5 border-b border-white/5 last:border-0">
               <div className="w-1 h-4 rounded-full shrink-0" style={{ background: team?.color ?? "#6B7280" }} />
