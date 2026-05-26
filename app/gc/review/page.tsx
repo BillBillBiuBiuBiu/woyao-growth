@@ -41,8 +41,8 @@ type ReviewCtx =
   | { type: "steal";   stealTeam: TeamId;   videoTs: number };
 
 // Clip buffer: 3s before the event, 5s after
-const PRE_S  = 3;
-const POST_S = 5;
+const PRE_S  = 5;
+const POST_S = 8;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -117,6 +117,7 @@ export default function GcReviewPage() {
   const [tsText,        setTsText]        = useState<string | null>(null);
   const [fileWarn,      setFileWarn]      = useState<string | null>(null);
   const [clipView,      setClipView]      = useState<{ title: string; clips: GameEvent[]; idx: number } | null>(null);
+  const [cloudSaved,    setCloudSaved]    = useState(false);
 
   const isWeChat = typeof navigator !== "undefined" && /MicroMessenger/i.test(navigator.userAgent);
 
@@ -486,7 +487,9 @@ export default function GcReviewPage() {
           note: e.action,
         }))
       );
-      void apiUploadClip(gameId, blob, `${events.length}个打点集锦`, clipName);
+      apiUploadClip(gameId, blob, `${events.length}个打点集锦`, clipName)
+        .then((url) => { if (url) setCloudSaved(true); })
+        .catch(() => {});
 
     } catch (e) {
       if (ffmpegRef.current) {
@@ -1121,7 +1124,7 @@ export default function GcReviewPage() {
             />
           </div>
         </div>
-        <div className="text-xs text-gray-600 text-center">全程本地处理 · 视频不会上传服务器</div>
+        <div className="text-xs text-gray-600 text-center">全程本地生成 · 完成后保存到云端</div>
       </div>
     );
   }
@@ -1160,6 +1163,12 @@ export default function GcReviewPage() {
         <div className="text-4xl mb-2">🎉</div>
         <div className="text-2xl font-black text-white">集锦已生成！</div>
         {statusMsg && <div className="text-sm text-orange-400 mt-1">{statusMsg}</div>}
+        {cloudSaved && (
+          <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full text-xs font-medium"
+            style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>
+            ✅ 已保存到云端 · 可在主页历史记录查看
+          </div>
+        )}
       </div>
 
       {resultUrl && (
