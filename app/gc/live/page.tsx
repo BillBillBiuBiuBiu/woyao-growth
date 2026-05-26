@@ -42,13 +42,14 @@ export interface GameEvent {
   cat: string;
 }
 
-// Unified contextual prompt — one at a time
 type CtxPrompt =
   | { type: "rebound";  shootingTeam: TeamId }
   | { type: "assist";   scoringTeam: TeamId; scorerId: string }
   | { type: "ft_count" }
   | { type: "ft_seq";   total: number; current: number }
   | { type: "steal";    stealTeam: TeamId };
+
+type PlayerRef = { id: string; name: string; num: string };
 
 const TEAM_PLAYER_ID = (teamId: TeamId) => `${teamId}-team`;
 
@@ -74,9 +75,12 @@ export default function GcLivePage() {
   const [recSecs,       setRecSecs]       = useState(0);
   const [events,        setEvents]        = useState<GameEvent[]>([]);
   const [selTeam,       setSelTeam]       = useState<TeamId>("home");
-  const [selPlayer,     setSelPlayer]     = useState<string | null>(null);
   const [ctxPrompt,     setCtxPrompt]     = useState<CtxPrompt | null>(null);
-  const [detailPlayer,  setDetailPlayer]  = useState<string | null>(null); // postgame detail modal
+  // GameChanger-style: action first → player picker
+  const [pendingAction, setPendingAction] = useState<typeof ACTIONS[number] | null>(null);
+  const [pendingTeam,   setPendingTeam]   = useState<TeamId>("home");
+  const [ftShooter,     setFtShooter]     = useState<PlayerRef | null>(null);
+  const [detailPlayer,  setDetailPlayer]  = useState<string | null>(null);
   const [lastFlash,     setLastFlash]     = useState<string | null>(null);
   const [timeouts,      setTimeouts]      = useState<{ home: number; away: number }>({ home: 5, away: 5 });
 
@@ -101,18 +105,10 @@ export default function GcLivePage() {
     };
   }, []);
 
-  // Auto-select "全队" when switching to away team in team mode
-  useEffect(() => {
-    if (selTeam === "away" && awayTrackMode === "team") {
-      setSelPlayer(TEAM_PLAYER_ID("away"));
-    }
-  }, [selTeam, awayTrackMode]);
-
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   function switchToTeam(teamId: TeamId) {
     setSelTeam(teamId);
-    if (!(teamId === "away" && awayTrackMode === "team")) setSelPlayer(null);
   }
 
   function clearCtx() {
@@ -139,7 +135,7 @@ export default function GcLivePage() {
     };
   }
 
-  function resolvePlayer(teamId: TeamId, playerId?: string | null) {
+  function resolvePlayer(teamId: TeamId, playerId?: string | null): PlayerRef | null {
     const isTeamMode = teamId === "away" && awayTrackMode === "team";
     if (isTeamMode) return { id: TEAM_PLAYER_ID(teamId), name: "全队", num: "-" };
     const team = teams.find(t => t.id === teamId);
@@ -147,16 +143,29 @@ export default function GcLivePage() {
     return p ? { id: p.id, name: p.name, num: p.num } : null;
   }
 
-  // ── Event logging ────────────────────────────────────────────────────────────
+  // ── GameChanger-style: action first → player picker ──────────────────────────
 
-  function logEvent(action: typeof ACTIONS[number]) {
-    if (!selPlayer) return;
-    const player = resolvePlayer(selTeam, selPlayer);
-    if (!player) return;
+  function startAction(action: typeof ACTIONS[number]) {
+    // Defensive actions default to the opposing team
+    const inferred: TeamId = (action.cat === "stl" || action.cat === "blk" || action.cat === "dreb")
+      ? (selTeam === "home" ? "away" : "home")
+      : selTeam;
+    setPendingTeam(inferred);
+    setPendingAction(action);
+  }
 
-    setEvents(prev => [makeEvent(selTeam, player.id, player.name, player.num, action), ...prev]);
+  function commitAction(player: PlayerRef | null) {
+    if (!pendingAction) return;
+    const action = pendingAction;
+    const teamId = pendingTeam;
+    const isTeamMode = teamId === "away" && awayTrackMode === "team";
+    const p: PlayerRef = isTeamMode
+      ? { id: TEAM_PLAYER_ID(teamId), name: "全队", num: "-" }
+      : (player ?? { id: `${teamId}-tbd`, name: "未指定", num: "-" });
 
-    // Flash chip
+    setPendingAction(null);
+    setEvents(prev => [makeEvent(teamId, p.id, p.name, p.num, action), ...prev]);
+
     if (flashRef.current) clearTimeout(flashRef.current);
     setLastFlash(action.pts > 0 ? `+${action.pts} ${action.label}` : action.label);
     flashRef.current = setTimeout(() => setLastFlash(null), 1800);
@@ -164,29 +173,31 @@ export default function GcLivePage() {
     clearCtx();
 
     if (action.pts > 0) {
-      setCtxTimed({ type: "assist", scoringTeam: selTeam, scorerId: player.id }, 5000);
-    } else if (["2pt_miss", "3pt_miss", "ft_miss"].includes(action.cat)) {
-      setCtxTimed({ type: "rebound", shootingTeam: selTeam }, 6000);
+      setCtxTimed({ type: "assist", scoringTeam: teamId, scorerId: p.id }, 5000);
+    } else if (["2pt_miss", "3pt_miss"].includes(action.cat)) {
+      setCtxTimed({ type: "rebound", shootingTeam: teamId }, 6000);
     } else if (action.cat === "foul_drawn") {
+      setFtShooter(player); // track who is shooting FT
       setCtxTimed({ type: "ft_count" }, 10000);
     } else if (action.cat === "tov") {
-      const otherTeam: TeamId = selTeam === "home" ? "away" : "home";
+      const otherTeam: TeamId = teamId === "home" ? "away" : "home";
       setCtxTimed({ type: "steal", stealTeam: otherTeam }, 6000);
     }
+
+    // Auto-switch possession on steal or defensive rebound
+    if (action.cat === "stl" || action.cat === "dreb") switchToTeam(teamId);
   }
+
+  // ── Contextual prompt handlers ───────────────────────────────────────────────
 
   function logRebound(type: "oreb" | "dreb") {
     if (!ctxPrompt || ctxPrompt.type !== "rebound") return;
     const shootingTeam = ctxPrompt.shootingTeam;
     clearCtx();
     const rebTeamId: TeamId = type === "oreb" ? shootingTeam : (shootingTeam === "home" ? "away" : "home");
-    const orebPlayer = type === "oreb"
-      ? resolvePlayer(shootingTeam, selPlayer)
-      : null;
-    const player = orebPlayer ?? resolvePlayer(rebTeamId) ?? { id: TEAM_PLAYER_ID(rebTeamId), name: "全队", num: "-" };
+    const player = resolvePlayer(rebTeamId) ?? { id: TEAM_PLAYER_ID(rebTeamId), name: "全队", num: "-" };
     const action = ACTIONS.find(a => a.cat === type)!;
     setEvents(prev => [makeEvent(rebTeamId, player.id, player.name, player.num, action), ...prev]);
-    // Defensive rebound = possession change
     if (type === "dreb") switchToTeam(rebTeamId);
   }
 
@@ -199,7 +210,6 @@ export default function GcLivePage() {
     if (!player) return;
     const action = ACTIONS.find(a => a.cat === "ast")!;
     setEvents(prev => [makeEvent(scoringTeam, player.id, player.name, player.num, action), ...prev]);
-    // After made basket → opponent takes possession
     switchToTeam(otherTeam);
   }
 
@@ -211,17 +221,17 @@ export default function GcLivePage() {
   function logFT(made: boolean) {
     if (!ctxPrompt || ctxPrompt.type !== "ft_seq") return;
     const { total, current } = ctxPrompt;
-    const player = resolvePlayer(selTeam, selPlayer) ?? { id: TEAM_PLAYER_ID(selTeam), name: "全队", num: "-" };
+    const player = ftShooter ?? { id: TEAM_PLAYER_ID(selTeam), name: "全队", num: "-" };
     const action = ACTIONS.find(a => a.cat === (made ? "ft" : "ft_miss"))!;
     setEvents(prev => [makeEvent(selTeam, player.id, player.name, player.num, action), ...prev]);
     if (current >= total) {
       if (made) {
-        // Made last FT → opponent takes possession
         clearCtx();
+        setFtShooter(null);
         const otherTeam: TeamId = selTeam === "home" ? "away" : "home";
         switchToTeam(otherTeam);
       } else {
-        // Missed last FT → rebound expected
+        setFtShooter(null);
         setCtxTimed({ type: "rebound", shootingTeam: selTeam }, 6000);
       }
     } else {
@@ -239,7 +249,6 @@ export default function GcLivePage() {
     if (!p) return;
     const action = ACTIONS.find(a => a.cat === "stl")!;
     setEvents(prev => [makeEvent(stealTeam, p.id, p.name, p.num, action), ...prev]);
-    // Steal = possession change to stealing team
     switchToTeam(stealTeam);
   }
 
@@ -252,7 +261,6 @@ export default function GcLivePage() {
     if (ctxTimerRef.current) { clearTimeout(ctxTimerRef.current); ctxTimerRef.current = null; }
     setCtxPrompt(null);
 
-    // Save session for /gc/review to auto-import
     try {
       const sc = {
         home: events.filter(e => e.teamId === "home").reduce((s, e) => s + e.pts, 0),
@@ -294,7 +302,6 @@ export default function GcLivePage() {
     home: events.filter(e => e.teamId === "home").reduce((s, e) => s + e.pts, 0),
     away: events.filter(e => e.teamId === "away").reduce((s, e) => s + e.pts, 0),
   };
-  const currentTeam = teams.find(t => t.id === selTeam)!;
 
   // ── POST-GAME SUMMARY ────────────────────────────────────────────────────────
 
@@ -303,11 +310,9 @@ export default function GcLivePage() {
       score.home > score.away ? "home" : score.away > score.home ? "away" : null;
     const winnerTeam = teams.find(t => t.id === winner);
 
-    // Build all players that appeared, including synthetic "全队" player
     const allPlayers: { id: string; name: string; num: string; teamId: TeamId; teamColor: string }[] = [];
     teams.forEach(t => {
       t.players.forEach(p => allPlayers.push({ id: p.id, name: p.name, num: p.num, teamId: t.id, teamColor: t.color }));
-      // synthetic team-level player for away in team mode
       if (t.id === "away" && awayTrackMode === "team") {
         allPlayers.push({ id: TEAM_PLAYER_ID("away"), name: "全队", num: "-", teamId: "away", teamColor: t.color });
       }
@@ -324,7 +329,6 @@ export default function GcLivePage() {
           stl:  pe.filter(e => e.cat === "stl").length,
           blk:  pe.filter(e => e.cat === "blk").length,
           tov:  pe.filter(e => e.cat === "tov").length,
-          fts:  pe.filter(e => e.cat === "ft").length,
           pf:   pe.filter(e => e.cat === "foul").length,
           all:  pe,
         };
@@ -341,12 +345,10 @@ export default function GcLivePage() {
         videoTs: e.videoTs,
       }));
 
-    // Player detail modal
     const detailStats = detailPlayer ? playerStats.find(p => p.id === detailPlayer) : null;
 
     return (
       <div className="pb-10">
-        {/* Player detail modal */}
         {detailStats && (
           <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.75)" }}>
             <div className="w-full rounded-t-2xl px-4 pt-5 pb-10 max-h-[80vh] overflow-y-auto" style={{ background: "#1a1d27" }}>
@@ -359,8 +361,6 @@ export default function GcLivePage() {
                 </div>
                 <button onClick={() => setDetailPlayer(null)} className="text-gray-500 text-lg px-2">✕</button>
               </div>
-
-              {/* Summary row */}
               <div className="grid grid-cols-7 gap-1 mb-5">
                 {[["分", detailStats.pts], ["板", detailStats.reb], ["助", detailStats.ast],
                   ["断", detailStats.stl], ["帽", detailStats.blk], ["误", detailStats.tov], ["犯", detailStats.pf]].map(([label, val]) => (
@@ -370,8 +370,6 @@ export default function GcLivePage() {
                   </div>
                 ))}
               </div>
-
-              {/* Event timeline */}
               <div className="text-xs text-gray-500 mb-2">全场事件时间线</div>
               <div className="flex flex-col gap-0">
                 {[...detailStats.all].sort((a, b) => a.videoTs - b.videoTs).map(e => (
@@ -386,26 +384,17 @@ export default function GcLivePage() {
           </div>
         )}
 
-        {/* Final score */}
         <div className="bg-[#1a1d27] border-b border-white/10 px-4 py-5">
           <div className="text-xs text-gray-500 text-center uppercase tracking-wider mb-3">最终比分</div>
           <div className="flex items-center justify-between max-w-xs mx-auto">
             <div className="text-center">
-              <div className="text-xs font-bold text-orange-400 mb-1">
-                {teams.find(t => t.id === "home")?.name ?? "主场"}
-              </div>
-              <div className={`text-5xl font-black ${score.home >= score.away ? "text-orange-400" : "text-gray-500"}`}>
-                {score.home}
-              </div>
+              <div className="text-xs font-bold text-orange-400 mb-1">{teams.find(t => t.id === "home")?.name ?? "主场"}</div>
+              <div className={`text-5xl font-black ${score.home >= score.away ? "text-orange-400" : "text-gray-500"}`}>{score.home}</div>
             </div>
             <div className="text-gray-600 text-2xl font-bold">—</div>
             <div className="text-center">
-              <div className="text-xs font-bold text-blue-400 mb-1">
-                {teams.find(t => t.id === "away")?.name ?? "客场"}
-              </div>
-              <div className={`text-5xl font-black ${score.away >= score.home ? "text-blue-400" : "text-gray-500"}`}>
-                {score.away}
-              </div>
+              <div className="text-xs font-bold text-blue-400 mb-1">{teams.find(t => t.id === "away")?.name ?? "客场"}</div>
+              <div className={`text-5xl font-black ${score.away >= score.home ? "text-blue-400" : "text-gray-500"}`}>{score.away}</div>
             </div>
           </div>
           {winnerTeam && (
@@ -415,40 +404,30 @@ export default function GcLivePage() {
             录制时长 {fmt(recSecs)} · {events.length} 个事件
           </div>
 
-          {/* Quarter breakdown */}
           {events.length > 0 && (() => {
             const maxQ = Math.max(...events.map(e => e.quarter));
             const qs = Array.from({ length: maxQ }, (_, i) => {
               const q = i + 1;
               const qe = events.filter(e => e.quarter === q);
-              return {
-                q,
-                home: qe.filter(e => e.teamId === "home").reduce((s, e) => s + e.pts, 0),
-                away: qe.filter(e => e.teamId === "away").reduce((s, e) => s + e.pts, 0),
-              };
+              return { q, home: qe.filter(e => e.teamId === "home").reduce((s, e) => s + e.pts, 0), away: qe.filter(e => e.teamId === "away").reduce((s, e) => s + e.pts, 0) };
             });
             return (
               <div className="mt-4 pt-3 border-t border-white/10">
-                <div className={`grid gap-2 max-w-xs mx-auto`} style={{ gridTemplateColumns: `repeat(${maxQ}, 1fr)` }}>
-                  {qs.map(({ q, home, away }) => {
-                    const homeWins = home > away;
-                    const awayWins = away > home;
-                    return (
-                      <div key={q} className="text-center bg-white/5 rounded-lg py-2 px-1">
-                        <div className="text-[10px] text-gray-600 mb-1.5">Q{q}</div>
-                        <div className="text-sm font-black" style={{ color: homeWins ? "#F97316" : "#6B7280" }}>{home}</div>
-                        <div className="text-[10px] text-gray-700 my-0.5">—</div>
-                        <div className="text-sm font-black" style={{ color: awayWins ? "#3B82F6" : "#6B7280" }}>{away}</div>
-                      </div>
-                    );
-                  })}
+                <div className="grid gap-2 max-w-xs mx-auto" style={{ gridTemplateColumns: `repeat(${maxQ}, 1fr)` }}>
+                  {qs.map(({ q, home, away }) => (
+                    <div key={q} className="text-center bg-white/5 rounded-lg py-2 px-1">
+                      <div className="text-[10px] text-gray-600 mb-1.5">Q{q}</div>
+                      <div className="text-sm font-black" style={{ color: home > away ? "#F97316" : "#6B7280" }}>{home}</div>
+                      <div className="text-[10px] text-gray-700 my-0.5">—</div>
+                      <div className="text-sm font-black" style={{ color: away > home ? "#3B82F6" : "#6B7280" }}>{away}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             );
           })()}
         </div>
 
-        {/* Auto-generated clips */}
         {clips.length > 0 && (
           <div className="px-4 pt-5 pb-3">
             <div className="text-sm font-bold mb-3">🎬 得分片段 ({clips.length})</div>
@@ -480,7 +459,6 @@ export default function GcLivePage() {
           </div>
         )}
 
-        {/* Player stats table — tap row to see detail */}
         {playerStats.length > 0 && (
           <div className="px-4 pb-4">
             <div className="text-sm font-bold mb-3">📊 球员数据 <span className="text-xs text-gray-600 font-normal">（点击查看详情）</span></div>
@@ -489,19 +467,13 @@ export default function GcLivePage() {
                 <thead>
                   <tr className="bg-white/5 border-b border-white/10">
                     {["球员", "分", "板", "助", "断", "帽", "误", "犯"].map((h, i) => (
-                      <th key={h} className={`py-2 font-medium text-gray-400 ${i === 0 ? "text-left px-3" : "text-center px-1.5"}`}>
-                        {h}
-                      </th>
+                      <th key={h} className={`py-2 font-medium text-gray-400 ${i === 0 ? "text-left px-3" : "text-center px-1.5"}`}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {playerStats.map(p => (
-                    <tr
-                      key={p.id}
-                      className="border-b border-white/5 last:border-0 active:bg-white/5 cursor-pointer"
-                      onClick={() => setDetailPlayer(p.id)}
-                    >
+                    <tr key={p.id} className="border-b border-white/5 last:border-0 active:bg-white/5 cursor-pointer" onClick={() => setDetailPlayer(p.id)}>
                       <td className="px-3 py-2.5">
                         <div className="flex items-center gap-1.5">
                           <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: p.teamColor }} />
@@ -548,14 +520,22 @@ export default function GcLivePage() {
 
   // ── LIVE SCOREKEEPING ────────────────────────────────────────────────────────
 
+  const scoring = ACTIONS.filter(a => a.pts > 0);
+  const misses  = ACTIONS.filter(a => a.pts === 0 && a.cat.endsWith("_miss"));
+  const stats   = ACTIONS.filter(a => a.pts === 0 && !a.cat.endsWith("_miss"));
+
+  // Player picker team (used inside picker sheet)
+  const pickerTeam = teams.find(t => t.id === pendingTeam)!;
+
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Quarter + end button */}
+      {/* Quarter + end */}
       <div className="bg-[#1a1d27] border-b border-white/10 px-3 py-2 flex items-center gap-1.5 shrink-0">
         {[1, 2, 3, 4].map(q => (
           <button key={q} onClick={() => setQuarter(q)}
-            className={`px-3 py-1 rounded-md text-xs font-bold transition-colors ${quarter === q ? "bg-orange-500 text-white" : "text-gray-500"}`}
-          >Q{q}</button>
+            className={`px-3 py-1 rounded-md text-xs font-bold transition-colors ${quarter === q ? "bg-orange-500 text-white" : "text-gray-500"}`}>
+            Q{q}
+          </button>
         ))}
         <div className="flex-1" />
         <button onClick={endGame} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 text-white">
@@ -566,13 +546,8 @@ export default function GcLivePage() {
       {/* Scoreboard */}
       <div className="bg-[#1a1d27] border-b border-white/10 px-4 py-3 flex items-center justify-between shrink-0 relative">
         <div className="flex-1 text-center">
-          <div className="text-xs font-bold text-orange-400 mb-1">
-            {teams.find(t => t.id === "home")?.name ?? "主场"}
-          </div>
-          <div className={`text-4xl font-black transition-all ${score.home >= score.away ? "text-orange-400" : "text-gray-500"}`}>
-            {score.home}
-          </div>
-          {/* Timeout dots — tap to use */}
+          <div className="text-xs font-bold text-orange-400 mb-1">{teams.find(t => t.id === "home")?.name ?? "主场"}</div>
+          <div className={`text-4xl font-black transition-all ${score.home >= score.away ? "text-orange-400" : "text-gray-500"}`}>{score.home}</div>
           <div className="flex justify-center gap-1 mt-1.5">
             {Array.from({ length: 5 }, (_, i) => (
               <button key={i} onClick={() => useTimeout("home")}
@@ -587,13 +562,8 @@ export default function GcLivePage() {
           <div className="w-2 h-2 rounded-full bg-red-500 mx-auto mt-1 animate-pulse" />
         </div>
         <div className="flex-1 text-center">
-          <div className="text-xs font-bold text-blue-400 mb-1">
-            {teams.find(t => t.id === "away")?.name ?? "客场"}
-          </div>
-          <div className={`text-4xl font-black transition-all ${score.away > score.home ? "text-blue-400" : "text-gray-500"}`}>
-            {score.away}
-          </div>
-          {/* Timeout dots — tap to use */}
+          <div className="text-xs font-bold text-blue-400 mb-1">{teams.find(t => t.id === "away")?.name ?? "客场"}</div>
+          <div className={`text-4xl font-black transition-all ${score.away > score.home ? "text-blue-400" : "text-gray-500"}`}>{score.away}</div>
           <div className="flex justify-center gap-1 mt-1.5">
             {Array.from({ length: 5 }, (_, i) => (
               <button key={i} onClick={() => useTimeout("away")}
@@ -602,7 +572,6 @@ export default function GcLivePage() {
             ))}
           </div>
         </div>
-        {/* Last-action flash */}
         {lastFlash && (
           <div className="absolute bottom-1 left-1/2 -translate-x-1/2 pointer-events-none">
             <div className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 whitespace-nowrap">
@@ -612,232 +581,53 @@ export default function GcLivePage() {
         )}
       </div>
 
-      {/* Team toggle */}
-      <div className="flex gap-2 px-3 pt-3 shrink-0">
+      {/* Team context indicator */}
+      <div className="flex gap-2 px-3 pt-2.5 shrink-0">
         {teams.map(t => (
-          <button key={t.id}
-            onClick={() => { setSelTeam(t.id); if (!(t.id === "away" && awayTrackMode === "team")) setSelPlayer(null); }}
+          <button key={t.id} onClick={() => setSelTeam(t.id)}
             className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors"
-            style={selTeam === t.id ? { background: t.color, color: "#fff" } : { background: "rgba(255,255,255,0.06)", color: "#6B7280" }}
-          >
+            style={selTeam === t.id ? { background: t.color, color: "#fff" } : { background: "rgba(255,255,255,0.06)", color: "#6B7280" }}>
             {t.name}
           </button>
         ))}
       </div>
-
-      {/* Player chips */}
-      <div className="flex flex-wrap gap-2 px-3 pt-2 pb-0.5 shrink-0">
-        {selTeam === "away" && awayTrackMode === "team" ? (
-          <button className="px-3 py-1.5 rounded-lg text-xs font-bold border"
-            style={{ background: currentTeam.color, borderColor: currentTeam.color, color: "#fff" }}>
-            全队（整队记录）
-          </button>
-        ) : (
-          currentTeam.players.map(p => {
-            const active = selPlayer === p.id;
-            const fouls = events.filter(e => e.playerId === p.id && e.cat === "foul").length;
-            const inTrouble = fouls >= 3;
-            const fouledOut = fouls >= 5;
-            return (
-              <button key={p.id} onClick={() => setSelPlayer(active ? null : p.id)}
-                className="relative px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors"
-                style={active
-                  ? { background: currentTeam.color, borderColor: currentTeam.color, color: "#fff" }
-                  : fouledOut
-                    ? { background: "rgba(107,114,128,0.1)", borderColor: "rgba(107,114,128,0.3)", color: "#4B5563" }
-                    : { background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#6B7280" }}
-              >
-                #{p.num} {p.name}
-                {fouls > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[9px] font-black flex items-center justify-center"
-                    style={{ background: fouledOut ? "#4B5563" : inTrouble ? "#EF4444" : "#F97316", color: "#fff" }}>
-                    {fouls}
-                  </span>
-                )}
-              </button>
-            );
-          })
-        )}
+      <div className="px-3 pt-1 pb-0.5 shrink-0">
+        <div className="text-[10px] text-gray-700 text-center">点击动作按钮，再选球员 → 快速记录</div>
       </div>
 
-      {/* Selected player running stats */}
-      {selPlayer && (() => {
-        const pe = events.filter(e => e.playerId === selPlayer);
-        if (pe.length === 0) return null;
-        const pts = pe.reduce((s, e) => s + e.pts, 0);
-        const reb = pe.filter(e => e.cat === "oreb" || e.cat === "dreb").length;
-        const ast = pe.filter(e => e.cat === "ast").length;
-        return (
-          <div className="flex items-center gap-3 px-4 py-1 shrink-0">
-            <span className="text-xs text-gray-600">本场：</span>
-            <span className="text-xs text-orange-400 font-bold">{pts}分</span>
-            <span className="text-xs text-gray-400">{reb}板</span>
-            <span className="text-xs text-gray-400">{ast}助</span>
-          </div>
-        );
-      })()}
-
-      {/* Action buttons — 3-tier hierarchy */}
-      {(() => {
-        const disabled = !selPlayer;
-        const btn = (a: typeof ACTIONS[number], py: string, fontSize: string, activeBg: string, activeColor: string) => (
-          <button key={a.cat} onClick={() => logEvent(a)} disabled={disabled}
-            className={`${py} rounded-xl font-bold leading-tight transition-colors ${fontSize}`}
-            style={disabled ? { background: "rgba(255,255,255,0.03)", color: "#374151" } : { background: activeBg, color: activeColor }}
-          >
+      {/* Action buttons — always active, no player pre-selection needed */}
+      <div className="grid grid-cols-3 gap-1.5 px-3 pt-1.5 shrink-0">
+        {scoring.map(a => (
+          <button key={a.cat} onClick={() => startAction(a)}
+            className="py-5 rounded-xl font-bold text-sm leading-tight active:scale-95 transition-transform"
+            style={{ background: "rgba(249,115,22,0.90)", color: "#fff" }}>
             {a.label}
           </button>
-        );
-        const scoring = ACTIONS.filter(a => a.pts > 0);
-        const misses  = ACTIONS.filter(a => a.pts === 0 && a.cat.endsWith("_miss"));
-        const stats   = ACTIONS.filter(a => a.pts === 0 && !a.cat.endsWith("_miss"));
-        return (
-          <>
-            <div className="grid grid-cols-3 gap-1.5 px-3 pt-2 shrink-0">
-              {scoring.map(a => btn(a, "py-5", "text-sm", "rgba(249,115,22,0.90)", "#fff"))}
-            </div>
-            <div className="grid grid-cols-3 gap-1.5 px-3 pt-1.5 shrink-0">
-              {misses.map(a => btn(a, "py-3", "text-xs", "rgba(239,68,68,0.18)", "#F87171"))}
-            </div>
-            <div className="grid grid-cols-3 gap-1.5 px-3 pt-1.5 shrink-0">
-              {stats.map(a => btn(a, "py-2.5", "text-xs", "rgba(255,255,255,0.10)", "#D1D5DB"))}
-            </div>
-          </>
-        );
-      })()}
-
-      {/* Contextual prompt overlay */}
-      {ctxPrompt !== null && (
-        <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.65)" }}>
-          <div className="w-full rounded-t-2xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
-
-            {/* REBOUND */}
-            {ctxPrompt.type === "rebound" && (<>
-              <div className="text-xs text-gray-400 text-center mb-4 font-medium">谁抢到篮板？</div>
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <button onClick={() => logRebound("oreb")}
-                  className="py-5 rounded-xl flex flex-col items-center gap-1 active:scale-95 transition-transform"
-                  style={{ background: "rgba(249,115,22,0.20)" }}>
-                  <span className="text-2xl">🔄</span>
-                  <span className="text-sm font-bold text-orange-400">进攻篮板</span>
-                  <span className="text-xs text-orange-500/70">己方抢到</span>
-                </button>
-                <button onClick={() => logRebound("dreb")}
-                  className="py-5 rounded-xl flex flex-col items-center gap-1 active:scale-95 transition-transform"
-                  style={{ background: "rgba(59,130,246,0.20)" }}>
-                  <span className="text-2xl">🛡️</span>
-                  <span className="text-sm font-bold text-blue-400">防守篮板</span>
-                  <span className="text-xs text-blue-500/70">对方抢到</span>
-                </button>
-              </div>
-              <button onClick={clearCtx} className="w-full text-xs text-gray-600 py-2 text-center">跳过</button>
-            </>)}
-
-            {/* ASSIST */}
-            {ctxPrompt.type === "assist" && (<>
-              <div className="text-xs text-gray-400 text-center mb-3 font-medium">有助攻？</div>
-              <div className="flex flex-wrap gap-2 justify-center mb-3">
-                {(() => {
-                  const team = teams.find(t => t.id === ctxPrompt.scoringTeam);
-                  return team?.players
-                    .filter(p => p.id !== ctxPrompt.scorerId)
-                    .map(p => (
-                      <button key={p.id} onClick={() => logAssist(p.id)}
-                        className="px-3 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform"
-                        style={{ background: `${team.color}33`, color: team.color }}>
-                        #{p.num} {p.name}
-                      </button>
-                    ));
-                })()}
-              </div>
-              <button onClick={() => {
-                const other: TeamId = ctxPrompt.scoringTeam === "home" ? "away" : "home";
-                clearCtx();
-                switchToTeam(other);
-              }} className="w-full text-xs text-gray-600 py-2 text-center">无助攻</button>
-            </>)}
-
-            {/* FT COUNT */}
-            {ctxPrompt.type === "ft_count" && (<>
-              <div className="text-xs text-gray-400 text-center mb-4 font-medium">罚球几次？</div>
-              <div className="grid grid-cols-3 gap-3 mb-3">
-                {([1, 2, 3] as const).map(n => (
-                  <button key={n} onClick={() => selectFTCount(n)}
-                    className="py-4 rounded-xl text-lg font-black active:scale-95 transition-transform"
-                    style={{ background: "rgba(249,115,22,0.18)", color: "#F97316" }}>
-                    {n}次
-                  </button>
-                ))}
-              </div>
-              <button onClick={clearCtx} className="w-full text-xs text-gray-600 py-2 text-center">跳过</button>
-            </>)}
-
-            {/* FT SEQUENCE */}
-            {ctxPrompt.type === "ft_seq" && (<>
-              <div className="text-xs text-gray-400 text-center mb-1 font-medium">
-                第 {ctxPrompt.current}/{ctxPrompt.total} 次罚球
-              </div>
-              <div className="w-full h-1 bg-white/10 rounded-full mb-4">
-                <div className="h-1 bg-orange-500 rounded-full transition-all"
-                  style={{ width: `${((ctxPrompt.current - 1) / ctxPrompt.total) * 100}%` }} />
-              </div>
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <button onClick={() => logFT(true)}
-                  className="py-5 rounded-xl flex flex-col items-center gap-1 active:scale-95 transition-transform"
-                  style={{ background: "rgba(34,197,94,0.20)" }}>
-                  <span className="text-2xl">✅</span>
-                  <span className="text-sm font-bold text-green-400">命中</span>
-                </button>
-                <button onClick={() => logFT(false)}
-                  className="py-5 rounded-xl flex flex-col items-center gap-1 active:scale-95 transition-transform"
-                  style={{ background: "rgba(239,68,68,0.18)" }}>
-                  <span className="text-2xl">❌</span>
-                  <span className="text-sm font-bold text-red-400">不中</span>
-                </button>
-              </div>
-              <button onClick={clearCtx} className="w-full text-xs text-gray-600 py-2 text-center">中止记录</button>
-            </>)}
-
-            {/* STEAL */}
-            {ctxPrompt.type === "steal" && (() => {
-              const stealTeam = teams.find(t => t.id === ctxPrompt.stealTeam);
-              const isTeamMode = ctxPrompt.stealTeam === "away" && awayTrackMode === "team";
-              return (<>
-                <div className="text-xs text-gray-400 text-center mb-3 font-medium">
-                  {stealTeam?.name ?? "对方"} 谁抢断了？
-                </div>
-                <div className="flex flex-wrap gap-2 justify-center mb-3">
-                  {isTeamMode ? (
-                    <button onClick={() => logSteal()}
-                      className="px-4 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition-transform"
-                      style={{ background: `${stealTeam?.color ?? "#3B82F6"}33`, color: stealTeam?.color ?? "#60A5FA" }}>
-                      全队
-                    </button>
-                  ) : (
-                    stealTeam?.players.map(p => (
-                      <button key={p.id} onClick={() => logSteal(p.id)}
-                        className="px-3 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform"
-                        style={{ background: `${stealTeam.color}33`, color: stealTeam.color }}>
-                        #{p.num} {p.name}
-                      </button>
-                    ))
-                  )}
-                </div>
-                <button onClick={clearCtx} className="w-full text-xs text-gray-600 py-2 text-center">无抢断</button>
-              </>);
-            })()}
-
-          </div>
-        </div>
-      )}
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-1.5 px-3 pt-1.5 shrink-0">
+        {misses.map(a => (
+          <button key={a.cat} onClick={() => startAction(a)}
+            className="py-3 rounded-xl font-bold text-xs leading-tight active:scale-95 transition-transform"
+            style={{ background: "rgba(239,68,68,0.18)", color: "#F87171" }}>
+            {a.label}
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-1.5 px-3 pt-1.5 shrink-0">
+        {stats.map(a => (
+          <button key={a.cat} onClick={() => startAction(a)}
+            className="py-2.5 rounded-xl font-bold text-xs leading-tight active:scale-95 transition-transform"
+            style={{ background: "rgba(255,255,255,0.10)", color: "#D1D5DB" }}>
+            {a.label}
+          </button>
+        ))}
+      </div>
 
       {/* Event feed */}
       <div className="flex-1 overflow-y-auto px-3 pt-3 pb-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-gray-600">
-            事件记录 ({events.length})
-            {!selPlayer && events.length === 0 && <span className="ml-1.5 text-gray-700">← 先选择球员</span>}
-          </span>
+          <span className="text-xs text-gray-600">事件记录 ({events.length})</span>
           <button
             onClick={() => setEvents(prev => prev.slice(1))}
             disabled={events.length === 0}
@@ -879,6 +669,204 @@ export default function GcLivePage() {
           );
         })}
       </div>
+
+      {/* ── Player picker sheet (GameChanger-style) ────────────────────────────── */}
+      {pendingAction !== null && (
+        <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.72)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setPendingAction(null); }}>
+          <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+            {/* Drag handle */}
+            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
+
+            {/* Action title */}
+            <div className="text-center mb-4">
+              <div className="text-base font-black text-white">{pendingAction.label}</div>
+              <div className="text-xs text-gray-500 mt-0.5">谁做了这个动作？</div>
+            </div>
+
+            {/* Team toggle inside picker */}
+            <div className="flex gap-2 mb-4">
+              {teams.map(t => (
+                <button key={t.id} onClick={() => setPendingTeam(t.id)}
+                  className="flex-1 py-1.5 rounded-lg text-xs font-bold"
+                  style={pendingTeam === t.id
+                    ? { background: t.color, color: "#fff" }
+                    : { background: "rgba(255,255,255,0.06)", color: "#6B7280" }}>
+                  {t.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Player grid */}
+            {pendingTeam === "away" && awayTrackMode === "team" ? (
+              <button
+                onClick={() => commitAction({ id: TEAM_PLAYER_ID("away"), name: "全队", num: "-" })}
+                className="w-full py-6 rounded-2xl mb-3 active:scale-95 transition-transform"
+                style={{ background: "rgba(59,130,246,0.20)" }}>
+                <div className="text-xl font-black text-blue-400">全队（整队记录）</div>
+              </button>
+            ) : (
+              <div className="grid grid-cols-3 gap-2.5 mb-4">
+                {pickerTeam?.players.map(p => {
+                  const fouls = events.filter(e => e.playerId === p.id && e.cat === "foul").length;
+                  const inTrouble = fouls >= 3;
+                  const fouledOut = fouls >= 5;
+                  return (
+                    <button key={p.id}
+                      onClick={() => commitAction(p)}
+                      disabled={fouledOut}
+                      className="rounded-2xl py-5 flex flex-col items-center gap-1 active:scale-95 transition-transform relative"
+                      style={{
+                        background: fouledOut ? "rgba(107,114,128,0.08)" : "rgba(255,255,255,0.07)",
+                        opacity: fouledOut ? 0.45 : 1,
+                      }}>
+                      <span className={`text-2xl font-black ${fouledOut ? "text-gray-600" : "text-white"}`}>{p.num}</span>
+                      <span className="text-xs text-gray-500 mt-0.5">{p.name}</span>
+                      {fouls > 0 && (
+                        <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full text-[9px] font-black flex items-center justify-center"
+                          style={{ background: fouledOut ? "#4B5563" : inTrouble ? "#EF4444" : "#F97316", color: "#fff" }}>
+                          {fouls}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Assign Later + Cancel */}
+            <button onClick={() => commitAction(null)}
+              className="w-full py-3 rounded-xl border border-white/15 text-sm text-gray-400 mb-2">
+              稍后指定
+            </button>
+            <button onClick={() => setPendingAction(null)}
+              className="w-full py-2 text-xs text-gray-700">
+              取消
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Contextual prompt overlay ─────────────────────────────────────────── */}
+      {ctxPrompt !== null && pendingAction === null && (
+        <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.65)" }}>
+          <div className="w-full rounded-t-2xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+
+            {ctxPrompt.type === "rebound" && (<>
+              <div className="text-xs text-gray-400 text-center mb-4 font-medium">谁抢到篮板？</div>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <button onClick={() => logRebound("oreb")}
+                  className="py-5 rounded-xl flex flex-col items-center gap-1 active:scale-95 transition-transform"
+                  style={{ background: "rgba(249,115,22,0.20)" }}>
+                  <span className="text-2xl">🔄</span>
+                  <span className="text-sm font-bold text-orange-400">进攻篮板</span>
+                  <span className="text-xs text-orange-500/70">己方抢到</span>
+                </button>
+                <button onClick={() => logRebound("dreb")}
+                  className="py-5 rounded-xl flex flex-col items-center gap-1 active:scale-95 transition-transform"
+                  style={{ background: "rgba(59,130,246,0.20)" }}>
+                  <span className="text-2xl">🛡️</span>
+                  <span className="text-sm font-bold text-blue-400">防守篮板</span>
+                  <span className="text-xs text-blue-500/70">对方抢到</span>
+                </button>
+              </div>
+              <button onClick={clearCtx} className="w-full text-xs text-gray-600 py-2 text-center">跳过</button>
+            </>)}
+
+            {ctxPrompt.type === "assist" && (<>
+              <div className="text-xs text-gray-400 text-center mb-3 font-medium">有助攻？</div>
+              <div className="flex flex-wrap gap-2 justify-center mb-3">
+                {(() => {
+                  const team = teams.find(t => t.id === ctxPrompt.scoringTeam);
+                  return team?.players
+                    .filter(p => p.id !== ctxPrompt.scorerId)
+                    .map(p => (
+                      <button key={p.id} onClick={() => logAssist(p.id)}
+                        className="px-3 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform"
+                        style={{ background: `${team.color}33`, color: team.color }}>
+                        #{p.num} {p.name}
+                      </button>
+                    ));
+                })()}
+              </div>
+              <button onClick={() => {
+                const other: TeamId = ctxPrompt.scoringTeam === "home" ? "away" : "home";
+                clearCtx();
+                switchToTeam(other);
+              }} className="w-full text-xs text-gray-600 py-2 text-center">无助攻</button>
+            </>)}
+
+            {ctxPrompt.type === "ft_count" && (<>
+              <div className="text-xs text-gray-400 text-center mb-4 font-medium">罚球几次？</div>
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                {([1, 2, 3] as const).map(n => (
+                  <button key={n} onClick={() => selectFTCount(n)}
+                    className="py-4 rounded-xl text-lg font-black active:scale-95 transition-transform"
+                    style={{ background: "rgba(249,115,22,0.18)", color: "#F97316" }}>
+                    {n}次
+                  </button>
+                ))}
+              </div>
+              <button onClick={clearCtx} className="w-full text-xs text-gray-600 py-2 text-center">跳过</button>
+            </>)}
+
+            {ctxPrompt.type === "ft_seq" && (<>
+              <div className="text-xs text-gray-400 text-center mb-1 font-medium">
+                第 {ctxPrompt.current}/{ctxPrompt.total} 次罚球
+                {ftShooter && ftShooter.num !== "-" && <span className="text-orange-400 ml-1">#{ftShooter.num} {ftShooter.name}</span>}
+              </div>
+              <div className="w-full h-1 bg-white/10 rounded-full mb-4">
+                <div className="h-1 bg-orange-500 rounded-full transition-all"
+                  style={{ width: `${((ctxPrompt.current - 1) / ctxPrompt.total) * 100}%` }} />
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <button onClick={() => logFT(true)}
+                  className="py-5 rounded-xl flex flex-col items-center gap-1 active:scale-95 transition-transform"
+                  style={{ background: "rgba(34,197,94,0.20)" }}>
+                  <span className="text-2xl">✅</span>
+                  <span className="text-sm font-bold text-green-400">命中</span>
+                </button>
+                <button onClick={() => logFT(false)}
+                  className="py-5 rounded-xl flex flex-col items-center gap-1 active:scale-95 transition-transform"
+                  style={{ background: "rgba(239,68,68,0.18)" }}>
+                  <span className="text-2xl">❌</span>
+                  <span className="text-sm font-bold text-red-400">不中</span>
+                </button>
+              </div>
+              <button onClick={clearCtx} className="w-full text-xs text-gray-600 py-2 text-center">中止记录</button>
+            </>)}
+
+            {ctxPrompt.type === "steal" && (() => {
+              const stealTeam = teams.find(t => t.id === ctxPrompt.stealTeam);
+              const isTeamMode = ctxPrompt.stealTeam === "away" && awayTrackMode === "team";
+              return (<>
+                <div className="text-xs text-gray-400 text-center mb-3 font-medium">
+                  {stealTeam?.name ?? "对方"} 谁抢断了？
+                </div>
+                <div className="flex flex-wrap gap-2 justify-center mb-3">
+                  {isTeamMode ? (
+                    <button onClick={() => logSteal()}
+                      className="px-4 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition-transform"
+                      style={{ background: `${stealTeam?.color ?? "#3B82F6"}33`, color: stealTeam?.color ?? "#60A5FA" }}>
+                      全队
+                    </button>
+                  ) : (
+                    stealTeam?.players.map(p => (
+                      <button key={p.id} onClick={() => logSteal(p.id)}
+                        className="px-3 py-2 rounded-xl text-sm font-bold active:scale-95 transition-transform"
+                        style={{ background: `${stealTeam.color}33`, color: stealTeam.color }}>
+                        #{p.num} {p.name}
+                      </button>
+                    ))
+                  )}
+                </div>
+                <button onClick={clearCtx} className="w-full text-xs text-gray-600 py-2 text-center">无抢断</button>
+              </>);
+            })()}
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }
