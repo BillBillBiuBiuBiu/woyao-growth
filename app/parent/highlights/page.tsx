@@ -438,6 +438,7 @@ export default function HighlightsPage() {
   const [progress,     setProgress]     = useState(0);
   const [statusMsg,    setStatusMsg]    = useState("");
   const [resultUrl,    setResultUrl]    = useState<string|null>(null);
+  const [resultBlob,   setResultBlob]   = useState<Blob|null>(null);
   const [resultName,   setResultName]   = useState("highlight.mp4");
   const [error,        setError]        = useState<string|null>(null);
   const [feedbackRating, setFeedbackRating] = useState<number>(0);
@@ -512,7 +513,7 @@ export default function HighlightsPage() {
 
   const run = useCallback(async () => {
     if (!videoFile||!photoFile) return;
-    setError(null); setResultUrl(null);
+    setError(null); setResultUrl(null); setResultBlob(null);
     setFeedbackRating(0); setFeedbackTypes([]); setFeedbackDone(false);
 
     try {
@@ -822,6 +823,7 @@ export default function HighlightsPage() {
       await ff.deleteFile("input.mp4"); await ff.deleteFile("highlight.mp4");
       if (hasBgm) { try { await ff.deleteFile(bgmFile); } catch {} }
 
+      setResultBlob(blob);
       setResultUrl(URL.createObjectURL(blob));
       setResultName(videoFile.name.replace(/\.[^.]+$/,"")+"_highlight.mp4");
       setStage("done"); setProgress(100);
@@ -958,11 +960,33 @@ export default function HighlightsPage() {
           <div className="text-sm font-bold text-gray-800">🎉 集锦已生成！</div>
           {statusMsg && <div className="text-xs text-orange-500 -mt-1">{statusMsg}</div>}
           <video src={resultUrl} controls playsInline className="w-full rounded-xl bg-black" style={{maxHeight:280}}/>
-          <a href={resultUrl} download={resultName} className="w-full py-3 rounded-xl bg-orange-500 text-white text-sm font-bold text-center block">下载集锦视频</a>
+          {resultBlob && !isWeChat && "share" in navigator && (
+            <button
+              onClick={async () => {
+                try {
+                  const file = new File([resultBlob], resultName, { type: "video/mp4" });
+                  if (navigator.canShare?.({ files: [file] })) {
+                    await navigator.share({ files: [file], title: "精彩集锦" });
+                  }
+                } catch (e) {
+                  if (e instanceof Error && e.name !== "AbortError") {
+                    // silent fallback — download button remains available
+                  }
+                }
+              }}
+              className="w-full py-3 rounded-xl bg-orange-500 text-white text-sm font-bold text-center active:scale-95 transition-transform"
+            >
+              📤 分享集锦视频
+            </button>
+          )}
+          <a href={resultUrl} download={resultName}
+            className={`w-full py-3 rounded-xl text-sm font-bold text-center block ${resultBlob && !isWeChat && "share" in navigator ? "border border-gray-200 text-gray-600" : "bg-orange-500 text-white"}`}>
+            ⬇️ 下载集锦视频
+          </a>
           {isWeChat && (
             <div className="text-xs text-gray-400 text-center -mt-1">微信用户：长按上方视频 → 保存到相册</div>
           )}
-          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);}} className="text-sm text-gray-400 text-center">重新制作</button>
+          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);}} className="text-sm text-gray-400 text-center">重新制作</button>
           <Link href={`/parent/profile/${mockStudent.id}`} className="w-full py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-bold text-center block active:scale-95 transition-transform">
             📊 查看孩子的成长档案
           </Link>
