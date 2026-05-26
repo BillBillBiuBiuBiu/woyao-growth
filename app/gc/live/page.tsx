@@ -86,6 +86,7 @@ export default function GcLivePage() {
   const [shareText,     setShareText]     = useState<string | null>(null);
   const [copyToast,     setCopyToast]     = useState(false);
   const [endConfirm,    setEndConfirm]    = useState(false);
+  const [reassignEvent, setReassignEvent] = useState<GameEvent | null>(null);
 
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
   const ctxTimerRef = useRef<ReturnType<typeof setTimeout>  | null>(null);
@@ -772,17 +773,24 @@ export default function GcLivePage() {
         {events.map(e => {
           const team = teams.find(t => t.id === e.teamId);
           const evtColor = actionColor(e.cat, e.pts);
+          const isUnassigned = e.playerName === "未指定";
           return (
-            <div key={e.id} className="flex items-center gap-2 py-1.5 border-b border-white/5 last:border-0">
+            <div key={e.id}
+              className={`flex items-center gap-2 py-1.5 border-b border-white/5 last:border-0 ${isUnassigned ? "cursor-pointer rounded active:bg-white/5" : ""}`}
+              onClick={isUnassigned ? () => setReassignEvent(e) : undefined}
+            >
               <div className="w-1 h-4 rounded-full shrink-0" style={{ background: team?.color ?? "#6B7280" }} />
               <span className="text-xs font-mono text-gray-500 shrink-0 w-10">{fmt(e.videoTs)}</span>
               <span className="flex-1 text-xs truncate">
-                <span className="text-gray-400">{e.playerNum !== "-" ? `#${e.playerNum} ` : ""}{e.playerName} </span>
+                <span className={isUnassigned ? "text-orange-400 font-bold" : "text-gray-400"}>
+                  {e.playerNum !== "-" ? `#${e.playerNum} ` : ""}
+                  {isUnassigned ? "未指定 →" : e.playerName}{" "}
+                </span>
                 <span style={{ color: evtColor }}>{e.action}</span>
               </span>
               {e.pts > 0 && <span className="text-xs font-bold text-orange-400 shrink-0">+{e.pts}</span>}
               <button
-                onClick={() => setEvents(prev => prev.filter(x => x.id !== e.id))}
+                onClick={(ev) => { ev.stopPropagation(); setEvents(prev => prev.filter(x => x.id !== e.id)); }}
                 className="text-gray-700 hover:text-red-400 active:text-red-400 text-xs shrink-0 w-5 text-center"
               >✕</button>
             </div>
@@ -866,6 +874,52 @@ export default function GcLivePage() {
           </div>
         </div>
       )}
+
+      {/* ── Reassign "未指定" event overlay ────────────────────────────────────── */}
+      {reassignEvent !== null && (() => {
+        const rTeam = teams.find(t => t.id === reassignEvent.teamId)!;
+        const isTeamMode = reassignEvent.teamId === "away" && awayTrackMode === "team";
+        function doReassign(player: PlayerRef) {
+          setEvents(prev => prev.map(ev => ev.id === reassignEvent!.id
+            ? { ...ev, playerId: player.id, playerName: player.name, playerNum: player.num }
+            : ev));
+          setReassignEvent(null);
+        }
+        return (
+          <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.72)" }}
+            onClick={(ev) => { if (ev.target === ev.currentTarget) setReassignEvent(null); }}>
+            <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+              <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
+              <div className="text-center mb-4">
+                <div className="text-base font-black text-white">补录归属</div>
+                <div className="text-xs text-gray-500 mt-0.5">{reassignEvent.action} · {rTeam?.name}</div>
+              </div>
+              {isTeamMode ? (
+                <button onClick={() => doReassign({ id: TEAM_PLAYER_ID("away"), name: "全队", num: "-" })}
+                  className="w-full py-6 rounded-2xl mb-3 active:scale-95 transition-transform"
+                  style={{ background: "rgba(59,130,246,0.20)" }}>
+                  <div className="text-xl font-black text-blue-400">全队（整队记录）</div>
+                </button>
+              ) : (
+                <div className="grid grid-cols-3 gap-2.5 mb-4">
+                  {rTeam?.players.map(p => (
+                    <button key={p.id} onClick={() => doReassign(p)}
+                      className="rounded-2xl py-5 flex flex-col items-center gap-1 active:scale-95 transition-transform"
+                      style={{ background: "rgba(255,255,255,0.07)" }}>
+                      <span className="text-2xl font-black text-white">{p.num}</span>
+                      <span className="text-xs text-gray-500 mt-0.5">{p.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button onClick={() => setReassignEvent(null)}
+                className="w-full py-2 text-xs text-gray-700">
+                取消
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Contextual prompt overlay ─────────────────────────────────────────── */}
       {ctxPrompt !== null && pendingAction === null && (
