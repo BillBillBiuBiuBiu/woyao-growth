@@ -936,6 +936,23 @@ export default function GcLivePage() {
             {/* Drag handle */}
             <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
 
+            {/* Mini scoreboard */}
+            <div className="flex items-center justify-center gap-2 mb-3 text-xs">
+              {(() => {
+                const ht = teams.find(t => t.id === "home");
+                const at = teams.find(t => t.id === "away");
+                return (
+                  <>
+                    <span className="font-bold" style={{ color: ht?.color ?? "#F97316" }}>{ht?.name ?? "主场"}</span>
+                    <span className="font-black text-base" style={{ color: ht?.color ?? "#F97316" }}>{score.home}</span>
+                    <span className="text-gray-600 mx-0.5">—</span>
+                    <span className="font-black text-base" style={{ color: at?.color ?? "#3B82F6" }}>{score.away}</span>
+                    <span className="font-bold" style={{ color: at?.color ?? "#3B82F6" }}>{at?.name ?? "客场"}</span>
+                  </>
+                );
+              })()}
+            </div>
+
             {/* Action title */}
             <div className="text-center mb-4">
               <div className="text-base font-black text-white">{pendingAction.label}</div>
