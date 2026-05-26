@@ -35,8 +35,9 @@ type ActionCat = typeof ACTIONS[number]["cat"];
 type PlayerRef = { id: string; name: string; num: string };
 
 type ReviewCtx =
-  | { type: "assist";  scoringTeam: TeamId; videoTs: number }
-  | { type: "rebound"; shootingTeam: TeamId; videoTs: number };
+  | { type: "assist";  scoringTeam: TeamId; scorerId: string; videoTs: number }
+  | { type: "rebound"; shootingTeam: TeamId; videoTs: number }
+  | { type: "steal";   stealTeam: TeamId;   videoTs: number };
 
 // Clip buffer: 3s before the event, 5s after
 const PRE_S  = 3;
@@ -216,9 +217,12 @@ export default function GcReviewPage() {
     setEvents(prev => [makeEvent(teamId, p, action), ...prev]);
 
     if (action.pts > 0) {
-      setReviewCtx({ type: "assist", scoringTeam: teamId, videoTs });
+      setReviewCtx({ type: "assist", scoringTeam: teamId, scorerId: p.id, videoTs });
     } else if (action.cat === "2pt_miss" || action.cat === "3pt_miss" || action.cat === "ft_miss") {
       setReviewCtx({ type: "rebound", shootingTeam: teamId, videoTs });
+    } else if (action.cat === "tov") {
+      const stealTeam: TeamId = teamId === "home" ? "away" : "home";
+      setReviewCtx({ type: "steal", stealTeam, videoTs });
     }
   }
 
@@ -258,6 +262,25 @@ export default function GcReviewPage() {
       cat: action.cat,
     }, ...prev]);
     setReviewCtx(null);
+  }
+
+  function commitSteal(player: PlayerRef | null) {
+    if (!reviewCtx || reviewCtx.type !== "steal") return;
+    const { stealTeam, videoTs } = reviewCtx;
+    setReviewCtx(null);
+    if (!player) return;
+    const action = ACTIONS.find(a => a.cat === "stl")!;
+    setEvents(prev => [{
+      id: `e-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+      videoTs,
+      teamId: stealTeam,
+      playerId: player.id,
+      playerName: player.name,
+      playerNum: player.num,
+      action: action.label,
+      pts: 0,
+      cat: action.cat,
+    }, ...prev]);
   }
 
   // ── Generate highlight ───────────────────────────────────────────────────────
@@ -599,7 +622,7 @@ export default function GcReviewPage() {
         {/* ── Contextual prompt: assist ──────────────────────────────────────── */}
         {reviewCtx?.type === "assist" && pendingAction === null && (() => {
           const scoringTeam = teams.find(t => t.id === reviewCtx.scoringTeam)!;
-          const otherPlayers = scoringTeam.players;
+          const assistCandidates = scoringTeam.players.filter(p => p.id !== reviewCtx.scorerId);
           return (
             <div className="fixed inset-0 z-40 flex items-end" style={{ background: "rgba(0,0,0,0.60)" }}>
               <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
@@ -609,7 +632,7 @@ export default function GcReviewPage() {
                   <div className="text-xs text-gray-500 mt-0.5">{scoringTeam.name}</div>
                 </div>
                 <div className="flex flex-wrap gap-2 mb-4 justify-center">
-                  {otherPlayers.map(p => (
+                  {assistCandidates.map(p => (
                     <button
                       key={p.id}
                       onClick={() => commitAssist(p)}
@@ -665,6 +688,51 @@ export default function GcReviewPage() {
                   className="w-full py-2.5 rounded-xl text-sm text-gray-500"
                 >
                   跳过
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ── Contextual prompt: steal ───────────────────────────────────────── */}
+        {reviewCtx?.type === "steal" && pendingAction === null && (() => {
+          const stealTeam = teams.find(t => t.id === reviewCtx.stealTeam)!;
+          const isTeamMode = reviewCtx.stealTeam === "away" && awayTrackMode === "team";
+          return (
+            <div className="fixed inset-0 z-40 flex items-end" style={{ background: "rgba(0,0,0,0.60)" }}>
+              <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+                <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
+                <div className="text-center mb-4">
+                  <div className="text-base font-black text-white">谁抢断了？</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{stealTeam.name}</div>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-4 justify-center">
+                  {isTeamMode ? (
+                    <button
+                      onClick={() => commitSteal({ id: TEAM_PLAYER_ID(reviewCtx.stealTeam), name: "全队", num: "-" })}
+                      className="px-4 py-2.5 rounded-xl font-bold text-sm"
+                      style={{ background: `${stealTeam.color}25`, border: `1px solid ${stealTeam.color}60`, color: stealTeam.color }}
+                    >
+                      全队
+                    </button>
+                  ) : (
+                    stealTeam.players.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => commitSteal(p)}
+                        className="px-4 py-2.5 rounded-xl font-bold text-sm"
+                        style={{ background: `${stealTeam.color}25`, border: `1px solid ${stealTeam.color}60`, color: stealTeam.color }}
+                      >
+                        #{p.num} {p.name}
+                      </button>
+                    ))
+                  )}
+                </div>
+                <button
+                  onClick={() => commitSteal(null)}
+                  className="w-full py-3 rounded-xl text-sm text-gray-400 border border-white/10"
+                >
+                  无抢断
                 </button>
               </div>
             </div>
