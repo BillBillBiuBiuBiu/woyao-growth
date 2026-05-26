@@ -115,11 +115,13 @@ export default function GcReviewPage() {
   const [tsToast,       setTsToast]       = useState(false);
   const [tsText,        setTsText]        = useState<string | null>(null);
   const [fileWarn,      setFileWarn]      = useState<string | null>(null);
+  const [clipView,      setClipView]      = useState<{ title: string; clips: GameEvent[]; idx: number } | null>(null);
 
   const isWeChat = typeof navigator !== "undefined" && /MicroMessenger/i.test(navigator.userAgent);
 
   const videoRef      = useRef<HTMLVideoElement | null>(null);
   const replayRef     = useRef<HTMLVideoElement | null>(null);
+  const clipVideoRef  = useRef<HTMLVideoElement | null>(null);
   const ffmpegRef     = useRef<FFmpeg | null>(null);
   const ffmpegInitRef = useRef<Promise<void> | null>(null);
 
@@ -199,6 +201,14 @@ export default function GcReviewPage() {
   useEffect(() => {
     ensureFFmpegLoaded().catch(() => { ffmpegInitRef.current = null; });
   }, [ensureFFmpegLoaded]);
+
+  useEffect(() => {
+    if (!clipView || !clipVideoRef.current) return;
+    const evt = clipView.clips[clipView.idx];
+    if (!evt) return;
+    clipVideoRef.current.currentTime = Math.max(0, evt.videoTs - PRE_S);
+    clipVideoRef.current.play().catch(() => {});
+  }, [clipView]);
 
   // ── Event logging ────────────────────────────────────────────────────────────
 
@@ -1182,7 +1192,7 @@ export default function GcReviewPage() {
           <div className="rounded-2xl bg-[#1a1d27] border border-white/10 overflow-hidden">
             <div className="px-4 py-2.5 border-b border-white/10">
               <span className="text-sm font-bold text-white">📊 球员数据</span>
-              <span className="text-xs text-gray-500 ml-2">点击球员筛选回放</span>
+              <span className="text-xs text-gray-500 ml-2">{videoUrl ? "点击数据格查看片段" : "点击球员筛选回放"}</span>
             </div>
             <table className="w-full text-xs">
               <thead>
@@ -1193,25 +1203,40 @@ export default function GcReviewPage() {
                 </tr>
               </thead>
               <tbody>
-                {stats.map(p => (
-                  <tr key={p.id}
-                    className={`border-b border-white/5 last:border-0 cursor-pointer transition-colors ${filterPlayer === p.id ? "bg-white/10" : "active:bg-white/5"}`}
-                    onClick={() => setFilterPlayer(filterPlayer === p.id ? null : p.id)}>
-                    <td className="px-3 py-2">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: p.color }} />
-                        <span className="font-medium">{p.num !== "-" ? `#${p.num} ` : ""}{p.name}</span>
-                        {filterPlayer === p.id && <span className="text-orange-400 text-xs">▶</span>}
-                      </div>
-                    </td>
-                    <td className="px-1 py-2 text-center font-bold text-orange-400">{p.pts}</td>
-                    <td className="px-1 py-2 text-center text-gray-300">{p.reb}</td>
-                    <td className="px-1 py-2 text-center text-gray-300">{p.ast}</td>
-                    <td className="px-1 py-2 text-center text-gray-300">{p.stl}</td>
-                    <td className="px-1 py-2 text-center text-gray-300">{p.blk}</td>
-                    <td className="px-1 py-2 text-center text-gray-300">{p.tov}</td>
-                  </tr>
-                ))}
+                {stats.map(p => {
+                  const label = `${p.num !== "-" ? "#"+p.num+" " : ""}${p.name}`;
+                  const openClip = (title: string, filter: (e: GameEvent) => boolean) => {
+                    if (!videoUrl) return;
+                    const clips = events.filter(ev => ev.playerId === p.id && filter(ev)).sort((a, b) => a.videoTs - b.videoTs);
+                    if (clips.length) setClipView({ title: `${label} · ${title}`, clips, idx: 0 });
+                  };
+                  return (
+                    <tr key={p.id} className={`border-b border-white/5 last:border-0 ${filterPlayer === p.id ? "bg-white/10" : ""}`}>
+                      <td className="px-3 py-2 cursor-pointer active:bg-white/5"
+                        onClick={() => setFilterPlayer(filterPlayer === p.id ? null : p.id)}>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: p.color }} />
+                          <span className="font-medium">{p.num !== "-" ? `#${p.num} ` : ""}{p.name}</span>
+                          {filterPlayer === p.id && <span className="text-orange-400 text-xs">▶</span>}
+                        </div>
+                      </td>
+                      {[
+                        { val: p.pts, title: "得分",  filter: (e: GameEvent) => e.pts > 0,                              cls: "font-bold text-orange-400" },
+                        { val: p.reb, title: "篮板",  filter: (e: GameEvent) => e.cat === "oreb" || e.cat === "dreb",    cls: "text-gray-300" },
+                        { val: p.ast, title: "助攻",  filter: (e: GameEvent) => e.cat === "ast",                         cls: "text-gray-300" },
+                        { val: p.stl, title: "抢断",  filter: (e: GameEvent) => e.cat === "stl",                         cls: "text-gray-300" },
+                        { val: p.blk, title: "盖帽",  filter: (e: GameEvent) => e.cat === "blk",                         cls: "text-gray-300" },
+                        { val: p.tov, title: "失误",  filter: (e: GameEvent) => e.cat === "tov",                         cls: "text-gray-300" },
+                      ].map(({ val, title, filter, cls }) => (
+                        <td key={title}
+                          className={`px-1 py-2 text-center ${cls} ${val > 0 && videoUrl ? "cursor-pointer active:bg-white/10 rounded" : ""}`}
+                          onClick={() => val > 0 && openClip(title, filter)}>
+                          {val > 0 ? <span className={val > 0 && videoUrl ? "underline decoration-dotted underline-offset-2" : ""}>{val}</span> : <span className="text-gray-700">—</span>}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -1316,6 +1341,69 @@ export default function GcReviewPage() {
           再来一场
         </div>
       </Link>
+
+      {/* Clip viewer bottom sheet */}
+      {clipView && videoUrl && (
+        <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.80)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setClipView(null); }}>
+          <div className="w-full rounded-t-3xl" style={{ background: "#1a1d27" }}>
+            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mt-3" />
+            <div className="flex items-center justify-between px-4 py-3">
+              <div>
+                <span className="text-base font-black text-white">{clipView.title}</span>
+                <span className="text-xs text-gray-500 ml-2">共 {clipView.clips.length} 个片段</span>
+              </div>
+              <button onClick={() => setClipView(null)} className="text-gray-500 text-xl px-1">✕</button>
+            </div>
+            <video
+              ref={clipVideoRef}
+              src={videoUrl}
+              playsInline
+              className="w-full bg-black"
+              style={{ maxHeight: 230 }}
+              onTimeUpdate={() => {
+                if (!clipVideoRef.current) return;
+                const evt = clipView.clips[clipView.idx];
+                if (evt && clipVideoRef.current.currentTime >= evt.videoTs + POST_S) {
+                  clipVideoRef.current.pause();
+                }
+              }}
+            />
+            {(() => {
+              const evt = clipView.clips[clipView.idx];
+              const team = evt ? teams.find(t => t.id === evt.teamId) : null;
+              return (
+                <div className="flex items-center justify-between px-4 py-2">
+                  <span className="text-xs font-bold text-gray-400">{clipView.idx + 1} / {clipView.clips.length}</span>
+                  <span className="text-xs font-mono text-orange-400">{evt ? fmt(evt.videoTs) : ""}</span>
+                  <span className="text-xs font-medium" style={{ color: team?.color ?? "#9CA3AF" }}>{evt?.action ?? ""}</span>
+                </div>
+              );
+            })()}
+            <div className="flex gap-1.5 justify-center px-4 pb-2 flex-wrap">
+              {clipView.clips.map((_, i) => (
+                <button key={i}
+                  onClick={() => setClipView(prev => prev ? { ...prev, idx: i } : null)}
+                  className="h-1.5 rounded-full transition-all"
+                  style={{ width: i === clipView.idx ? 20 : 6, background: i === clipView.idx ? "#F97316" : "rgba(255,255,255,0.2)" }}
+                />
+              ))}
+            </div>
+            <div className="flex gap-3 px-4 pb-8 pt-1">
+              <button
+                onClick={() => setClipView(prev => prev && prev.idx > 0 ? { ...prev, idx: prev.idx - 1 } : prev)}
+                disabled={clipView.idx === 0}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold border border-white/15 text-gray-400 disabled:opacity-30"
+              >← 上一个</button>
+              <button
+                onClick={() => setClipView(prev => prev && prev.idx < prev.clips.length - 1 ? { ...prev, idx: prev.idx + 1 } : prev)}
+                disabled={clipView.idx >= clipView.clips.length - 1}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold border border-white/15 text-gray-400 disabled:opacity-30"
+              >下一个 →</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Timestamp fallback sheet (clipboard blocked in WeChat) */}
       {tsText && (
