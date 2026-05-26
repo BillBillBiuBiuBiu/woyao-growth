@@ -87,6 +87,7 @@ export default function GcLivePage() {
   const [copyToast,     setCopyToast]     = useState(false);
   const [endConfirm,    setEndConfirm]    = useState(false);
   const [reassignEvent, setReassignEvent] = useState<GameEvent | null>(null);
+  const [liveDraft,     setLiveDraft]     = useState<{ events: GameEvent[]; quarter: number } | null>(null);
 
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
   const ctxTimerRef = useRef<ReturnType<typeof setTimeout>  | null>(null);
@@ -98,6 +99,13 @@ export default function GcLivePage() {
       setTeams(teamsFromConfig(cfg));
       setAwayTrackMode(cfg.awayTrackMode ?? "team");
     } catch {}
+    try {
+      const draftRaw = localStorage.getItem("gc_live_draft");
+      if (draftRaw) {
+        const draft = JSON.parse(draftRaw) as { events: GameEvent[]; quarter: number };
+        if (Array.isArray(draft.events) && draft.events.length > 0) setLiveDraft(draft);
+      }
+    } catch {}
   }, []);
 
   useEffect(() => {
@@ -108,6 +116,12 @@ export default function GcLivePage() {
       if (flashRef.current)    clearTimeout(flashRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (phase === "live" && events.length > 0) {
+      try { localStorage.setItem("gc_live_draft", JSON.stringify({ events, quarter })); } catch {}
+    }
+  }, [events, phase, quarter]);
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -262,6 +276,7 @@ export default function GcLivePage() {
   }
 
   function endGame() {
+    try { localStorage.removeItem("gc_live_draft"); } catch {}
     if (timerRef.current)    { clearInterval(timerRef.current);  timerRef.current = null; }
     if (ctxTimerRef.current) { clearTimeout(ctxTimerRef.current); ctxTimerRef.current = null; }
     setCtxPrompt(null);
@@ -724,6 +739,23 @@ export default function GcLivePage() {
           </div>
         )}
       </div>
+
+      {/* Draft recovery banner */}
+      {liveDraft && events.length === 0 && (
+        <div className="mx-3 mt-2 px-3 py-2.5 rounded-xl flex items-center gap-2 shrink-0"
+          style={{ background: "rgba(249,115,22,0.10)", border: "1px solid rgba(249,115,22,0.35)" }}>
+          <span className="text-orange-400 text-sm shrink-0">⚠️</span>
+          <span className="flex-1 text-xs text-orange-300">检测到上次未完成打点（{liveDraft.events.length} 个事件 · Q{liveDraft.quarter}）</span>
+          <button onClick={() => { setEvents(liveDraft.events); setQuarter(liveDraft.quarter); setLiveDraft(null); }}
+            className="text-xs font-bold text-orange-400 px-2 py-1 rounded-lg bg-orange-500/20 active:bg-orange-500/30 shrink-0">
+            恢复
+          </button>
+          <button onClick={() => { setLiveDraft(null); try { localStorage.removeItem("gc_live_draft"); } catch {} }}
+            className="text-xs text-gray-600 px-1.5 py-1 shrink-0">
+            放弃
+          </button>
+        </div>
+      )}
 
       {/* Team context indicator */}
       <div className="flex gap-2 px-3 pt-2.5 shrink-0">
