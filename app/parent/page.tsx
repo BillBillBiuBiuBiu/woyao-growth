@@ -161,8 +161,19 @@ export default function ParentHome() {
           />
           <div className="flex-1 min-w-0 flex flex-col gap-3 pt-1">
             <div>
-              <div className="text-sm text-gray-500">教练：{mockStudent.coach}</div>
-              <div className="text-xs bg-orange-100 text-orange-700 rounded-full px-2.5 py-1 inline-block mt-1.5 font-medium">{mockStudent.currentStage}</div>
+              {recentGames.length > 0 ? (
+                <>
+                  <div className="text-sm text-gray-500">🏀 真实成长记录</div>
+                  <div className="text-xs bg-orange-100 text-orange-700 rounded-full px-2.5 py-1 inline-block mt-1.5 font-medium">
+                    已参加 {recentGames.length} 场 · 共 {recentGames.reduce((s, g) => s + g.eventCount, 0)} 个打点
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-sm text-gray-500">教练：{mockStudent.coach}</div>
+                  <div className="text-xs bg-orange-100 text-orange-700 rounded-full px-2.5 py-1 inline-block mt-1.5 font-medium">{mockStudent.currentStage}</div>
+                </>
+              )}
             </div>
 
             {/* Today's growth — real last-game data when available, mock otherwise */}
@@ -178,7 +189,7 @@ export default function ParentHome() {
                       {heroChildStat.pts}分{heroChildStat.reb > 0 ? ` · ${heroChildStat.reb}板` : ""}{heroChildStat.ast > 0 ? ` · ${heroChildStat.ast}助` : ""}{heroChildStat.stl > 0 ? ` · ${heroChildStat.stl}断` : ""}
                     </div>
                     <div className="text-xs text-yellow-200 mt-0.5">
-                      {recentGames[0].homeTeam} {recentGames[0].homeScore}—{recentGames[0].awayScore} {recentGames[0].awayTeam} · {fmtMatchDate(recentGames[0].ts)}
+                      {recentGames[0].homeTeam} {recentGames[0].homeScore}—{recentGames[0].awayScore} {recentGames[0].awayTeam} · {fmtRelDate(recentGames[0].ts)}
                     </div>
                   </button>
                 ) : (
@@ -188,7 +199,7 @@ export default function ParentHome() {
                       {recentGames[0].homeTeam} {recentGames[0].homeScore} — {recentGames[0].awayScore} {recentGames[0].awayTeam}
                     </div>
                     <div className="text-xs text-yellow-200 mt-0.5">
-                      {fmtMatchDate(recentGames[0].ts)}{recentGames[0].eventCount > 0 ? ` · ${recentGames[0].eventCount}个打点` : ""}
+                      {fmtRelDate(recentGames[0].ts)}{recentGames[0].eventCount > 0 ? ` · ${recentGames[0].eventCount}个打点` : ""}
                     </div>
                   </>
                 )
