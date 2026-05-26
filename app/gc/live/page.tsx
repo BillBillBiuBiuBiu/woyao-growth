@@ -1140,7 +1140,7 @@ export default function GcLivePage() {
           <div className="w-full max-w-sm rounded-2xl px-6 py-6" style={{ background: "#1a1d27" }}>
             <div className="text-center mb-5">
               <div className="text-xl font-black text-white mb-2">⚠️ 确认结束比赛？</div>
-              <div className="text-xs text-gray-500">结束后无法继续打点</div>
+              <div className="text-xs text-gray-500">结束后可在战报页补录遗漏事件</div>
             </div>
             <div className="flex gap-3">
               <button onClick={() => setEndConfirm(false)}

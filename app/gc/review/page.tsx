@@ -527,10 +527,11 @@ export default function GcReviewPage() {
                 <span className="text-xl shrink-0">📋</span>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-bold text-blue-400 mb-0.5">检测到现场打点记录</div>
-                  <div className="text-xs text-gray-400 mb-3">
+                  <div className="text-xs text-gray-400 mb-1">
                     {liveSession.events.length} 个事件 · {new Date(liveSession.ts).toLocaleDateString("zh-CN")}
                     {" · "}{liveSession.teams["home"]?.name} vs {liveSession.teams["away"]?.name}
                   </div>
+                  <div className="text-[10px] text-yellow-600 mb-3">⚠️ 时间戳为现场计时，需在视频上重新确认各事件位置</div>
                   <button
                     onClick={() => {
                       setEvents(liveSession.events);
@@ -543,7 +544,7 @@ export default function GcReviewPage() {
                         : "bg-white/5 text-gray-600"
                     }`}
                   >
-                    {videoFile ? "导入打点数据 → 开始生成" : "请先上传视频再导入"}
+                    {videoFile ? "导入参考数据，开始视频打点" : "请先上传视频再导入"}
                   </button>
                 </div>
               </div>
