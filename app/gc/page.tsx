@@ -63,6 +63,8 @@ export default function GcSetupPage() {
     loading: boolean;
     stats: PlayerStat[] | null;
   } | null>(null);
+  const [shareText,  setShareText]  = useState<string | null>(null);
+  const [copyToast,  setCopyToast]  = useState(false);
 
   useEffect(() => {
     setCfg(loadTeamsConfig());
@@ -126,6 +128,40 @@ export default function GcSetupPage() {
   function handleCancel() {
     setCfg(loadTeamsConfig());
     setEditing(false);
+  }
+
+  function buildShareText(record: GameRecord, stats: PlayerStat[]): string {
+    const { homeTeam, awayTeam, homeScore, awayScore, quarterScores } = record;
+    const winner = homeScore > awayScore ? homeTeam : awayScore > homeScore ? awayTeam : null;
+    const qLine = quarterScores.map(({ q, home, away }) => `Q${q} ${home}-${away}`).join("  ");
+    const fmt = (p: PlayerStat) =>
+      `  ${p.num && p.num !== "-" ? `#${p.num} ` : ""}${p.name}  ${p.pts}分${p.reb > 0 ? ` ${p.reb}板` : ""}${p.ast > 0 ? ` ${p.ast}助` : ""}${p.stl > 0 ? ` ${p.stl}断` : ""}`;
+    const homePlayers = stats.filter(p => p.team === "home").map(fmt).join("\n");
+    const awayPlayers = stats.filter(p => p.team === "away").map(fmt).join("\n");
+    return [
+      `🏀 ${homeTeam} ${homeScore} — ${awayScore} ${awayTeam}`,
+      winner ? `🏆 ${winner} 获胜` : "平局",
+      "",
+      qLine,
+      "",
+      `【${homeTeam}】`,
+      homePlayers || "  暂无数据",
+      "",
+      `【${awayTeam}】`,
+      awayPlayers || "  暂无数据",
+      "",
+      `${fmtGameDate(record.ts)} 我耀成长证据系统`,
+    ].join("\n");
+  }
+
+  async function handleShare(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyToast(true);
+      setTimeout(() => setCopyToast(false), 2000);
+    } catch {
+      setShareText(text);
+    }
   }
 
   function openDetail(record: GameRecord) {
@@ -459,7 +495,40 @@ export default function GcSetupPage() {
                   </>
                 );
               })()}
+              {!detailGame.loading && (
+                <button
+                  onClick={() => handleShare(buildShareText(detailGame.record, detailGame.stats ?? []))}
+                  className="w-full mt-2 mb-4 py-2.5 rounded-xl text-sm font-bold border active:opacity-80"
+                  style={{ borderColor: "rgba(249,115,22,0.4)", color: copyToast ? "#4ade80" : "#F97316", background: copyToast ? "rgba(34,197,94,0.10)" : "rgba(249,115,22,0.08)" }}
+                >
+                  {copyToast ? "✅ 战报已复制！" : "📤 复制战报"}
+                </button>
+              )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share fallback sheet (clipboard unavailable) */}
+      {shareText !== null && (
+        <div className="fixed inset-0 z-[60] flex items-end" style={{ background: "rgba(0,0,0,0.72)" }}>
+          <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
+            <div className="text-sm font-bold text-white mb-1">📤 复制战报</div>
+            <div className="text-xs text-gray-500 mb-3">长按下方文字 → 全选 → 复制，粘贴到微信群</div>
+            <textarea
+              readOnly
+              value={shareText}
+              className="w-full rounded-xl text-xs text-gray-300 p-3 resize-none"
+              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", height: 200, fontFamily: "monospace" }}
+              onFocus={e => e.target.select()}
+            />
+            <button
+              onClick={() => setShareText(null)}
+              className="w-full mt-3 py-3 rounded-xl border border-white/15 text-sm text-gray-400"
+            >
+              关闭
+            </button>
           </div>
         </div>
       )}
