@@ -1,6 +1,10 @@
+"use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { mockPendingReports, mockReports, mockStudents } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
+import { apiLoadGames } from "@/lib/gc-api";
+import type { GameRecord } from "@/lib/gc-teams";
 
 const statusMap: Record<string, { label: string; color: string }> = {
   awaiting_review: { label: "待确认", color: "bg-orange-100 text-orange-700" },
@@ -17,8 +21,18 @@ const planCount = {
 const pendingCount = mockReports.filter((r) => r.status === "draft" || r.status === "generated").length;
 const sentCount = mockReports.filter((r) => r.status === "sent").length;
 
+function fmtGameDate(ts: string): string {
+  const d = new Date(ts);
+  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+}
+
 export default function CoachPage() {
   const pending = mockPendingReports.filter((r) => r.status === "awaiting_review");
+  const [recentGames, setRecentGames] = useState<GameRecord[]>([]);
+
+  useEffect(() => {
+    apiLoadGames().then((games) => setRecentGames(games.slice(0, 10))).catch(() => {});
+  }, []);
 
   return (
     <div className="flex flex-col gap-5">
@@ -85,6 +99,52 @@ export default function CoachPage() {
           </div>
         </div>
       </Link>
+
+      {/* Recent game records — real data from Supabase */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold">近期打点记录</h2>
+          {recentGames.length > 0 && (
+            <span className="text-xs text-gray-400">{recentGames.length} 场</span>
+          )}
+        </div>
+        {recentGames.length > 0 ? (
+          <div className="rounded-2xl border border-border bg-white overflow-hidden">
+            {recentGames.map((game, i) => (
+              <Link key={game.id} href={`/gc/review?gameId=${game.id}`}>
+                <div
+                  className="flex items-center justify-between px-4 py-3 active:bg-orange-50 transition-colors"
+                  style={{ borderTop: i === 0 ? "none" : "1px solid rgba(0,0,0,0.05)" }}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-gray-800">
+                      {game.homeTeam} <span className="text-orange-500">{game.homeScore}</span>
+                      <span className="text-gray-300 mx-1">—</span>
+                      <span className="text-orange-500">{game.awayScore}</span> {game.awayTeam}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-0.5">{fmtGameDate(game.ts)}</div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-2 shrink-0">
+                    {game.eventCount > 0
+                      ? <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-medium">{game.eventCount}个打点</span>
+                      : <span className="text-xs text-gray-400">无记录</span>
+                    }
+                    <span className="text-orange-300 text-sm">›</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <Link href="/gc">
+            <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/50 px-4 py-5 text-center active:bg-orange-50 transition-colors">
+              <div className="text-2xl mb-1">🏀</div>
+              <div className="text-sm font-medium text-gray-600">还没有打点记录</div>
+              <div className="text-xs text-orange-500 mt-1">开始第一场 →</div>
+            </div>
+          </Link>
+        )}
+      </div>
 
       {/* Quick actions */}
       <div>
