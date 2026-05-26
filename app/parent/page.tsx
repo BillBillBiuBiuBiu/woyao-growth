@@ -64,6 +64,7 @@ export default function ParentHome() {
   const [nameInput, setNameInput] = useState("");
   const [myLastHighlight, setMyLastHighlight] = useState<HighlightRecord | null>(null);
   const [heroChildStat, setHeroChildStat] = useState<{ pts: number; reb: number; ast: number; stl: number } | null>(null);
+  const [latestClips, setLatestClips] = useState<ClipRecord[] | null>(null);
 
   useEffect(() => {
     apiLoadGames().then((games) => { if (games.length > 0) setRecentGames(games.slice(0, 10)); }).catch(() => {});
@@ -72,7 +73,9 @@ export default function ParentHome() {
   }, []);
 
   useEffect(() => {
-    if (!childName || recentGames.length === 0 || recentGames[0].eventCount === 0) { setHeroChildStat(null); return; }
+    if (recentGames.length === 0) { setLatestClips(null); return; }
+    apiLoadClips(recentGames[0].id).then(setLatestClips).catch(() => setLatestClips([]));
+    if (!childName || recentGames[0].eventCount === 0) { setHeroChildStat(null); return; }
     apiLoadEvents(recentGames[0].id).then((evts) => {
       const s = computeStats(evts).find(p => p.name === childName);
       setHeroChildStat(s ? { pts: s.pts, reb: s.reb, ast: s.ast, stl: s.stl } : null);
@@ -292,39 +295,89 @@ export default function ParentHome() {
           </div>
         )}
 
-        {/* Latest report */}
-        <Link href={`/parent/reports/${mockReport.id}`}>
-          <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-center justify-between active:scale-98 transition-transform">
-            <div>
-              <div className="text-xs text-orange-500 mb-1 font-medium">📋 最新成长报告</div>
-              <div className="font-bold text-gray-800">{mockReport.title}</div>
-              <div className="text-xs text-gray-400 mt-1">{mockReport.clips.length}个成长证据 · 教练已确认 ✓</div>
+        {/* Latest report — shown only when no real games exist (demo state) */}
+        {recentGames.length === 0 && (
+          <Link href={`/parent/reports/${mockReport.id}`}>
+            <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-center justify-between active:scale-98 transition-transform">
+              <div>
+                <div className="text-xs text-orange-500 mb-1 font-medium">📋 最新成长报告</div>
+                <div className="font-bold text-gray-800">{mockReport.title}</div>
+                <div className="text-xs text-gray-400 mt-1">{mockReport.clips.length}个成长证据 · 教练已确认 ✓</div>
+              </div>
+              <div className="text-2xl text-orange-300 ml-2">›</div>
             </div>
-            <div className="text-2xl text-orange-300 ml-2">›</div>
-          </div>
-        </Link>
+          </Link>
+        )}
 
-        {/* Clips */}
-        <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4">
-          <div className="text-sm font-bold text-gray-800 mb-3">🎞️ 教练标注片段</div>
-          <div className="grid grid-cols-3 gap-2">
-            {mockReport.clips.map((clip) => (
-              <Link key={clip.id} href={`/parent/reports/${mockReport.id}`}>
-                <div className="aspect-video rounded-2xl overflow-hidden relative cursor-pointer bg-slate-900">
-                  {clip.thumbnail && (
-                    <img src={clip.thumbnail} alt={clip.title} className="w-full h-full object-cover opacity-80" />
-                  )}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-7 h-7 rounded-full bg-white/40 flex items-center justify-center">
-                      <span className="text-white text-xs">▶</span>
+        {/* Clips — real when available, mock demo when no games, generate CTA when no clips */}
+        {recentGames.length === 0 ? (
+          <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4">
+            <div className="text-sm font-bold text-gray-800 mb-3">🎞️ 教练标注片段</div>
+            <div className="grid grid-cols-3 gap-2">
+              {mockReport.clips.map((clip) => (
+                <Link key={clip.id} href={`/parent/reports/${mockReport.id}`}>
+                  <div className="aspect-video rounded-2xl overflow-hidden relative cursor-pointer bg-slate-900">
+                    {clip.thumbnail && (
+                      <img src={clip.thumbnail} alt={clip.title} className="w-full h-full object-cover opacity-80" />
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-7 h-7 rounded-full bg-white/40 flex items-center justify-center">
+                        <span className="text-white text-xs">▶</span>
+                      </div>
                     </div>
+                    <div className="absolute bottom-1 left-0 right-0 text-xs text-white/90 text-center leading-tight px-1 truncate drop-shadow">{clip.title}</div>
                   </div>
-                  <div className="absolute bottom-1 left-0 right-0 text-xs text-white/90 text-center leading-tight px-1 truncate drop-shadow">{clip.title}</div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : latestClips && latestClips.length > 0 ? (
+          <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4">
+            <div className="text-sm font-bold text-gray-800 mb-3">🎞️ 最新集锦切片</div>
+            <div className="flex flex-col gap-2">
+              {latestClips.slice(0, 3).map((clip) => {
+                const isExpanded = expandedClipId === clip.id;
+                return (
+                  <div key={clip.id} className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
+                    <button
+                      className="flex items-center justify-between w-full px-3 py-2.5 text-left active:bg-orange-50 transition-colors"
+                      onClick={() => setExpandedClipId(isExpanded ? null : clip.id)}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-gray-800 truncate">{clip.label || "集锦片段"}</div>
+                        <div className="text-xs text-gray-400">{fmtMatchDate(clip.created_at)}</div>
+                      </div>
+                      <span className="shrink-0 ml-3 text-orange-400 text-sm" style={{ display: "inline-block", transform: isExpanded ? "rotate(180deg)" : "none" }}>▾</span>
+                    </button>
+                    {isExpanded && (
+                      <div className="px-2 pb-2 flex flex-col gap-2">
+                        <video src={clip.public_url} controls playsInline className="w-full rounded-xl bg-black" style={{ maxHeight: 220 }} />
+                        <button
+                          onClick={() => copyClipLink(clip.public_url)}
+                          className="w-full py-1.5 rounded-lg text-xs font-bold border active:opacity-70 transition-colors"
+                          style={{ borderColor: linkToast === clip.public_url ? "rgba(34,197,94,0.4)" : "rgba(249,115,22,0.4)", color: linkToast === clip.public_url ? "#4ade80" : "#F97316", background: linkToast === clip.public_url ? "rgba(34,197,94,0.08)" : "rgba(249,115,22,0.08)" }}
+                        >
+                          {linkToast === clip.public_url ? "✅ 已复制" : "🔗 复制链接"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : latestClips !== null ? (
+          <Link href="/parent/highlights">
+            <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-center justify-between active:scale-98 transition-transform">
+              <div>
+                <div className="text-xs text-orange-500 mb-1 font-medium">🎞️ 集锦切片</div>
+                <div className="font-bold text-gray-800">暂无集锦</div>
+                <div className="text-xs text-gray-400 mt-1">上传比赛视频，AI帮你剪精彩片段</div>
+              </div>
+              <div className="text-sm font-bold text-orange-500 ml-2">🎬 生成 ›</div>
+            </div>
+          </Link>
+        ) : null}
 
         {/* Next steps */}
         <div className="rounded-3xl bg-white/90 border border-blue-100 shadow-sm p-4">
