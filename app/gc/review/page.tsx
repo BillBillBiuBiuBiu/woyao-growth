@@ -32,6 +32,11 @@ const ACTIONS = [
 ] as const;
 
 type ActionCat = typeof ACTIONS[number]["cat"];
+type PlayerRef = { id: string; name: string; num: string };
+
+type ReviewCtx =
+  | { type: "assist";  scoringTeam: TeamId; videoTs: number }
+  | { type: "rebound"; shootingTeam: TeamId; videoTs: number };
 
 // Clip buffer: 3s before the event, 5s after
 const PRE_S  = 3;
@@ -61,7 +66,6 @@ function fmt(secs: number) {
   return `${m}:${s}`;
 }
 
-// Merge overlapping [start, end] segments
 function mergeSegs(segs: [number, number][]): [number, number][] {
   if (segs.length === 0) return [];
   const sorted = [...segs].sort((a, b) => a[0] - b[0]);
@@ -88,21 +92,23 @@ interface LiveSession {
 }
 
 export default function GcReviewPage() {
-  const [teams,       setTeams]       = useState<RuntimeTeam[]>(() => teamsFromConfig(DEFAULT_TEAMS));
-  const [phase,       setPhase]       = useState<Phase>("setup");
-  const [videoFile,   setVideoFile]   = useState<File | null>(null);
-  const [videoUrl,    setVideoUrl]    = useState<string | null>(null);
-  const [events,      setEvents]      = useState<GameEvent[]>([]);
-  const [selTeam,     setSelTeam]     = useState<TeamId>("home");
-  const [selPlayer,   setSelPlayer]   = useState<string | null>(null);
-  const [progress,    setProgress]    = useState(0);
-  const [statusMsg,   setStatusMsg]   = useState("");
-  const [resultUrl,   setResultUrl]   = useState<string | null>(null);
-  const [resultName,  setResultName]  = useState("highlight.mp4");
-  const [error,       setError]       = useState<string | null>(null);
+  const [teams,         setTeams]         = useState<RuntimeTeam[]>(() => teamsFromConfig(DEFAULT_TEAMS));
+  const [phase,         setPhase]         = useState<Phase>("setup");
+  const [videoFile,     setVideoFile]     = useState<File | null>(null);
+  const [videoUrl,      setVideoUrl]      = useState<string | null>(null);
+  const [events,        setEvents]        = useState<GameEvent[]>([]);
+  const [selTeam,       setSelTeam]       = useState<TeamId>("home");
+  const [pendingAction, setPendingAction] = useState<typeof ACTIONS[number] | null>(null);
+  const [pendingTeam,   setPendingTeam]   = useState<TeamId>("home");
+  const [reviewCtx,     setReviewCtx]     = useState<ReviewCtx | null>(null);
+  const [progress,      setProgress]      = useState(0);
+  const [statusMsg,     setStatusMsg]     = useState("");
+  const [resultUrl,     setResultUrl]     = useState<string | null>(null);
+  const [resultName,    setResultName]    = useState("highlight.mp4");
+  const [error,         setError]         = useState<string | null>(null);
   const [awayTrackMode, setAwayTrackMode] = useState<"player" | "team">("team");
-  const [liveSession, setLiveSession] = useState<LiveSession | null>(null);
-  const [filterPlayer, setFilterPlayer] = useState<string | null>(null); // done phase player filter
+  const [liveSession,   setLiveSession]   = useState<LiveSession | null>(null);
+  const [filterPlayer,  setFilterPlayer]  = useState<string | null>(null);
 
   const videoRef      = useRef<HTMLVideoElement | null>(null);
   const replayRef     = useRef<HTMLVideoElement | null>(null);
@@ -128,18 +134,9 @@ export default function GcReviewPage() {
     } catch {}
   }, []);
 
-  // Auto-select synthetic team player when switching to away in team mode
-  useEffect(() => {
-    if (selTeam === "away" && awayTrackMode === "team") {
-      setSelPlayer(TEAM_PLAYER_ID("away"));
-    }
-  }, [selTeam, awayTrackMode]);
-
-  // Revoke blob URLs on unmount
   useEffect(() => () => { if (resultUrl) URL.revokeObjectURL(resultUrl); }, [resultUrl]);
   useEffect(() => () => { if (videoUrl)  URL.revokeObjectURL(videoUrl);  }, [videoUrl]);
 
-  // Deduplicated FFmpeg loader with CDN → local fallback and 90s timeout
   const ensureFFmpegLoaded = useCallback(async () => {
     if (ffmpegRef.current) return;
     if (!ffmpegInitRef.current) {
@@ -168,12 +165,11 @@ export default function GcReviewPage() {
     await ffmpegInitRef.current;
   }, []);
 
-  // Silently preload FFmpeg while user is on setup/tagging screens
   useEffect(() => {
     ensureFFmpegLoaded().catch(() => { ffmpegInitRef.current = null; });
   }, [ensureFFmpegLoaded]);
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
+  // ── Event logging ────────────────────────────────────────────────────────────
 
   function handleVideoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -182,31 +178,89 @@ export default function GcReviewPage() {
     setVideoUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(file); });
   }
 
-  function logEvent(action: typeof ACTIONS[number]) {
-    if (!selPlayer) return;
-    const team = teams.find((t) => t.id === selTeam);
-    if (!team) return;
-    const isTeamMode = selTeam === "away" && awayTrackMode === "team";
-    const player = isTeamMode
-      ? { id: TEAM_PLAYER_ID("away"), name: "全队", num: "-" }
-      : team.players.find((p) => p.id === selPlayer);
-    if (!player) return;
+  function makeEvent(teamId: TeamId, p: PlayerRef, action: typeof ACTIONS[number]): GameEvent {
+    return {
+      id: `e-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+      videoTs: videoRef.current?.currentTime ?? 0,
+      teamId,
+      playerId: p.id,
+      playerName: p.name,
+      playerNum: p.num,
+      action: action.label,
+      pts: action.pts,
+      cat: action.cat,
+    };
+  }
+
+  function startAction(action: typeof ACTIONS[number]) {
+    const inferred: TeamId =
+      action.cat === "stl" || action.cat === "blk" || action.cat === "dreb"
+        ? selTeam === "home" ? "away" : "home"
+        : selTeam;
+    setReviewCtx(null);
+    setPendingTeam(inferred);
+    setPendingAction(action);
+  }
+
+  function commitAction(player: PlayerRef | null) {
+    if (!pendingAction) return;
+    const action = pendingAction;
+    const teamId = pendingTeam;
+    const isTeamMode = teamId === "away" && awayTrackMode === "team";
+    const p: PlayerRef = isTeamMode
+      ? { id: TEAM_PLAYER_ID(teamId), name: "全队", num: "-" }
+      : (player ?? { id: `${teamId}-tbd`, name: "未指定", num: "-" });
+
     const videoTs = videoRef.current?.currentTime ?? 0;
-    setEvents((prev) => [
-      {
+    setPendingAction(null);
+    setEvents(prev => [makeEvent(teamId, p, action), ...prev]);
+
+    if (action.pts > 0) {
+      setReviewCtx({ type: "assist", scoringTeam: teamId, videoTs });
+    } else if (action.cat === "2pt_miss" || action.cat === "3pt_miss" || action.cat === "ft_miss") {
+      setReviewCtx({ type: "rebound", shootingTeam: teamId, videoTs });
+    }
+  }
+
+  function commitAssist(player: PlayerRef | null) {
+    if (!reviewCtx || reviewCtx.type !== "assist") return;
+    if (player) {
+      const astAction = ACTIONS.find(a => a.cat === "ast")!;
+      setEvents(prev => [{
         id: `e-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
-        videoTs,
-        teamId: selTeam,
-        playerId: isTeamMode ? TEAM_PLAYER_ID("away") : selPlayer,
+        videoTs: reviewCtx.videoTs,
+        teamId: reviewCtx.scoringTeam,
+        playerId: player.id,
         playerName: player.name,
         playerNum: player.num,
-        action: action.label,
-        pts: action.pts,
-        cat: action.cat,
-      },
-      ...prev,
-    ]);
+        action: astAction.label,
+        pts: 0,
+        cat: astAction.cat,
+      }, ...prev]);
+    }
+    setReviewCtx(null);
   }
+
+  function commitRebound(type: "oreb" | "dreb") {
+    if (!reviewCtx || reviewCtx.type !== "rebound") return;
+    const shootingTeam = reviewCtx.shootingTeam;
+    const rebTeamId: TeamId = type === "oreb" ? shootingTeam : (shootingTeam === "home" ? "away" : "home");
+    const action = ACTIONS.find(a => a.cat === type)!;
+    setEvents(prev => [{
+      id: `e-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+      videoTs: reviewCtx.videoTs,
+      teamId: rebTeamId,
+      playerId: TEAM_PLAYER_ID(rebTeamId),
+      playerName: "全队",
+      playerNum: "-",
+      action: action.label,
+      pts: 0,
+      cat: action.cat,
+    }, ...prev]);
+    setReviewCtx(null);
+  }
+
+  // ── Generate highlight ───────────────────────────────────────────────────────
 
   const generateHighlight = useCallback(async () => {
     if (!videoFile || events.length === 0) return;
@@ -215,7 +269,6 @@ export default function GcReviewPage() {
     setError(null);
 
     try {
-      // 1. Load FFmpeg
       setStatusMsg(ffmpegRef.current ? "视频引擎已就绪，开始处理…" : "加载视频处理引擎…（首次需30–60秒）");
       if (!ffmpegRef.current) {
         let fake = 0;
@@ -232,12 +285,10 @@ export default function GcReviewPage() {
       const ff = ffmpegRef.current!;
       setProgress(20);
 
-      // 2. Write video to WASM FS
       setStatusMsg("正在写入视频数据…");
       await ff.writeFile("input.mp4", await fetchFile(videoFile));
       setProgress(40);
 
-      // 3. Build segments from events (sorted, merged)
       const rawSegs: [number, number][] = events.map((e) => [
         Math.max(0, e.videoTs - PRE_S),
         e.videoTs + POST_S,
@@ -246,7 +297,6 @@ export default function GcReviewPage() {
       const totalDur = segs.reduce((sum, [s, e]) => sum + (e - s), 0);
       setStatusMsg(`找到 ${segs.length} 个片段（共 ${totalDur.toFixed(0)}s），正在剪辑…`);
 
-      // 4. FFmpeg multi-input concat
       const args: string[] = [];
       for (const [s, e] of segs) {
         args.push("-ss", s.toFixed(3), "-t", (e - s).toFixed(3), "-i", "input.mp4");
@@ -292,7 +342,6 @@ export default function GcReviewPage() {
       }
       if (ret !== 0) throw new Error(`FFmpeg 编码失败 (exit ${ret}) ${encodeLog.slice(-1).join("")}`);
 
-      // 5. Read result, clean up WASM FS
       const data = await ff.readFile("highlight.mp4");
       const raw  = data as Uint8Array;
       const copy = new Uint8Array(raw.length);
@@ -319,30 +368,7 @@ export default function GcReviewPage() {
 
   // ── Render helpers ───────────────────────────────────────────────────────────
 
-  const currentTeam = teams.find((t) => t.id === selTeam)!;
-
-  const actionBtn = (
-    a: typeof ACTIONS[number],
-    py: string,
-    fontSize: string,
-    activeBg: string,
-    activeColor: string,
-    disabled: boolean,
-  ) => (
-    <button
-      key={a.cat}
-      onClick={() => logEvent(a)}
-      disabled={disabled}
-      className={`${py} rounded-xl font-bold leading-tight transition-colors ${fontSize}`}
-      style={
-        disabled
-          ? { background: "rgba(255,255,255,0.04)", color: "#374151" }
-          : { background: activeBg, color: activeColor }
-      }
-    >
-      {a.label}
-    </button>
-  );
+  const pickerTeam = teams.find(t => t.id === pendingTeam);
 
   // ── Phase: SETUP ─────────────────────────────────────────────────────────────
 
@@ -382,7 +408,6 @@ export default function GcReviewPage() {
           </div>
         </div>
 
-        {/* Live session import banner */}
         {liveSession && (
           <div className="px-4">
             <div className="rounded-2xl border border-blue-500/30 p-4" style={{ background: "rgba(59,130,246,0.08)" }}>
@@ -419,8 +444,8 @@ export default function GcReviewPage() {
             <div className="font-bold text-gray-400 mb-2">📖 使用方式</div>
             <div className="flex flex-col gap-1.5">
               <div>① 上传视频后进入打点界面，视频在顶部播放</div>
-              <div>② 选择球员，在事件发生时点击对应按钮（如「2分命中」）</div>
-              <div>③ 系统自动记录视频时间戳，每次打点生成前3秒/后5秒片段</div>
+              <div>② 在事件发生时点击动作按钮（如「2分命中」），再选球员</div>
+              <div>③ 进球后自动询问助攻；出手不中后自动询问篮板</div>
               <div>④ 打点完成后一键生成集锦，支持下载</div>
             </div>
           </div>
@@ -452,7 +477,6 @@ export default function GcReviewPage() {
     const scoring  = ACTIONS.filter((a) => a.pts > 0);
     const misses   = ACTIONS.filter((a) => a.pts === 0 && a.cat.endsWith("_miss"));
     const statActs = ACTIONS.filter((a) => a.pts === 0 && !a.cat.endsWith("_miss"));
-    const disabled = !selPlayer;
 
     return (
       <div className="flex flex-col min-h-screen" style={{ background: "#0f1117" }}>
@@ -471,7 +495,7 @@ export default function GcReviewPage() {
         {/* Status bar */}
         <div className="bg-[#1a1d27] border-b border-white/10 px-3 py-2 flex items-center justify-between shrink-0">
           <span className="text-xs text-gray-500">
-            {events.length > 0 ? `${events.length} 个打点` : "选择球员后点击事件按钮"}
+            {events.length > 0 ? `${events.length} 个打点` : "点击动作按钮开始打点"}
           </span>
           <div className="flex gap-2">
             <button
@@ -497,7 +521,7 @@ export default function GcReviewPage() {
           {teams.map((t) => (
             <button
               key={t.id}
-              onClick={() => { setSelTeam(t.id); setSelPlayer(null); }}
+              onClick={() => setSelTeam(t.id)}
               className="flex-1 py-1.5 rounded-lg text-xs font-bold"
               style={
                 selTeam === t.id
@@ -509,46 +533,46 @@ export default function GcReviewPage() {
             </button>
           ))}
         </div>
-
-        {/* Player chips */}
-        <div className="flex flex-wrap gap-1.5 px-3 pt-1.5 shrink-0">
-          {selTeam === "away" && awayTrackMode === "team" ? (
-            <button
-              className="px-3 py-1 rounded-lg text-xs font-bold border"
-              style={{ background: "rgba(59,130,246,0.20)", borderColor: "rgba(59,130,246,0.5)", color: "#60A5FA" }}
-            >
-              全队（整队记录）
-            </button>
-          ) : (
-            currentTeam.players.map((p) => {
-              const active = selPlayer === p.id;
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => setSelPlayer(active ? null : p.id)}
-                  className="px-2 py-1 rounded-lg text-xs font-bold border"
-                  style={
-                    active
-                      ? { background: currentTeam.color, borderColor: currentTeam.color, color: "#fff" }
-                      : { background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#6B7280" }
-                  }
-                >
-                  #{p.num} {p.name}
-                </button>
-              );
-            })
-          )}
+        <div className="px-3 pt-1 shrink-0">
+          <div className="text-[10px] text-gray-600 text-center">点击动作，再选球员 → 快速打点</div>
         </div>
 
         {/* Action buttons */}
         <div className="grid grid-cols-3 gap-1.5 px-3 pt-2 shrink-0">
-          {scoring.map((a) => actionBtn(a, "py-4", "text-sm", "rgba(249,115,22,0.90)", "#fff", disabled))}
+          {scoring.map((a) => (
+            <button
+              key={a.cat}
+              onClick={() => startAction(a)}
+              className="py-4 rounded-xl font-bold text-sm"
+              style={{ background: "rgba(249,115,22,0.90)", color: "#fff" }}
+            >
+              {a.label}
+            </button>
+          ))}
         </div>
         <div className="grid grid-cols-3 gap-1.5 px-3 pt-1 shrink-0">
-          {misses.map((a) => actionBtn(a, "py-2.5", "text-xs", "rgba(239,68,68,0.20)", "#F87171", disabled))}
+          {misses.map((a) => (
+            <button
+              key={a.cat}
+              onClick={() => startAction(a)}
+              className="py-2.5 rounded-xl font-bold text-xs"
+              style={{ background: "rgba(239,68,68,0.20)", color: "#F87171" }}
+            >
+              {a.label}
+            </button>
+          ))}
         </div>
         <div className="grid grid-cols-3 gap-1.5 px-3 pt-1 shrink-0">
-          {statActs.map((a) => actionBtn(a, "py-2", "text-xs", "rgba(255,255,255,0.10)", "#D1D5DB", disabled))}
+          {statActs.map((a) => (
+            <button
+              key={a.cat}
+              onClick={() => startAction(a)}
+              className="py-2 rounded-xl font-bold text-xs"
+              style={{ background: "rgba(255,255,255,0.10)", color: "#D1D5DB" }}
+            >
+              {a.label}
+            </button>
+          ))}
         </div>
 
         {/* Recent events feed */}
@@ -560,7 +584,7 @@ export default function GcReviewPage() {
                 <div className="w-1 h-4 rounded-full shrink-0" style={{ background: team?.color ?? "#6B7280" }} />
                 <span className="text-xs font-mono text-gray-500 shrink-0 w-10">{fmt(e.videoTs)}</span>
                 <span className="flex-1 text-xs text-gray-300 truncate">
-                  #{e.playerNum} {e.playerName}
+                  {e.playerNum !== "-" ? `#${e.playerNum} ` : ""}{e.playerName}
                   <span className="text-gray-500 ml-1">{e.action}</span>
                 </span>
                 {e.pts > 0 && <span className="text-xs font-bold text-orange-400 shrink-0">+{e.pts}</span>}
@@ -571,6 +595,154 @@ export default function GcReviewPage() {
             <div className="text-xs text-gray-700 text-center py-6">暂无打点记录</div>
           )}
         </div>
+
+        {/* ── Contextual prompt: assist ──────────────────────────────────────── */}
+        {reviewCtx?.type === "assist" && pendingAction === null && (() => {
+          const scoringTeam = teams.find(t => t.id === reviewCtx.scoringTeam)!;
+          const otherPlayers = scoringTeam.players;
+          return (
+            <div className="fixed inset-0 z-40 flex items-end" style={{ background: "rgba(0,0,0,0.60)" }}>
+              <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+                <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
+                <div className="text-center mb-4">
+                  <div className="text-base font-black text-white">有助攻？</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{scoringTeam.name}</div>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-4 justify-center">
+                  {otherPlayers.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => commitAssist(p)}
+                      className="px-4 py-2.5 rounded-xl font-bold text-sm"
+                      style={{ background: `${scoringTeam.color}25`, border: `1px solid ${scoringTeam.color}60`, color: scoringTeam.color }}
+                    >
+                      #{p.num} {p.name}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => commitAssist(null)}
+                  className="w-full py-3 rounded-xl text-sm text-gray-400 border border-white/10"
+                >
+                  无助攻
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ── Contextual prompt: rebound ─────────────────────────────────────── */}
+        {reviewCtx?.type === "rebound" && pendingAction === null && (() => {
+          const shootTeam  = teams.find(t => t.id === reviewCtx.shootingTeam)!;
+          const otherTeam  = teams.find(t => t.id !== reviewCtx.shootingTeam)!;
+          return (
+            <div className="fixed inset-0 z-40 flex items-end" style={{ background: "rgba(0,0,0,0.60)" }}>
+              <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+                <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
+                <div className="text-center mb-4">
+                  <div className="text-base font-black text-white">篮板归属？</div>
+                </div>
+                <div className="flex gap-3 mb-3">
+                  <button
+                    onClick={() => commitRebound("oreb")}
+                    className="flex-1 py-3.5 rounded-xl font-bold text-sm"
+                    style={{ background: `${shootTeam.color}25`, border: `1px solid ${shootTeam.color}60`, color: shootTeam.color }}
+                  >
+                    进攻篮板
+                    <div className="text-xs font-normal mt-0.5 opacity-70">{shootTeam.name}</div>
+                  </button>
+                  <button
+                    onClick={() => commitRebound("dreb")}
+                    className="flex-1 py-3.5 rounded-xl font-bold text-sm"
+                    style={{ background: `${otherTeam.color}25`, border: `1px solid ${otherTeam.color}60`, color: otherTeam.color }}
+                  >
+                    防守篮板
+                    <div className="text-xs font-normal mt-0.5 opacity-70">{otherTeam.name}</div>
+                  </button>
+                </div>
+                <button
+                  onClick={() => setReviewCtx(null)}
+                  className="w-full py-2.5 rounded-xl text-sm text-gray-500"
+                >
+                  跳过
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ── Player picker bottom sheet ─────────────────────────────────────── */}
+        {pendingAction !== null && (
+          <div
+            className="fixed inset-0 z-50 flex items-end"
+            style={{ background: "rgba(0,0,0,0.72)" }}
+            onClick={(e) => { if (e.target === e.currentTarget) setPendingAction(null); }}
+          >
+            <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+              <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
+              <div className="text-center mb-4">
+                <div className="text-base font-black text-white">{pendingAction.label}</div>
+                <div className="text-xs text-gray-500 mt-0.5">谁做了这个动作？</div>
+              </div>
+
+              {/* Team toggle inside picker */}
+              <div className="flex gap-2 mb-4">
+                {teams.map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => setPendingTeam(t.id)}
+                    className="flex-1 py-1.5 rounded-lg text-xs font-bold"
+                    style={
+                      pendingTeam === t.id
+                        ? { background: t.color, color: "#fff" }
+                        : { background: "rgba(255,255,255,0.06)", color: "#6B7280" }
+                    }
+                  >
+                    {t.name}
+                  </button>
+                ))}
+              </div>
+
+              {/* Player grid */}
+              {pendingTeam === "away" && awayTrackMode === "team" ? (
+                <button
+                  onClick={() => commitAction({ id: TEAM_PLAYER_ID("away"), name: "全队", num: "-" })}
+                  className="w-full py-4 rounded-xl font-bold text-base mb-4"
+                  style={{ background: "rgba(59,130,246,0.20)", border: "1px solid rgba(59,130,246,0.4)", color: "#60A5FA" }}
+                >
+                  全队（整队记录）
+                </button>
+              ) : (
+                <div className="grid grid-cols-3 gap-2.5 mb-4">
+                  {pickerTeam?.players.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => commitAction(p)}
+                      className="flex flex-col items-center py-3 rounded-xl"
+                      style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.10)" }}
+                    >
+                      <span className="text-2xl font-black text-white">{p.num}</span>
+                      <span className="text-xs text-gray-500 mt-0.5">{p.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <button
+                onClick={() => commitAction(null)}
+                className="w-full py-3 rounded-xl text-sm text-gray-400 border border-white/10 mb-2"
+              >
+                稍后指定
+              </button>
+              <button
+                onClick={() => setPendingAction(null)}
+                className="w-full py-2 rounded-xl text-sm text-gray-600"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -603,7 +775,7 @@ export default function GcReviewPage() {
                 <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: team?.color ?? "#6B7280" }} />
                 <span className="text-xs font-mono text-gray-500 shrink-0 w-10">{fmt(e.videoTs)}</span>
                 <span className="flex-1 text-sm text-gray-300 truncate">
-                  #{e.playerNum} {e.playerName}
+                  {e.playerNum !== "-" ? `#${e.playerNum} ` : ""}{e.playerName}
                   <span className="text-gray-500 ml-1">· {e.action}</span>
                 </span>
                 {e.pts > 0 && <span className="text-xs font-bold text-orange-400 shrink-0">+{e.pts}</span>}
@@ -729,7 +901,6 @@ export default function GcReviewPage() {
         </a>
       )}
 
-      {/* Per-player stats */}
       {events.length > 0 && (() => {
         const playerIds = [...new Set(events.map(e => e.playerId))];
         const stats = playerIds.map(pid => {
@@ -790,7 +961,6 @@ export default function GcReviewPage() {
         );
       })()}
 
-      {/* Per-event replay using original video */}
       {videoUrl && events.length > 0 && (
         <div className="rounded-2xl bg-[#1a1d27] border border-white/10 overflow-hidden">
           <div className="px-4 py-2.5 border-b border-white/10 flex items-center justify-between">
