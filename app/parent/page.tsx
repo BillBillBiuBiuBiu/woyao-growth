@@ -441,13 +441,26 @@ export default function ParentHome() {
                 )}
 
                 {gameDetail.stats.length === 0 && gameDetail.clips.length === 0 && (
-                  <div className="text-center text-gray-400 text-sm py-6">暂无数据</div>
+                  <div className="text-center text-gray-400 text-sm py-4">暂无数据</div>
                 )}
 
-                {gameDetail.clips.length === 0 && gameDetail.stats.length > 0 && (
-                  <div className="text-xs text-gray-400 text-center mb-3">
-                    暂无集锦 · 教练赛后在「打点中心」生成后会出现在这里
-                  </div>
+                {gameDetail.clips.length === 0 && (
+                  <Link
+                    href="/parent/highlights"
+                    onClick={() => { setGameDetail(null); setSelectedGame(null); setExpandedClipId(null); setStatsCopied(false); }}
+                    className="block mx-1 mb-3"
+                  >
+                    <div
+                      className="rounded-xl px-4 py-3 flex items-center justify-between border active:opacity-70 transition-opacity"
+                      style={{ background: "rgba(249,115,22,0.06)", borderColor: "rgba(249,115,22,0.2)" }}
+                    >
+                      <div>
+                        <div className="text-xs font-bold text-orange-600 mb-0.5">暂无集锦</div>
+                        <div className="text-xs text-gray-500">上传比赛视频，AI帮你剪精彩片段</div>
+                      </div>
+                      <div className="text-sm font-bold text-orange-500 shrink-0 ml-3">🎬 生成 ›</div>
+                    </div>
+                  </Link>
                 )}
 
                 {selectedGame && gameDetail.stats.length > 0 && (
