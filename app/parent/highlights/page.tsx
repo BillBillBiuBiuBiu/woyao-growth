@@ -443,6 +443,7 @@ export default function HighlightsPage() {
   const [feedbackRating, setFeedbackRating] = useState<number>(0);
   const [feedbackTypes,  setFeedbackTypes]  = useState<string[]>([]);
   const [feedbackDone,   setFeedbackDone]   = useState(false);
+  const [isWeChat,       setIsWeChat]       = useState(false);
   const [bgmEnabled,     setBgmEnabled]     = useState(false);
   const [bgmUserFile,    setBgmUserFile]    = useState<File|null>(null);
   const ffmpegRef     = useRef<FFmpeg|null>(null);
@@ -484,6 +485,11 @@ export default function HighlightsPage() {
       ffmpegInitRef.current = null;
     });
   }, [ensureFFmpegLoaded]);
+
+  // Detect WeChat WKWebView once on mount — used to show long-press save hint
+  useEffect(() => {
+    setIsWeChat(/MicroMessenger/i.test(navigator.userAgent));
+  }, []);
 
   // Revoke blob URLs on change/unmount to prevent memory leaks
   useEffect(() => {
@@ -953,6 +959,9 @@ export default function HighlightsPage() {
           {statusMsg && <div className="text-xs text-orange-500 -mt-1">{statusMsg}</div>}
           <video src={resultUrl} controls playsInline className="w-full rounded-xl bg-black" style={{maxHeight:280}}/>
           <a href={resultUrl} download={resultName} className="w-full py-3 rounded-xl bg-orange-500 text-white text-sm font-bold text-center block">下载集锦视频</a>
+          {isWeChat && (
+            <div className="text-xs text-gray-400 text-center -mt-1">微信用户：长按上方视频 → 保存到相册</div>
+          )}
           <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);}} className="text-sm text-gray-400 text-center">重新制作</button>
           <Link href={`/parent/profile/${mockStudent.id}`} className="w-full py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-bold text-center block active:scale-95 transition-transform">
             📊 查看孩子的成长档案
