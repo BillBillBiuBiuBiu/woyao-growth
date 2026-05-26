@@ -51,12 +51,21 @@ export default function ParentHome() {
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [myLastHighlight, setMyLastHighlight] = useState<HighlightRecord | null>(null);
+  const [heroChildStat, setHeroChildStat] = useState<{ pts: number; reb: number; ast: number; stl: number } | null>(null);
 
   useEffect(() => {
     apiLoadGames().then((games) => { if (games.length > 0) setRecentGames(games.slice(0, 10)); }).catch(() => {});
     try { const n = localStorage.getItem("child_name"); if (n) setChildName(n); } catch {}
     try { const hl = JSON.parse(localStorage.getItem("my_highlights") || "[]"); if (hl.length > 0) setMyLastHighlight(hl[0]); } catch {}
   }, []);
+
+  useEffect(() => {
+    if (!childName || recentGames.length === 0 || recentGames[0].eventCount === 0) { setHeroChildStat(null); return; }
+    apiLoadEvents(recentGames[0].id).then((evts) => {
+      const s = computeStats(evts).find(p => p.name === childName);
+      setHeroChildStat(s ? { pts: s.pts, reb: s.reb, ast: s.ast, stl: s.stl } : null);
+    }).catch(() => {});
+  }, [childName, recentGames]);
 
   function saveName() {
     const trimmed = nameInput.trim();
@@ -143,15 +152,27 @@ export default function ParentHome() {
             {/* Today's growth — real last-game data when available, mock otherwise */}
             <div className="rounded-2xl p-3 text-white shadow-sm" style={{ background: "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)" }}>
               {recentGames.length > 0 ? (
-                <>
-                  <div className="text-xs font-medium text-yellow-100 mb-1">🏀 最近比赛</div>
-                  <div className="text-base font-bold leading-snug" style={{ color: "#7C3810" }}>
-                    {recentGames[0].homeTeam} {recentGames[0].homeScore} — {recentGames[0].awayScore} {recentGames[0].awayTeam}
-                  </div>
-                  <div className="text-xs text-yellow-200 mt-0.5">
-                    {fmtMatchDate(recentGames[0].ts)}{recentGames[0].eventCount > 0 ? ` · ${recentGames[0].eventCount}个打点` : ""}
-                  </div>
-                </>
+                heroChildStat ? (
+                  <>
+                    <div className="text-xs font-medium text-yellow-100 mb-1">⭐ {childName}的最新表现</div>
+                    <div className="text-base font-bold leading-snug" style={{ color: "#7C3810" }}>
+                      {heroChildStat.pts}分{heroChildStat.reb > 0 ? ` · ${heroChildStat.reb}板` : ""}{heroChildStat.ast > 0 ? ` · ${heroChildStat.ast}助` : ""}{heroChildStat.stl > 0 ? ` · ${heroChildStat.stl}断` : ""}
+                    </div>
+                    <div className="text-xs text-yellow-200 mt-0.5">
+                      {recentGames[0].homeTeam} {recentGames[0].homeScore}—{recentGames[0].awayScore} {recentGames[0].awayTeam} · {fmtMatchDate(recentGames[0].ts)}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-xs font-medium text-yellow-100 mb-1">🏀 最近比赛</div>
+                    <div className="text-base font-bold leading-snug" style={{ color: "#7C3810" }}>
+                      {recentGames[0].homeTeam} {recentGames[0].homeScore} — {recentGames[0].awayScore} {recentGames[0].awayTeam}
+                    </div>
+                    <div className="text-xs text-yellow-200 mt-0.5">
+                      {fmtMatchDate(recentGames[0].ts)}{recentGames[0].eventCount > 0 ? ` · ${recentGames[0].eventCount}个打点` : ""}
+                    </div>
+                  </>
+                )
               ) : (
                 <>
                   <div className="text-xs font-medium text-yellow-100 mb-1">🏀 期待第一场</div>
