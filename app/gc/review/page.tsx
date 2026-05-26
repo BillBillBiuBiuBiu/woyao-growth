@@ -113,6 +113,7 @@ export default function GcReviewPage() {
   const [savedDraft,    setSavedDraft]    = useState<GameEvent[] | null>(null);
   const [tsToast,       setTsToast]       = useState(false);
   const [tsText,        setTsText]        = useState<string | null>(null);
+  const [fileWarn,      setFileWarn]      = useState<string | null>(null);
 
   const isWeChat = typeof navigator !== "undefined" && /MicroMessenger/i.test(navigator.userAgent);
 
@@ -203,6 +204,13 @@ export default function GcReviewPage() {
   function handleVideoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    const mb = file.size / 1024 / 1024;
+    if (mb > 400) {
+      setFileWarn(`文件 ${mb.toFixed(0)} MB 超出上限（400 MB），请压缩后重试`);
+      e.target.value = "";
+      return;
+    }
+    setFileWarn(mb > 150 ? `文件较大（${mb.toFixed(0)} MB），建议使用较短片段以避免卡顿` : null);
     setVideoFile(file);
     setVideoUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(file); });
   }
@@ -365,33 +373,35 @@ export default function GcReviewPage() {
       const totalDur = segs.reduce((sum, [s, e]) => sum + (e - s), 0);
       setStatusMsg(`找到 ${segs.length} 个片段（共 ${totalDur.toFixed(0)}s），正在剪辑…`);
 
-      const args: string[] = [];
-      for (const [s, e] of segs) {
-        args.push("-ss", s.toFixed(3), "-t", (e - s).toFixed(3), "-i", "input.mp4");
-      }
-
+      // Single -i: one decode stream for all segments → avoids n×decode-buffer OOM on mobile
       const n = segs.length;
+      let filterComplex: string;
+      let mapArgs: string[];
       if (n === 1) {
-        args.push(
-          "-vf", "scale=720:-2",
-          "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
-          "-c:a", "aac", "-b:a", "96k",
-          "-movflags", "+faststart",
-          "-y", "highlight.mp4",
-        );
+        const [segS, segE] = segs[0];
+        const dur = segE - segS;
+        filterComplex = `[0:v]trim=start=${segS.toFixed(3)}:duration=${dur.toFixed(3)},setpts=PTS-STARTPTS,scale=480:-2[cv];[0:a]atrim=start=${segS.toFixed(3)}:duration=${dur.toFixed(3)},asetpts=PTS-STARTPTS[ca]`;
+        mapArgs = ["-map", "[cv]", "-map", "[ca]"];
       } else {
-        const concatV = segs.map((_, i) => `[${i}:v]`).join("");
-        const concatA = segs.map((_, i) => `[${i}:a]`).join("");
-        args.push(
-          "-filter_complex",
-          `${concatV}concat=n=${n}:v=1[rawv];${concatA}concat=n=${n}:v=0:a=1[rawa];[rawv]scale=720:-2[cv]`,
-          "-map", "[cv]", "-map", "[rawa]",
-          "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
-          "-c:a", "aac", "-b:a", "96k",
-          "-movflags", "+faststart",
-          "-y", "highlight.mp4",
-        );
+        const vSplitOuts = segs.map((_, i) => `[vs${i}]`).join("");
+        const aSplitOuts = segs.map((_, i) => `[as${i}]`).join("");
+        const trimParts  = segs.map(([segS, segE], i) => {
+          const dur = segE - segS;
+          return `[vs${i}]trim=start=${segS.toFixed(3)}:duration=${dur.toFixed(3)},setpts=PTS-STARTPTS[v${i}];[as${i}]atrim=start=${segS.toFixed(3)}:duration=${dur.toFixed(3)},asetpts=PTS-STARTPTS[a${i}]`;
+        }).join(";");
+        const concatIn = segs.map((_, i) => `[v${i}][a${i}]`).join("");
+        filterComplex = `[0:v]split=${n}${vSplitOuts};[0:a]asplit=${n}${aSplitOuts};${trimParts};${concatIn}concat=n=${n}:v=1:a=1[rawv][rawa];[rawv]scale=480:-2[cv]`;
+        mapArgs = ["-map", "[cv]", "-map", "[rawa]"];
       }
+      const args = [
+        "-i", "input.mp4",
+        "-filter_complex", filterComplex,
+        ...mapArgs,
+        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
+        "-c:a", "aac", "-b:a", "96k",
+        "-movflags", "+faststart",
+        "-y", "highlight.mp4",
+      ];
 
       const encodeLog: string[] = [];
       const onLog      = ({ message }: { message: string }) => {
@@ -475,6 +485,11 @@ export default function GcReviewPage() {
                 </>
               )}
             </label>
+            {fileWarn && (
+              <div className="mt-2 text-xs rounded-lg px-3 py-2" style={{ background: "rgba(245,158,11,0.12)", color: "#FCD34D" }}>
+                ⚠️ {fileWarn}
+              </div>
+            )}
           </div>
         </div>
 
