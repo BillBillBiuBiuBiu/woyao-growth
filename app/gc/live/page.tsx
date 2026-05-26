@@ -612,19 +612,16 @@ export default function GcLivePage() {
               </button>
             );
           })()}
-          <Link href="/coach/reports/generate" className="block">
+          <Link href="/gc/review" className="block">
             <div className="bg-orange-500 text-white text-center font-bold text-sm rounded-xl py-3 active:opacity-80">
-              📋 生成本场报告 →
+              🎬 赛后视频打点 →
             </div>
           </Link>
-          <div className="flex gap-3">
-            <Link href="/coach" className="flex-1">
-              <div className="border border-white/20 text-white text-center font-bold text-sm rounded-xl py-3 active:opacity-80">返回教练台</div>
-            </Link>
-            <Link href="/gc" className="flex-1">
-              <div className="border border-white/20 text-white text-center font-bold text-sm rounded-xl py-3 active:opacity-80">再来一场</div>
-            </Link>
-          </div>
+          <Link href="/gc" className="block">
+            <div className="border border-white/20 text-white text-center font-bold text-sm rounded-xl py-3 active:opacity-80 text-center">
+              再来一场
+            </div>
+          </Link>
         </div>
 
         {/* Share text fallback sheet (clipboard unavailable) */}
