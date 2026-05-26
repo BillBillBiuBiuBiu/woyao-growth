@@ -496,13 +496,22 @@ export default function GcSetupPage() {
                 );
               })()}
               {!detailGame.loading && (
-                <button
-                  onClick={() => handleShare(buildShareText(detailGame.record, detailGame.stats ?? []))}
-                  className="w-full mt-2 mb-4 py-2.5 rounded-xl text-sm font-bold border active:opacity-80"
-                  style={{ borderColor: "rgba(249,115,22,0.4)", color: copyToast ? "#4ade80" : "#F97316", background: copyToast ? "rgba(34,197,94,0.10)" : "rgba(249,115,22,0.08)" }}
-                >
-                  {copyToast ? "✅ 战报已复制！" : "📤 复制战报"}
-                </button>
+                <div className="flex gap-2 mt-2 mb-4">
+                  <button
+                    onClick={() => handleShare(buildShareText(detailGame.record, detailGame.stats ?? []))}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold border active:opacity-80"
+                    style={{ borderColor: "rgba(249,115,22,0.4)", color: copyToast ? "#4ade80" : "#F97316", background: copyToast ? "rgba(34,197,94,0.10)" : "rgba(249,115,22,0.08)" }}
+                  >
+                    {copyToast ? "✅ 已复制" : "📤 复制战报"}
+                  </button>
+                  <Link
+                    href={`/gc/review?gameId=${detailGame.record.id}`}
+                    onClick={() => setDetailGame(null)}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-center border border-white/15 text-gray-300 active:bg-white/10"
+                  >
+                    🎬 去打点
+                  </Link>
+                </div>
               )}
             </div>
           </div>
