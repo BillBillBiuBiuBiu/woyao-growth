@@ -125,7 +125,12 @@ export default function CoachStudentDetailPage() {
 
       {/* Recent reports */}
       <div>
-        <h2 className="text-sm font-semibold mb-3">成长报告 ({reports.length})</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold">成长报告 ({reports.length})</h2>
+          <Link href={`/coach/reports/generate?studentId=${student.id}`} className="text-xs text-orange-600 font-medium hover:text-orange-700">
+            ✨ 新报告
+          </Link>
+        </div>
         {reports.length === 0 ? (
           <div className="rounded-2xl border border-border bg-white p-6 text-center text-sm text-muted-foreground">暂无报告</div>
         ) : (

@@ -42,9 +42,10 @@ const mockDraft: Record<PlanType, { summary: string; strengths: string; weakness
 function GenerateReportContent() {
   const searchParams = useSearchParams();
   const preVideoId = searchParams.get("videoId") ?? "";
+  const preStudentId = searchParams.get("studentId") ?? "";
 
   const [step, setStep] = useState(1);
-  const [selectedStudent, setSelectedStudent] = useState(mockStudents[0].id);
+  const [selectedStudent, setSelectedStudent] = useState(preStudentId || mockStudents[0].id);
   const [selectedVideo, setSelectedVideo] = useState(preVideoId || mockVideos[0].id);
   const [selectedType, setSelectedType] = useState<PlanType>("vip");
   const [selectedScene, setSelectedScene] = useState<ReportScene>("training");
