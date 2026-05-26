@@ -121,6 +121,7 @@ export default function GcReviewPage() {
   const [cloudSaved,    setCloudSaved]    = useState(false);
   const [clipUrl,       setClipUrl]       = useState<string | null>(null);
   const [linkToast,     setLinkToast]     = useState(false);
+  const [notifyCopied,  setNotifyCopied]  = useState(false);
   const [linkedGame,    setLinkedGame]    = useState<GameRecord | null>(null);
   const [gameOptions,   setGameOptions]   = useState<GameRecord[]>([]);
 
@@ -1272,6 +1273,41 @@ export default function GcReviewPage() {
           </button>
         )}
       </div>
+
+      {cloudSaved && (() => {
+        const homeScore = events.filter(e => e.teamId === "home").reduce((s, e) => s + e.pts, 0);
+        const awayScore = events.filter(e => e.teamId === "away").reduce((s, e) => s + e.pts, 0);
+        const homeName  = linkedGame?.homeTeam ?? teams.find(t => t.id === "home")?.name ?? "主场";
+        const awayName  = linkedGame?.awayTeam ?? teams.find(t => t.id === "away")?.name ?? "客场";
+        const msg = clipUrl
+          ? `🏀 孩子的精彩集锦来了！\n${homeName} ${homeScore} - ${awayScore} ${awayName}\n直接观看 👉 ${clipUrl}`
+          : `🏀 孩子的精彩集锦已上传！\n${homeName} ${homeScore} - ${awayScore} ${awayName}\n打开「我耀」→ 首页 → 比赛记录 → 集锦切片`;
+        return (
+          <div className="mx-4 rounded-2xl p-4" style={{ background: "rgba(249,115,22,0.08)", border: "1px solid rgba(249,115,22,0.2)" }}>
+            <div className="text-xs font-bold text-orange-400 mb-2">📣 通知家长</div>
+            <pre className="text-xs text-gray-300 whitespace-pre-wrap font-sans leading-relaxed mb-3">{msg}</pre>
+            <button
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(msg);
+                  setNotifyCopied(true);
+                  setTimeout(() => setNotifyCopied(false), 2000);
+                } catch {
+                  setTsText(msg);
+                }
+              }}
+              className="w-full py-2 rounded-xl text-xs font-bold border transition-colors active:opacity-80"
+              style={{
+                borderColor: notifyCopied ? "rgba(34,197,94,0.4)" : "rgba(249,115,22,0.4)",
+                color: notifyCopied ? "#4ade80" : "#F97316",
+                background: notifyCopied ? "rgba(34,197,94,0.08)" : "rgba(249,115,22,0.08)",
+              }}
+            >
+              {notifyCopied ? "✅ 消息已复制！去粘贴到家长群" : "📋 复制通知消息 · 发到家长群"}
+            </button>
+          </div>
+        );
+      })()}
 
       {resultUrl && (
         <div className="rounded-2xl overflow-hidden bg-black border border-white/10">
