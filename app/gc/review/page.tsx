@@ -42,7 +42,7 @@ type ReviewCtx =
 
 // Clip buffer: 3s before the event, 5s after
 const PRE_S  = 5;
-const POST_S = 8;
+const POST_S = 5;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
