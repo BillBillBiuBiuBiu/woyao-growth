@@ -120,6 +120,7 @@ export default function GcReviewPage() {
   const [clipView,      setClipView]      = useState<{ title: string; clips: GameEvent[]; idx: number } | null>(null);
   const [cloudSaved,    setCloudSaved]    = useState(false);
   const [clipUrl,       setClipUrl]       = useState<string | null>(null);
+  const [savedClipLabel, setSavedClipLabel] = useState<string>("");
   const [linkToast,     setLinkToast]     = useState(false);
   const [notifyCopied,  setNotifyCopied]  = useState(false);
   const [linkedGame,    setLinkedGame]    = useState<GameRecord | null>(null);
@@ -538,7 +539,7 @@ export default function GcReviewPage() {
       const topName = [...nameCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
       const clipLabel = topName ? `${topName}等${events.length}个精彩时刻` : `${events.length}个打点集锦`;
       apiUploadClip(gameId, blob, clipLabel, clipName)
-        .then((url) => { if (url) { setCloudSaved(true); setClipUrl(url); } })
+        .then((url) => { if (url) { setCloudSaved(true); setClipUrl(url); setSavedClipLabel(clipLabel); } })
         .catch(() => {});
 
     } catch (e) {
@@ -1288,8 +1289,8 @@ export default function GcReviewPage() {
         const homeName  = linkedGame?.homeTeam ?? teams.find(t => t.id === "home")?.name ?? "主场";
         const awayName  = linkedGame?.awayTeam ?? teams.find(t => t.id === "away")?.name ?? "客场";
         const msg = clipUrl
-          ? `🏀 孩子的精彩集锦来了！\n${homeName} ${homeScore} - ${awayScore} ${awayName}\n直接观看 👉 ${clipUrl}`
-          : `🏀 孩子的精彩集锦已上传！\n${homeName} ${homeScore} - ${awayScore} ${awayName}\n打开「我耀」→ 首页 → 比赛记录 → 集锦切片`;
+          ? `🏀 ${savedClipLabel || "孩子的精彩集锦"}来了！\n${homeName} ${homeScore} - ${awayScore} ${awayName}\n直接观看 👉 ${clipUrl}`
+          : `🏀 ${savedClipLabel || "孩子的精彩集锦"}已上传！\n${homeName} ${homeScore} - ${awayScore} ${awayName}\n打开「我耀」→ 首页 → 比赛记录 → 集锦切片`;
         return (
           <div className="mx-4 rounded-2xl p-4" style={{ background: "rgba(249,115,22,0.08)", border: "1px solid rgba(249,115,22,0.2)" }}>
             <div className="text-xs font-bold text-orange-400 mb-2">📣 通知家长</div>
@@ -1489,7 +1490,7 @@ export default function GcReviewPage() {
       <button
         onClick={() => {
           setPhase("tagging"); setEvents([]); setProgress(0);
-          setResultUrl(null); setResultBlob(null); setCloudSaved(false); setClipUrl(null);
+          setResultUrl(null); setResultBlob(null); setCloudSaved(false); setClipUrl(null); setSavedClipLabel("");
           const autoGame = gameOptions[0] ?? null;
           setLinkedGame(autoGame);
           gameIdRef.current = autoGame?.id ?? `g-${Date.now()}`;
