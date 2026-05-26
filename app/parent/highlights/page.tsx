@@ -450,6 +450,8 @@ export default function HighlightsPage() {
   const [videoDuration,  setVideoDuration]  = useState<number>(0);
   const [childName,      setChildName]      = useState("");
   const [myHighlights,   setMyHighlights]   = useState<Array<{date:string;name:string;dur:number}>>([]);
+  const [captionCopied,  setCaptionCopied]  = useState(false);
+  const [captionFallback, setCaptionFallback] = useState<string|null>(null);
   const ffmpegRef     = useRef<FFmpeg|null>(null);
   const ffmpegInitRef = useRef<Promise<void>|null>(null);
 
@@ -871,6 +873,7 @@ export default function HighlightsPage() {
   const canRun = !!(videoFile && photoFile && !isProcessing);
 
   return (
+    <>
     <div className="pb-16 flex flex-col gap-5">
       <div className="rounded-3xl p-5 shadow-lg" style={{background:"linear-gradient(135deg,#f7971e 0%,#ffd200 100%)"}}>
         <div className="text-2xl font-black mb-1" style={{color:"#7C3810"}}>🎬 生成{childName ? `${childName}的` : ""}精彩集锦</div>
@@ -1025,7 +1028,24 @@ export default function HighlightsPage() {
               </div>
             </div>
           )}
-          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);}} className="text-sm text-gray-400 text-center">重新制作</button>
+          <button
+            onClick={async () => {
+              const dur = videoDuration > 0 ? Math.round(videoDuration) : 15;
+              const caption = `🏀 ${childName ? childName + "的精彩集锦！" : "精彩集锦！"}${dur}秒精彩瞬间 🔥\n来自「我耀成长」`;
+              try {
+                await navigator.clipboard.writeText(caption);
+                setCaptionCopied(true);
+                setTimeout(() => setCaptionCopied(false), 2000);
+              } catch {
+                setCaptionFallback(caption);
+              }
+            }}
+            className="w-full py-2.5 rounded-xl text-sm font-bold border active:opacity-80 transition-colors"
+            style={{ borderColor: captionCopied ? "rgba(34,197,94,0.4)" : "rgba(249,115,22,0.4)", color: captionCopied ? "#16a34a" : "#F97316", background: captionCopied ? "rgba(34,197,94,0.06)" : "rgba(249,115,22,0.06)" }}
+          >
+            {captionCopied ? "✅ 配文已复制！粘贴到微信群" : "📋 复制配文 · 发给家人群"}
+          </button>
+          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);}} className="text-sm text-gray-400 text-center">重新制作</button>
           <Link href={`/parent/profile/${mockStudent.id}`} className="w-full py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-bold text-center block active:scale-95 transition-transform">
             📊 查看孩子的成长档案
           </Link>
@@ -1099,6 +1119,28 @@ export default function HighlightsPage() {
         </div>
       )}
     </div>
+
+      {/* Fallback sheet for caption copy (WeChat / restricted clipboard) */}
+      {captionFallback !== null && (
+        <div className="fixed inset-0 z-[60] flex items-end" style={{ background: "rgba(0,0,0,0.72)" }}>
+          <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
+            <div className="text-sm font-bold text-white mb-1">📋 配文</div>
+            <div className="text-xs text-gray-500 mb-3">长按下方文字 → 全选 → 复制，分享视频时粘贴</div>
+            <textarea
+              readOnly
+              value={captionFallback}
+              className="w-full rounded-xl text-xs text-gray-300 p-3 resize-none"
+              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", height: 80, fontFamily: "monospace" }}
+              onFocus={e => e.target.select()}
+            />
+            <button onClick={() => setCaptionFallback(null)} className="w-full mt-3 py-3 rounded-xl border border-white/15 text-sm text-gray-400">
+              关闭
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
