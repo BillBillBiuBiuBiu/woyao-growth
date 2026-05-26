@@ -1077,7 +1077,7 @@ export default function HighlightsPage() {
               <div key={i} className="flex items-center justify-between py-2.5 border-t border-gray-50 first:border-0">
                 <div className="min-w-0 flex-1">
                   <div className="text-sm text-gray-800 font-medium truncate">{hl.name.replace(/\.[^.]+$/,"")}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">{new Date(hl.date).toLocaleDateString("zh-CN",{month:"numeric",day:"numeric"})} · {hl.dur}秒</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{(() => { const d = new Date(hl.date); const now = new Date(); const hhmm = `${d.getHours().toString().padStart(2,"0")}:${d.getMinutes().toString().padStart(2,"0")}`; const diff = Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime() - new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()) / 86400000); return diff === 0 ? `今天 ${hhmm}` : diff === 1 ? `昨天 ${hhmm}` : diff <= 7 ? `${diff}天前 ${hhmm}` : `${d.getMonth()+1}/${d.getDate()} ${hhmm}`; })()} · {hl.dur}秒</div>
                 </div>
                 <div className="text-xs text-gray-300 shrink-0 ml-3">已过期</div>
               </div>

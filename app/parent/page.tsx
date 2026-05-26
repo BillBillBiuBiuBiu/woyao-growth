@@ -11,6 +11,18 @@ function fmtMatchDate(ts: string): string {
   return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
 }
 
+function fmtRelDate(ts: string): string {
+  const d = new Date(ts);
+  const now = new Date();
+  const hhmm = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const daysDiff = Math.floor((todayStart.getTime() - new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) / 86400000);
+  if (daysDiff === 0) return `今天 ${hhmm}`;
+  if (daysDiff === 1) return `昨天 ${hhmm}`;
+  if (daysDiff <= 7) return `${daysDiff}天前 ${hhmm}`;
+  return `${d.getMonth() + 1}/${d.getDate()} ${hhmm}`;
+}
+
 interface PlayerStat {
   name: string; num: string; team: "home" | "away";
   pts: number; reb: number; ast: number; stl: number;
@@ -224,7 +236,7 @@ export default function ParentHome() {
               <div className="min-w-0 flex-1">
                 <div className="text-xs text-orange-500 font-medium mb-0.5">✨ 最近集锦</div>
                 <div className="text-sm font-semibold text-gray-800 truncate">{myLastHighlight.name.replace(/\.[^.]+$/, "")}</div>
-                <div className="text-xs text-gray-400 mt-0.5">{fmtMatchDate(myLastHighlight.date)} · {myLastHighlight.dur}秒</div>
+                <div className="text-xs text-gray-400 mt-0.5">{fmtRelDate(myLastHighlight.date)} · {myLastHighlight.dur}秒</div>
               </div>
               <div className="text-orange-300 ml-3 shrink-0 text-xl">›</div>
             </div>
