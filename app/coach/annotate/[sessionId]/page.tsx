@@ -45,7 +45,7 @@ export default function AnnotatePage() {
 
   function handlePublish() {
     setPublished(true);
-    timerRef.current = setTimeout(() => router.push("/coach"), 1500);
+    timerRef.current = setTimeout(() => router.push("/coach/reports"), 1500);
   }
 
   if (published) {
