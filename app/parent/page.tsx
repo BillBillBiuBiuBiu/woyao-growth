@@ -140,10 +140,24 @@ export default function ParentHome() {
               <div className="text-xs bg-orange-100 text-orange-700 rounded-full px-2.5 py-1 inline-block mt-1.5 font-medium">{mockStudent.currentStage}</div>
             </div>
 
-            {/* Today's growth */}
+            {/* Today's growth — real last-game data when available, mock otherwise */}
             <div className="rounded-2xl p-3 text-white shadow-sm" style={{ background: "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)" }}>
-              <div className="text-xs font-medium text-yellow-100 mb-1">✨ 今日成长</div>
-              <div className="text-sm font-bold leading-snug line-clamp-3" style={{ color: "#7C3810" }}>{mockReport.heroSummary}</div>
+              {recentGames.length > 0 ? (
+                <>
+                  <div className="text-xs font-medium text-yellow-100 mb-1">🏀 最近比赛</div>
+                  <div className="text-base font-bold leading-snug" style={{ color: "#7C3810" }}>
+                    {recentGames[0].homeTeam} {recentGames[0].homeScore} — {recentGames[0].awayScore} {recentGames[0].awayTeam}
+                  </div>
+                  <div className="text-xs text-yellow-200 mt-0.5">
+                    {fmtMatchDate(recentGames[0].ts)}{recentGames[0].eventCount > 0 ? ` · ${recentGames[0].eventCount}个打点` : ""}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-xs font-medium text-yellow-100 mb-1">✨ 今日成长</div>
+                  <div className="text-sm font-bold leading-snug line-clamp-3" style={{ color: "#7C3810" }}>{mockReport.heroSummary}</div>
+                </>
+              )}
             </div>
 
             {/* Badge */}
