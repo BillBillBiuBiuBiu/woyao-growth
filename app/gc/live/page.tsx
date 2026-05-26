@@ -65,9 +65,11 @@ export default function GcLivePage() {
   const [selPlayer,     setSelPlayer]     = useState<string | null>(null);
   const [ctxPrompt,     setCtxPrompt]     = useState<CtxPrompt | null>(null);
   const [detailPlayer,  setDetailPlayer]  = useState<string | null>(null); // postgame detail modal
+  const [lastFlash,     setLastFlash]     = useState<string | null>(null);
 
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
   const ctxTimerRef = useRef<ReturnType<typeof setTimeout>  | null>(null);
+  const flashRef    = useRef<ReturnType<typeof setTimeout>  | null>(null);
 
   useEffect(() => {
     try {
@@ -82,6 +84,7 @@ export default function GcLivePage() {
     return () => {
       if (timerRef.current)    clearInterval(timerRef.current);
       if (ctxTimerRef.current) clearTimeout(ctxTimerRef.current);
+      if (flashRef.current)    clearTimeout(flashRef.current);
     };
   }, []);
 
@@ -133,6 +136,12 @@ export default function GcLivePage() {
     if (!player) return;
 
     setEvents(prev => [makeEvent(selTeam, player.id, player.name, player.num, action), ...prev]);
+
+    // Flash chip
+    if (flashRef.current) clearTimeout(flashRef.current);
+    setLastFlash(action.pts > 0 ? `+${action.pts} ${action.label}` : action.label);
+    flashRef.current = setTimeout(() => setLastFlash(null), 1800);
+
     clearCtx();
 
     if (action.pts > 0) {
@@ -447,12 +456,12 @@ export default function GcLivePage() {
       </div>
 
       {/* Scoreboard */}
-      <div className="bg-[#1a1d27] border-b border-white/10 px-4 py-3 flex items-center justify-between shrink-0">
+      <div className="bg-[#1a1d27] border-b border-white/10 px-4 py-3 flex items-center justify-between shrink-0 relative">
         <div className="flex-1 text-center">
           <div className="text-xs font-bold text-orange-400 mb-1">
             {teams.find(t => t.id === "home")?.name ?? "主场"}
           </div>
-          <div className={`text-4xl font-black ${score.home >= score.away ? "text-orange-400" : "text-gray-500"}`}>
+          <div className={`text-4xl font-black transition-all ${score.home >= score.away ? "text-orange-400" : "text-gray-500"}`}>
             {score.home}
           </div>
         </div>
@@ -465,10 +474,18 @@ export default function GcLivePage() {
           <div className="text-xs font-bold text-blue-400 mb-1">
             {teams.find(t => t.id === "away")?.name ?? "客场"}
           </div>
-          <div className={`text-4xl font-black ${score.away > score.home ? "text-blue-400" : "text-gray-500"}`}>
+          <div className={`text-4xl font-black transition-all ${score.away > score.home ? "text-blue-400" : "text-gray-500"}`}>
             {score.away}
           </div>
         </div>
+        {/* Last-action flash */}
+        {lastFlash && (
+          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 pointer-events-none">
+            <div className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 whitespace-nowrap">
+              {lastFlash}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Team toggle */}
@@ -485,7 +502,7 @@ export default function GcLivePage() {
       </div>
 
       {/* Player chips */}
-      <div className="flex flex-wrap gap-2 px-3 pt-2 shrink-0">
+      <div className="flex flex-wrap gap-2 px-3 pt-2 pb-0.5 shrink-0">
         {selTeam === "away" && awayTrackMode === "team" ? (
           <button className="px-3 py-1.5 rounded-lg text-xs font-bold border"
             style={{ background: currentTeam.color, borderColor: currentTeam.color, color: "#fff" }}>
@@ -508,6 +525,23 @@ export default function GcLivePage() {
         )}
       </div>
 
+      {/* Selected player running stats */}
+      {selPlayer && (() => {
+        const pe = events.filter(e => e.playerId === selPlayer);
+        if (pe.length === 0) return null;
+        const pts = pe.reduce((s, e) => s + e.pts, 0);
+        const reb = pe.filter(e => e.cat === "oreb" || e.cat === "dreb").length;
+        const ast = pe.filter(e => e.cat === "ast").length;
+        return (
+          <div className="flex items-center gap-3 px-4 py-1 shrink-0">
+            <span className="text-xs text-gray-600">本场：</span>
+            <span className="text-xs text-orange-400 font-bold">{pts}分</span>
+            <span className="text-xs text-gray-400">{reb}板</span>
+            <span className="text-xs text-gray-400">{ast}助</span>
+          </div>
+        );
+      })()}
+
       {/* Action buttons — 3-tier hierarchy */}
       {(() => {
         const disabled = !selPlayer;
@@ -524,13 +558,13 @@ export default function GcLivePage() {
         const stats   = ACTIONS.filter(a => a.pts === 0 && !a.cat.endsWith("_miss"));
         return (
           <>
-            <div className="grid grid-cols-3 gap-1.5 px-3 pt-3 shrink-0">
+            <div className="grid grid-cols-3 gap-1.5 px-3 pt-2 shrink-0">
               {scoring.map(a => btn(a, "py-5", "text-sm", "rgba(249,115,22,0.90)", "#fff"))}
             </div>
             <div className="grid grid-cols-3 gap-1.5 px-3 pt-1.5 shrink-0">
               {misses.map(a => btn(a, "py-3", "text-xs", "rgba(239,68,68,0.18)", "#F87171"))}
             </div>
-            <div className="grid grid-cols-3 gap-1.5 px-3 pt-1.5 shrink-0">
+            <div className="grid grid-cols-4 gap-1.5 px-3 pt-1.5 shrink-0">
               {stats.map(a => btn(a, "py-2.5", "text-xs", "rgba(255,255,255,0.10)", "#D1D5DB"))}
             </div>
           </>

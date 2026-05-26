@@ -14,6 +14,8 @@ import {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
+const TEAM_PLAYER_ID = (teamId: TeamId) => `${teamId}-team`;
+
 const ACTIONS = [
   { label: "2分命中", pts: 2, cat: "2pt" },
   { label: "2分不中", pts: 0, cat: "2pt_miss" },
@@ -98,6 +100,7 @@ export default function GcReviewPage() {
   const [resultUrl,   setResultUrl]   = useState<string | null>(null);
   const [resultName,  setResultName]  = useState("highlight.mp4");
   const [error,       setError]       = useState<string | null>(null);
+  const [awayTrackMode, setAwayTrackMode] = useState<"player" | "team">("team");
   const [liveSession, setLiveSession] = useState<LiveSession | null>(null);
   const [filterPlayer, setFilterPlayer] = useState<string | null>(null); // done phase player filter
 
@@ -114,13 +117,23 @@ export default function GcReviewPage() {
   }
 
   useEffect(() => {
-    try { setTeams(teamsFromConfig(loadTeamsConfig())); } catch {}
-    // Check for live session data
+    try {
+      const cfg = loadTeamsConfig();
+      setTeams(teamsFromConfig(cfg));
+      setAwayTrackMode(cfg.awayTrackMode ?? "team");
+    } catch {}
     try {
       const raw = localStorage.getItem("gc_last_session");
       if (raw) setLiveSession(JSON.parse(raw) as LiveSession);
     } catch {}
   }, []);
+
+  // Auto-select synthetic team player when switching to away in team mode
+  useEffect(() => {
+    if (selTeam === "away" && awayTrackMode === "team") {
+      setSelPlayer(TEAM_PLAYER_ID("away"));
+    }
+  }, [selTeam, awayTrackMode]);
 
   // Revoke blob URLs on unmount
   useEffect(() => () => { if (resultUrl) URL.revokeObjectURL(resultUrl); }, [resultUrl]);
@@ -171,16 +184,20 @@ export default function GcReviewPage() {
 
   function logEvent(action: typeof ACTIONS[number]) {
     if (!selPlayer) return;
-    const team   = teams.find((t) => t.id === selTeam);
-    const player = team?.players.find((p) => p.id === selPlayer);
-    if (!team || !player) return;
+    const team = teams.find((t) => t.id === selTeam);
+    if (!team) return;
+    const isTeamMode = selTeam === "away" && awayTrackMode === "team";
+    const player = isTeamMode
+      ? { id: TEAM_PLAYER_ID("away"), name: "全队", num: "-" }
+      : team.players.find((p) => p.id === selPlayer);
+    if (!player) return;
     const videoTs = videoRef.current?.currentTime ?? 0;
     setEvents((prev) => [
       {
         id: `e-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
         videoTs,
         teamId: selTeam,
-        playerId: selPlayer,
+        playerId: isTeamMode ? TEAM_PLAYER_ID("away") : selPlayer,
         playerName: player.name,
         playerNum: player.num,
         action: action.label,
@@ -495,23 +512,32 @@ export default function GcReviewPage() {
 
         {/* Player chips */}
         <div className="flex flex-wrap gap-1.5 px-3 pt-1.5 shrink-0">
-          {currentTeam.players.map((p) => {
-            const active = selPlayer === p.id;
-            return (
-              <button
-                key={p.id}
-                onClick={() => setSelPlayer(active ? null : p.id)}
-                className="px-2 py-1 rounded-lg text-xs font-bold border"
-                style={
-                  active
-                    ? { background: currentTeam.color, borderColor: currentTeam.color, color: "#fff" }
-                    : { background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#6B7280" }
-                }
-              >
-                #{p.num} {p.name}
-              </button>
-            );
-          })}
+          {selTeam === "away" && awayTrackMode === "team" ? (
+            <button
+              className="px-3 py-1 rounded-lg text-xs font-bold border"
+              style={{ background: "rgba(59,130,246,0.20)", borderColor: "rgba(59,130,246,0.5)", color: "#60A5FA" }}
+            >
+              全队（整队记录）
+            </button>
+          ) : (
+            currentTeam.players.map((p) => {
+              const active = selPlayer === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setSelPlayer(active ? null : p.id)}
+                  className="px-2 py-1 rounded-lg text-xs font-bold border"
+                  style={
+                    active
+                      ? { background: currentTeam.color, borderColor: currentTeam.color, color: "#fff" }
+                      : { background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#6B7280" }
+                  }
+                >
+                  #{p.num} {p.name}
+                </button>
+              );
+            })
+          )}
         </div>
 
         {/* Action buttons */}
