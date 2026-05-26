@@ -54,6 +54,13 @@ export default function GcSetupPage() {
     }));
   }
 
+  function toggleAwayTrackMode() {
+    setCfg((prev) => ({
+      ...prev,
+      awayTrackMode: (prev.awayTrackMode ?? "team") === "team" ? "player" : "team",
+    }));
+  }
+
   function handleSave() {
     saveTeamsConfig(cfg);
     setSaved(true);
@@ -137,6 +144,33 @@ export default function GcSetupPage() {
                   </button>
                 )}
               </div>
+
+              {/* Away-only: track mode toggle */}
+              {side === "away" && (
+                <div className="mt-3 pt-3 border-t border-white/10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-bold text-gray-400">对手记录方式</div>
+                      <div className="text-xs text-gray-600 mt-0.5">
+                        {(cfg.awayTrackMode ?? "team") === "team"
+                          ? "整队：只记录总得分和总数据"
+                          : "个人：记录每位球员的详细数据"}
+                      </div>
+                    </div>
+                    <button
+                      onClick={toggleAwayTrackMode}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold border"
+                      style={
+                        (cfg.awayTrackMode ?? "team") === "team"
+                          ? { background: "rgba(59,130,246,0.15)", borderColor: "rgba(59,130,246,0.4)", color: "#60A5FA" }
+                          : { background: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.15)", color: "#9CA3AF" }
+                      }
+                    >
+                      {(cfg.awayTrackMode ?? "team") === "team" ? "整队" : "个人"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -202,11 +236,15 @@ export default function GcSetupPage() {
             </div>
             <div className="font-bold" style={{ color: cfg.away.color }}>{cfg.away.name}</div>
             <div className="text-xs text-gray-600 mt-0.5">客场</div>
+            <div className="mt-1 inline-block px-1.5 py-0.5 rounded text-xs font-medium"
+              style={{ background: "rgba(59,130,246,0.15)", color: "#60A5FA" }}>
+              {(cfg.awayTrackMode ?? "team") === "team" ? "整队记录" : "个人记录"}
+            </div>
             <div className="mt-1.5 flex flex-col gap-0.5">
-              {cfg.away.players.slice(0, 3).map((p, i) => (
+              {(cfg.awayTrackMode ?? "team") === "player" && cfg.away.players.slice(0, 3).map((p, i) => (
                 <div key={i} className="text-xs text-gray-500">#{p.num} {p.name}</div>
               ))}
-              {cfg.away.players.length > 3 && (
+              {(cfg.awayTrackMode ?? "team") === "player" && cfg.away.players.length > 3 && (
                 <div className="text-xs text-gray-600">+{cfg.away.players.length - 3}人</div>
               )}
             </div>

@@ -7,6 +7,7 @@ import {
   teamsFromConfig,
   type TeamId,
   type RuntimeTeam,
+  type TeamsConfig,
 } from "@/lib/gc-teams";
 
 const ACTIONS = [
@@ -44,48 +45,106 @@ function fmt(secs: number) {
   return `${m}:${s}`;
 }
 
+// Synthetic player ID for team-level events (opponent in team mode)
+const TEAM_PLAYER_ID = (teamId: TeamId) => `${teamId}-team`;
+
 export default function GcLivePage() {
   const [teams, setTeams] = useState<RuntimeTeam[]>(() => teamsFromConfig(DEFAULT_TEAMS));
+  const [awayTrackMode, setAwayTrackMode] = useState<"player" | "team">("team");
   const [phase, setPhase] = useState<"live" | "postgame">("live");
   const [quarter, setQuarter] = useState(1);
   const [recSecs, setRecSecs] = useState(0);
   const [events, setEvents] = useState<GameEvent[]>([]);
   const [selTeam, setSelTeam] = useState<TeamId>("home");
   const [selPlayer, setSelPlayer] = useState<string | null>(null);
+  // null = no pending rebound; TeamId = the shooting team that just missed
+  const [pendingRebound, setPendingRebound] = useState<TeamId | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const reboundTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    try { setTeams(teamsFromConfig(loadTeamsConfig())); } catch {}
+    try {
+      const cfg: TeamsConfig = loadTeamsConfig();
+      setTeams(teamsFromConfig(cfg));
+      setAwayTrackMode(cfg.awayTrackMode ?? "team");
+    } catch {}
   }, []);
+
+  // Auto-select "全队" player when switching to away team in team mode
+  useEffect(() => {
+    if (selTeam === "away" && awayTrackMode === "team") {
+      setSelPlayer(TEAM_PLAYER_ID("away"));
+    }
+  }, [selTeam, awayTrackMode]);
 
   useEffect(() => {
     timerRef.current = setInterval(() => setRecSecs((s) => s + 1), 1000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (reboundTimerRef.current) clearTimeout(reboundTimerRef.current);
+    };
   }, []);
+
+  function buildEvent(
+    teamId: TeamId, playerId: string, playerName: string, playerNum: string,
+    action: typeof ACTIONS[number]
+  ): GameEvent {
+    return {
+      id: `e-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+      videoTs: recSecs,
+      teamId, playerId, playerName, playerNum,
+      action: action.label, pts: action.pts, cat: action.cat,
+    };
+  }
 
   function logEvent(action: typeof ACTIONS[number]) {
     if (!selPlayer) return;
     const team = teams.find((t) => t.id === selTeam);
-    const player = team?.players.find((p) => p.id === selPlayer);
+    // In team mode, synthetic player is always valid; otherwise look up real player
+    const isTeamMode = selTeam === "away" && awayTrackMode === "team";
+    const player = isTeamMode
+      ? { name: "全队", num: "-" }
+      : team?.players.find((p) => p.id === selPlayer);
     if (!team || !player) return;
+
     setEvents((prev) => [
-      {
-        id: `e-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
-        videoTs: recSecs,
-        teamId: selTeam,
-        playerId: selPlayer,
-        playerName: player.name,
-        playerNum: player.num,
-        action: action.label,
-        pts: action.pts,
-        cat: action.cat,
-      },
+      buildEvent(selTeam, selPlayer, player.name, player.num, action),
       ...prev,
     ]);
+
+    // After any miss: trigger rebound prompt (auto-dismiss in 6s)
+    if (action.cat === "2pt_miss" || action.cat === "3pt_miss" || action.cat === "ft_miss") {
+      if (reboundTimerRef.current) clearTimeout(reboundTimerRef.current);
+      setPendingRebound(selTeam);
+      reboundTimerRef.current = setTimeout(() => setPendingRebound(null), 6000);
+    }
+  }
+
+  function logRebound(type: "oreb" | "dreb") {
+    if (reboundTimerRef.current) clearTimeout(reboundTimerRef.current);
+    const shootingTeam = pendingRebound!;
+    setPendingRebound(null);
+
+    const rebTeamId: TeamId = type === "oreb" ? shootingTeam : (shootingTeam === "home" ? "away" : "home");
+    const isTeamMode = rebTeamId === "away" && awayTrackMode === "team";
+
+    // For oreb: same player as shooter (fast path). For dreb: opponent team ("全队" since context switched)
+    const orebPlayer = type === "oreb"
+      ? teams.find(t => t.id === shootingTeam)?.players.find(p => p.id === selPlayer)
+      : undefined;
+
+    const playerId   = isTeamMode ? TEAM_PLAYER_ID(rebTeamId) : (orebPlayer?.id   ?? TEAM_PLAYER_ID(rebTeamId));
+    const playerName = isTeamMode ? "全队"                     : (orebPlayer?.name ?? "全队");
+    const playerNum  = isTeamMode ? "-"                        : (orebPlayer?.num  ?? "-");
+
+    const rebAction = ACTIONS.find(a => a.cat === type)!;
+    setEvents(prev => [buildEvent(rebTeamId, playerId, playerName, playerNum, rebAction), ...prev]);
   }
 
   function endGame() {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (reboundTimerRef.current) { clearTimeout(reboundTimerRef.current); reboundTimerRef.current = null; }
+    setPendingRebound(null);
     setPhase("postgame");
   }
 
@@ -300,7 +359,9 @@ export default function GcLivePage() {
       {/* Scoreboard */}
       <div className="bg-[#1a1d27] border-b border-white/10 px-4 py-3 flex items-center justify-between shrink-0">
         <div className="flex-1 text-center">
-          <div className="text-xs font-bold text-orange-400 mb-1">PAB篮球</div>
+          <div className="text-xs font-bold text-orange-400 mb-1">
+            {teams.find(t => t.id === "home")?.name ?? "主场"}
+          </div>
           <div className={`text-4xl font-black ${score.home >= score.away ? "text-orange-400" : "text-gray-500"}`}>
             {score.home}
           </div>
@@ -311,7 +372,9 @@ export default function GcLivePage() {
           <div className="w-2 h-2 rounded-full bg-red-500 mx-auto mt-1 animate-pulse" />
         </div>
         <div className="flex-1 text-center">
-          <div className="text-xs font-bold text-blue-400 mb-1">STB铁骑</div>
+          <div className="text-xs font-bold text-blue-400 mb-1">
+            {teams.find(t => t.id === "away")?.name ?? "客场"}
+          </div>
           <div className={`text-4xl font-black ${score.away > score.home ? "text-blue-400" : "text-gray-500"}`}>
             {score.away}
           </div>
@@ -336,25 +399,34 @@ export default function GcLivePage() {
         ))}
       </div>
 
-      {/* Player chips */}
+      {/* Player chips — or "全队" single chip when away team in team mode */}
       <div className="flex flex-wrap gap-2 px-3 pt-2 shrink-0">
-        {currentTeam.players.map((p) => {
-          const active = selPlayer === p.id;
-          return (
-            <button
-              key={p.id}
-              onClick={() => setSelPlayer(active ? null : p.id)}
-              className="px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors"
-              style={
-                active
-                  ? { background: currentTeam.color, borderColor: currentTeam.color, color: "#fff" }
-                  : { background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#6B7280" }
-              }
-            >
-              #{p.num} {p.name}
-            </button>
-          );
-        })}
+        {selTeam === "away" && awayTrackMode === "team" ? (
+          <button
+            className="px-3 py-1.5 rounded-lg text-xs font-bold border"
+            style={{ background: currentTeam.color, borderColor: currentTeam.color, color: "#fff" }}
+          >
+            全队（整队记录）
+          </button>
+        ) : (
+          currentTeam.players.map((p) => {
+            const active = selPlayer === p.id;
+            return (
+              <button
+                key={p.id}
+                onClick={() => setSelPlayer(active ? null : p.id)}
+                className="px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors"
+                style={
+                  active
+                    ? { background: currentTeam.color, borderColor: currentTeam.color, color: "#fff" }
+                    : { background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#6B7280" }
+                }
+              >
+                #{p.num} {p.name}
+              </button>
+            );
+          })
+        )}
       </div>
 
       {/* Action buttons — 3-tier hierarchy */}
@@ -391,6 +463,41 @@ export default function GcLivePage() {
           </>
         );
       })()}
+
+      {/* Rebound prompt overlay — appears after any miss */}
+      {pendingRebound !== null && (
+        <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.65)" }}>
+          <div className="w-full rounded-t-2xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+            <div className="text-xs text-gray-400 text-center mb-4 font-medium">谁抢到篮板？</div>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <button
+                onClick={() => logRebound("oreb")}
+                className="py-5 rounded-xl flex flex-col items-center gap-1 active:scale-95 transition-transform"
+                style={{ background: "rgba(249,115,22,0.20)" }}
+              >
+                <span className="text-2xl">🔄</span>
+                <span className="text-sm font-bold text-orange-400">进攻篮板</span>
+                <span className="text-xs text-orange-500/70">己方抢到</span>
+              </button>
+              <button
+                onClick={() => logRebound("dreb")}
+                className="py-5 rounded-xl flex flex-col items-center gap-1 active:scale-95 transition-transform"
+                style={{ background: "rgba(59,130,246,0.20)" }}
+              >
+                <span className="text-2xl">🛡️</span>
+                <span className="text-sm font-bold text-blue-400">防守篮板</span>
+                <span className="text-xs text-blue-500/70">对方抢到</span>
+              </button>
+            </div>
+            <button
+              onClick={() => { if (reboundTimerRef.current) clearTimeout(reboundTimerRef.current); setPendingRebound(null); }}
+              className="w-full text-xs text-gray-600 py-2 text-center"
+            >
+              跳过（无篮板记录）
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Event feed */}
       <div className="flex-1 overflow-y-auto px-3 pt-3 pb-4">

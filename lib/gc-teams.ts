@@ -16,6 +16,7 @@ export interface TeamConfig {
 export interface TeamsConfig {
   home: TeamConfig;
   away: TeamConfig;
+  awayTrackMode?: "player" | "team"; // default "team" — record opponents as full-team total
 }
 
 export interface RuntimePlayer {
