@@ -996,12 +996,21 @@ export default function HighlightsPage() {
               📤 分享集锦视频
             </button>
           )}
-          <a href={resultUrl} download={resultName}
-            className={`w-full py-3 rounded-xl text-sm font-bold text-center block ${resultBlob && !isWeChat && "share" in navigator ? "border border-gray-200 text-gray-600" : "bg-orange-500 text-white"}`}>
-            ⬇️ 下载集锦视频
-          </a>
+          {!isWeChat && (
+            <a href={resultUrl} download={resultName}
+              className={`w-full py-3 rounded-xl text-sm font-bold text-center block ${resultBlob && "share" in navigator ? "border border-gray-200 text-gray-600" : "bg-orange-500 text-white"}`}>
+              ⬇️ 下载集锦视频
+            </a>
+          )}
           {isWeChat && (
-            <div className="text-xs text-gray-400 text-center -mt-1">微信用户：长按上方视频 → 保存到相册</div>
+            <div className="rounded-xl p-3 flex flex-col gap-2" style={{background:"linear-gradient(135deg,#fff3e0,#ffe0b2)",border:"1px solid rgba(249,115,22,0.25)"}}>
+              <div className="text-xs font-black text-orange-800">📱 如何保存并分享这个视频</div>
+              <div className="flex flex-col gap-1.5 text-xs text-orange-700">
+                <div className="flex items-start gap-1.5"><span className="font-black shrink-0 text-orange-500">①</span><span>长按上方视频播放区域</span></div>
+                <div className="flex items-start gap-1.5"><span className="font-black shrink-0 text-orange-500">②</span><span>点击「保存视频」存到相册</span></div>
+                <div className="flex items-start gap-1.5"><span className="font-black shrink-0 text-orange-500">③</span><span>打开相册 → 选视频 → 发给家人群</span></div>
+              </div>
+            </div>
           )}
           <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);}} className="text-sm text-gray-400 text-center">重新制作</button>
           <Link href={`/parent/profile/${mockStudent.id}`} className="w-full py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-bold text-center block active:scale-95 transition-transform">
