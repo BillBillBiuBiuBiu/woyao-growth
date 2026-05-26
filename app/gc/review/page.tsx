@@ -105,6 +105,7 @@ export default function GcReviewPage() {
   const [progress,      setProgress]      = useState(0);
   const [statusMsg,     setStatusMsg]     = useState("");
   const [resultUrl,     setResultUrl]     = useState<string | null>(null);
+  const [resultBlob,    setResultBlob]    = useState<Blob | null>(null);
   const [resultName,    setResultName]    = useState("highlight.mp4");
   const [error,         setError]         = useState<string | null>(null);
   const [awayTrackMode, setAwayTrackMode] = useState<"player" | "team">("team");
@@ -428,6 +429,7 @@ export default function GcReviewPage() {
       try { await ff.deleteFile("input.mp4");     } catch {}
       try { await ff.deleteFile("highlight.mp4"); } catch {}
 
+      setResultBlob(blob);
       setResultUrl(URL.createObjectURL(blob));
       setResultName((videoFile.name.replace(/\.[^.]+$/, "") || "game") + "_highlight.mp4");
       setStatusMsg(`${events.length} 个打点 · ${segs.length} 个片段 · 共 ${totalDur.toFixed(0)}s`);
@@ -1122,11 +1124,35 @@ export default function GcReviewPage() {
         </div>
       )}
 
+      {resultUrl && resultBlob && !isWeChat && "share" in navigator && (
+        <button
+          onClick={async () => {
+            try {
+              const file = new File([resultBlob], resultName, { type: "video/mp4" });
+              if (navigator.canShare?.({ files: [file] })) {
+                await navigator.share({ files: [file], title: "精彩集锦" });
+              }
+            } catch (e) {
+              if (e instanceof Error && e.name !== "AbortError") {
+                // user cancelled — silent; other errors fall through to download
+              }
+            }
+          }}
+          className="w-full py-3.5 rounded-2xl bg-orange-500 text-white font-bold text-sm text-center active:scale-95 transition-transform"
+        >
+          📤 分享集锦视频
+        </button>
+      )}
+
       {resultUrl && (
         <a
           href={resultUrl}
           download={resultName}
-          className="w-full py-3.5 rounded-2xl bg-orange-500 text-white font-bold text-sm text-center block active:scale-95 transition-transform"
+          className={`w-full py-3.5 rounded-2xl font-bold text-sm text-center block active:scale-95 transition-transform ${
+            resultBlob && !isWeChat && "share" in navigator
+              ? "border border-white/20 text-gray-300"
+              : "bg-orange-500 text-white"
+          }`}
         >
           ⬇️ 下载集锦视频
         </a>
