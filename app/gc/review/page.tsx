@@ -529,7 +529,15 @@ export default function GcReviewPage() {
           note: e.action,
         }))
       );
-      apiUploadClip(gameId, blob, `${events.length}个打点集锦`, clipName)
+      const nameCounts = new Map<string, number>();
+      for (const e of events) {
+        if (e.playerId !== "home-team" && e.playerId !== "away-team" && e.playerName) {
+          nameCounts.set(e.playerName, (nameCounts.get(e.playerName) || 0) + 1);
+        }
+      }
+      const topName = [...nameCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+      const clipLabel = topName ? `${topName}等${events.length}个精彩时刻` : `${events.length}个打点集锦`;
+      apiUploadClip(gameId, blob, clipLabel, clipName)
         .then((url) => { if (url) { setCloudSaved(true); setClipUrl(url); } })
         .catch(() => {});
 
