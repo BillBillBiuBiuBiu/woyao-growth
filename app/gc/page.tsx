@@ -31,15 +31,28 @@ export default function GcSetupPage() {
         <div className="mt-4 text-xs text-gray-600 text-center">2026-05-25 · PAB球馆</div>
       </div>
 
-      <Link href="/gc/live" className="w-full max-w-sm">
-        <div className="bg-orange-500 text-white text-center font-black text-lg rounded-2xl py-4 active:scale-98 transition-transform">
-          开始记录 →
-        </div>
-      </Link>
+      <div className="w-full max-w-sm flex flex-col gap-3">
+        <Link href="/gc/live">
+          <div className="bg-orange-500 text-white text-center font-black text-lg rounded-2xl py-4 active:scale-98 transition-transform">
+            🏀 现场实时记录 →
+          </div>
+        </Link>
+        <Link href="/gc/review">
+          <div
+            className="text-white text-center font-bold text-base rounded-2xl py-3.5 active:scale-98 transition-transform border"
+            style={{ background: "rgba(249,115,22,0.12)", borderColor: "rgba(249,115,22,0.35)" }}
+          >
+            🎬 赛后视频打点 →
+          </div>
+        </Link>
+      </div>
 
-      <p className="mt-6 text-xs text-gray-600 text-center max-w-xs leading-relaxed">
-        记录员在场边实时点击 · 视频时间戳自动同步 · 赛后一键生成集锦
-      </p>
+      <div className="mt-5 w-full max-w-sm">
+        <div className="text-xs text-gray-700 text-center leading-relaxed">
+          <span className="text-orange-500">现场记录</span>：场边实时打点，不需要视频<br />
+          <span className="text-orange-400">视频打点</span>：上传比赛视频，边看边标记，自动切片
+        </div>
+      </div>
     </div>
   );
 }
