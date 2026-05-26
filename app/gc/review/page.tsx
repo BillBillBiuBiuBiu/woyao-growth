@@ -179,6 +179,21 @@ export default function GcReviewPage() {
     apiLoadGames().then((games) => {
       const opts = games.slice(0, 5);
       setGameOptions(opts);
+      // Prefer explicit ?gameId param (set by gc/live postgame links)
+      let paramGameId: string | null = null;
+      try { paramGameId = new URLSearchParams(window.location.search).get("gameId"); } catch {}
+      if (paramGameId) {
+        const matched = games.find(g => g.id === paramGameId) ?? null;
+        if (matched) {
+          setLinkedGame(matched);
+          gameIdRef.current = matched.id;
+          if (!opts.find(g => g.id === matched.id)) {
+            setGameOptions([matched, ...opts].slice(0, 5));
+          }
+          return;
+        }
+      }
+      // Fallback: auto-select most recent within 24h
       if (opts.length > 0) {
         const recent = opts[0];
         if (Date.now() - new Date(recent.ts).getTime() < 24 * 60 * 60 * 1000) {

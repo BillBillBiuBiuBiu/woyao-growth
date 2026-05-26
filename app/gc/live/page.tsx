@@ -87,6 +87,7 @@ export default function GcLivePage() {
   const [shareText,     setShareText]     = useState<string | null>(null);
   const [copyToast,     setCopyToast]     = useState(false);
   const [endConfirm,    setEndConfirm]    = useState(false);
+  const [lastGameId,    setLastGameId]    = useState<string | null>(null);
   const [reassignEvent, setReassignEvent] = useState<GameEvent | null>(null);
   const [liveDraft,     setLiveDraft]     = useState<{ events: GameEvent[]; quarter: number } | null>(null);
 
@@ -309,6 +310,7 @@ export default function GcLivePage() {
         return { q, home: qe.filter(e => e.teamId === "home").reduce((s, e) => s + e.pts, 0), away: qe.filter(e => e.teamId === "away").reduce((s, e) => s + e.pts, 0) };
       });
       const gameId = `g-${Date.now()}`;
+      setLastGameId(gameId);
       const record = {
         id: gameId,
         ts: now,
@@ -558,7 +560,7 @@ export default function GcLivePage() {
             </div>
             <div className="flex flex-col gap-2">
               {clips.map(c => (
-                <Link key={c.id} href="/gc/review" className="rounded-xl bg-[#1a1d27] border border-white/10 p-3 flex items-center gap-3 active:opacity-60 transition-opacity">
+                <Link key={c.id} href={lastGameId ? `/gc/review?gameId=${lastGameId}` : "/gc/review"} className="rounded-xl bg-[#1a1d27] border border-white/10 p-3 flex items-center gap-3 active:opacity-60 transition-opacity">
                   <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center shrink-0">
                     <span className="text-orange-400 text-xl">▶</span>
                   </div>
@@ -657,7 +659,7 @@ export default function GcLivePage() {
           >
             📝 补录事件
           </button>
-          <Link href="/gc/review" className="block">
+          <Link href={lastGameId ? `/gc/review?gameId=${lastGameId}` : "/gc/review"} className="block">
             <div className="bg-orange-500 text-white text-center font-bold text-sm rounded-xl py-3 active:opacity-80">
               🎬 赛后视频打点 →
             </div>
