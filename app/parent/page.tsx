@@ -153,15 +153,18 @@ export default function ParentHome() {
             <div className="rounded-2xl p-3 text-white shadow-sm" style={{ background: "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)" }}>
               {recentGames.length > 0 ? (
                 heroChildStat ? (
-                  <>
-                    <div className="text-xs font-medium text-yellow-100 mb-1">⭐ {childName}的最新表现</div>
+                  <button
+                    className="w-full text-left active:opacity-75 transition-opacity"
+                    onClick={() => openGameDetail(recentGames[0])}
+                  >
+                    <div className="text-xs font-medium text-yellow-100 mb-1">⭐ {childName}的最新表现 ›</div>
                     <div className="text-base font-bold leading-snug" style={{ color: "#7C3810" }}>
                       {heroChildStat.pts}分{heroChildStat.reb > 0 ? ` · ${heroChildStat.reb}板` : ""}{heroChildStat.ast > 0 ? ` · ${heroChildStat.ast}助` : ""}{heroChildStat.stl > 0 ? ` · ${heroChildStat.stl}断` : ""}
                     </div>
                     <div className="text-xs text-yellow-200 mt-0.5">
                       {recentGames[0].homeTeam} {recentGames[0].homeScore}—{recentGames[0].awayScore} {recentGames[0].awayTeam} · {fmtMatchDate(recentGames[0].ts)}
                     </div>
-                  </>
+                  </button>
                 ) : (
                   <>
                     <div className="text-xs font-medium text-yellow-100 mb-1">🏀 最近比赛</div>
