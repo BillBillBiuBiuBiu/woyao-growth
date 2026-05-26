@@ -110,6 +110,7 @@ export default function GcReviewPage() {
   const [awayTrackMode, setAwayTrackMode] = useState<"player" | "team">("team");
   const [liveSession,   setLiveSession]   = useState<LiveSession | null>(null);
   const [filterPlayer,  setFilterPlayer]  = useState<string | null>(null);
+  const [savedDraft,    setSavedDraft]    = useState<GameEvent[] | null>(null);
 
   const videoRef      = useRef<HTMLVideoElement | null>(null);
   const replayRef     = useRef<HTMLVideoElement | null>(null);
@@ -133,7 +134,21 @@ export default function GcReviewPage() {
       const raw = localStorage.getItem("gc_last_session");
       if (raw) setLiveSession(JSON.parse(raw) as LiveSession);
     } catch {}
+    try {
+      const draftRaw = localStorage.getItem("gc_review_events_draft");
+      if (draftRaw) {
+        const draft = JSON.parse(draftRaw) as GameEvent[];
+        if (Array.isArray(draft) && draft.length > 0) setSavedDraft(draft);
+      }
+    } catch {}
   }, []);
+
+  // Auto-save events to localStorage during tagging/review so crashes don't lose data
+  useEffect(() => {
+    if (events.length > 0 && (phase === "tagging" || phase === "review" || phase === "cutting")) {
+      try { localStorage.setItem("gc_review_events_draft", JSON.stringify(events)); } catch {}
+    }
+  }, [events, phase]);
 
   useEffect(() => () => { if (resultUrl) URL.revokeObjectURL(resultUrl); }, [resultUrl]);
   useEffect(() => () => { if (videoUrl)  URL.revokeObjectURL(videoUrl);  }, [videoUrl]);
@@ -216,7 +231,7 @@ export default function GcReviewPage() {
     setPendingAction(null);
     setEvents(prev => [makeEvent(teamId, p, action), ...prev]);
 
-    if (action.pts > 0) {
+    if (action.pts > 0 && action.cat !== "ft") {
       setReviewCtx({ type: "assist", scoringTeam: teamId, scorerId: p.id, videoTs });
     } else if (action.cat === "2pt_miss" || action.cat === "3pt_miss" || action.cat === "ft_miss") {
       setReviewCtx({ type: "rebound", shootingTeam: teamId, videoTs });
@@ -378,6 +393,8 @@ export default function GcReviewPage() {
       setStatusMsg(`${events.length} 个打点 · ${segs.length} 个片段 · 共 ${totalDur.toFixed(0)}s`);
       setProgress(100);
       setPhase("done");
+      try { localStorage.removeItem("gc_review_events_draft"); } catch {}
+      setSavedDraft(null);
 
     } catch (e) {
       if (ffmpegRef.current) {
@@ -430,6 +447,48 @@ export default function GcReviewPage() {
             </label>
           </div>
         </div>
+
+        {savedDraft && (
+          <div className="px-4">
+            <div className="rounded-2xl border border-red-500/40 p-4" style={{ background: "rgba(239,68,68,0.08)" }}>
+              <div className="flex items-start gap-3">
+                <span className="text-xl shrink-0">⚠️</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold text-red-400 mb-0.5">检测到未完成的打点记录</div>
+                  <div className="text-xs text-gray-400 mb-3">
+                    上次共 {savedDraft.length} 个打点，因程序中断未完成生成
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setEvents(savedDraft);
+                        setSavedDraft(null);
+                        if (videoFile) setPhase("review");
+                      }}
+                      disabled={!videoFile}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold text-center transition-colors ${
+                        videoFile
+                          ? "bg-red-500 text-white active:scale-95"
+                          : "bg-white/5 text-gray-600"
+                      }`}
+                    >
+                      {videoFile ? "恢复打点 → 重新生成" : "请先上传视频再恢复"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSavedDraft(null);
+                        try { localStorage.removeItem("gc_review_events_draft"); } catch {}
+                      }}
+                      className="px-3 py-2 rounded-xl text-xs font-bold text-gray-500 border border-white/10"
+                    >
+                      丢弃
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {liveSession && (
           <div className="px-4">
