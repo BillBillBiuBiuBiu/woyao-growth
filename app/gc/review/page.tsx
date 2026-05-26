@@ -1212,18 +1212,49 @@ export default function GcReviewPage() {
         重新打点
       </button>
 
-      <div className="flex gap-3 pt-1">
-        <Link href="/coach/reports/generate" className="flex-1">
-          <div className="border border-white/20 text-white text-center font-bold text-sm rounded-xl py-3">
-            📋 生成报告
-          </div>
-        </Link>
-        <Link href="/gc" className="flex-1">
-          <div className="border border-white/20 text-white text-center font-bold text-sm rounded-xl py-3">
-            再来一场
-          </div>
-        </Link>
-      </div>
+      {events.length > 0 && (() => {
+        const homeScore = events.filter(e => e.teamId === "home").reduce((s, e) => s + e.pts, 0);
+        const awayScore = events.filter(e => e.teamId === "away").reduce((s, e) => s + e.pts, 0);
+        const homeName  = teams.find(t => t.id === "home")?.name ?? "主场";
+        const awayName  = teams.find(t => t.id === "away")?.name ?? "客场";
+        const winner    = homeScore > awayScore ? homeName : awayScore > homeScore ? awayName : null;
+        const playerIds = [...new Set(events.map(e => e.playerId))];
+        const stats = playerIds.map(pid => {
+          const pe = events.filter(e => e.playerId === pid);
+          return { teamId: pe[0]?.teamId ?? "home", name: pe[0]?.playerName ?? "?", num: pe[0]?.playerNum ?? "-",
+            pts: pe.reduce((s, e) => s + e.pts, 0), reb: pe.filter(e => e.cat === "oreb" || e.cat === "dreb").length,
+            ast: pe.filter(e => e.cat === "ast").length, stl: pe.filter(e => e.cat === "stl").length };
+        });
+        const fmt2 = (p: typeof stats[0]) =>
+          `  ${p.num !== "-" ? `#${p.num} ` : ""}${p.name}  ${p.pts}分${p.reb > 0 ? ` ${p.reb}板` : ""}${p.ast > 0 ? ` ${p.ast}助` : ""}${p.stl > 0 ? ` ${p.stl}断` : ""}`;
+        const homePlayers = stats.filter(p => p.teamId === "home").sort((a, b) => b.pts - a.pts).map(fmt2).join("\n");
+        const awayPlayers = stats.filter(p => p.teamId === "away").sort((a, b) => b.pts - a.pts).map(fmt2).join("\n");
+        const today = new Date().toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" });
+        const text = [
+          `🏀 ${homeName} ${homeScore} — ${awayScore} ${awayName}`,
+          winner ? `🏆 ${winner} 获胜` : "平局", "",
+          `【${homeName}】`, homePlayers || "  暂无数据", "",
+          `【${awayName}】`, awayPlayers || "  暂无数据", "",
+          `${today} 我耀成长证据系统`,
+        ].join("\n");
+        function handleShare() {
+          try { navigator.clipboard.writeText(text); setTsToast(true); setTimeout(() => setTsToast(false), 2500); }
+          catch { setTsText(text); }
+        }
+        return (
+          <button onClick={handleShare}
+            className="w-full py-3 rounded-xl text-sm font-bold border active:opacity-80"
+            style={{ borderColor: "rgba(249,115,22,0.4)", color: "#F97316", background: "rgba(249,115,22,0.08)" }}>
+            {tsToast ? "✅ 战报已复制！" : "📤 复制战报"}
+          </button>
+        );
+      })()}
+
+      <Link href="/gc" className="block">
+        <div className="border border-white/20 text-white text-center font-bold text-sm rounded-xl py-3">
+          再来一场
+        </div>
+      </Link>
 
       {/* Timestamp fallback sheet (clipboard blocked in WeChat) */}
       {tsText && (
