@@ -11,7 +11,8 @@ import {
   type TeamId,
   type RuntimeTeam,
 } from "@/lib/gc-teams";
-import { apiSaveGame, apiSaveEvents, apiUploadClip, type StoredEvent } from "@/lib/gc-api";
+import { apiSaveGame, apiSaveEvents, apiUploadClip, apiLoadGames, type StoredEvent } from "@/lib/gc-api";
+import type { GameRecord } from "@/lib/gc-teams";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -120,8 +121,20 @@ export default function GcReviewPage() {
   const [cloudSaved,    setCloudSaved]    = useState(false);
   const [clipUrl,       setClipUrl]       = useState<string | null>(null);
   const [linkToast,     setLinkToast]     = useState(false);
+  const [linkedGame,    setLinkedGame]    = useState<GameRecord | null>(null);
+  const [gameOptions,   setGameOptions]   = useState<GameRecord[]>([]);
 
   const isWeChat = typeof navigator !== "undefined" && /MicroMessenger/i.test(navigator.userAgent);
+
+  function fmtGameDate(ts: string): string {
+    const d = new Date(ts);
+    return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  }
+
+  function selectLinkedGame(game: GameRecord | null) {
+    setLinkedGame(game);
+    gameIdRef.current = game?.id ?? `g-${Date.now()}`;
+  }
 
   const videoRef      = useRef<HTMLVideoElement | null>(null);
   const replayRef     = useRef<HTMLVideoElement | null>(null);
@@ -163,6 +176,17 @@ export default function GcReviewPage() {
         history.replaceState(null, "", window.location.pathname);
       }
     } catch {}
+    apiLoadGames().then((games) => {
+      const opts = games.slice(0, 5);
+      setGameOptions(opts);
+      if (opts.length > 0) {
+        const recent = opts[0];
+        if (Date.now() - new Date(recent.ts).getTime() < 24 * 60 * 60 * 1000) {
+          setLinkedGame(recent);
+          gameIdRef.current = recent.id;
+        }
+      }
+    }).catch(() => {});
   }, []);
 
   // Auto-save events to localStorage during tagging/review so crashes don't lose data
@@ -549,6 +573,50 @@ export default function GcReviewPage() {
             )}
           </div>
         </div>
+
+        {gameOptions.length > 0 && (
+          <div className="px-4">
+            <div className="rounded-2xl bg-[#1a1d27] border border-white/10 p-4">
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-sm font-bold text-gray-300">关联比赛（可选）</div>
+                {linkedGame && (
+                  <button onClick={() => selectLinkedGame(null)} className="text-xs text-gray-600 active:text-gray-400">
+                    取消关联
+                  </button>
+                )}
+              </div>
+              <div className="text-xs text-gray-600 mb-3">
+                选中后，生成的集锦会保存到对应比赛记录，家长可在比赛详情里查看
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {gameOptions.map((game) => {
+                  const selected = linkedGame?.id === game.id;
+                  return (
+                    <button
+                      key={game.id}
+                      onClick={() => selectLinkedGame(selected ? null : game)}
+                      className="flex items-center justify-between rounded-xl px-3 py-2.5 text-left border transition-colors active:scale-98"
+                      style={{
+                        borderColor: selected ? "rgba(249,115,22,0.5)" : "rgba(255,255,255,0.08)",
+                        background:  selected ? "rgba(249,115,22,0.10)" : "rgba(255,255,255,0.03)",
+                      }}
+                    >
+                      <div>
+                        <div className="text-xs font-medium text-gray-200">
+                          {game.homeTeam} <span style={{ color: "#F97316" }}>{game.homeScore}</span>
+                          <span className="text-gray-600 mx-1">—</span>
+                          <span style={{ color: "#F97316" }}>{game.awayScore}</span> {game.awayTeam}
+                        </div>
+                        <div className="text-[10px] text-gray-500 mt-0.5">{fmtGameDate(game.ts)}</div>
+                      </div>
+                      {selected && <span className="text-orange-400 text-xs font-bold shrink-0 ml-2">✓ 已选</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {savedDraft && (
           <div className="px-4">
@@ -1363,7 +1431,9 @@ export default function GcReviewPage() {
         onClick={() => {
           setPhase("tagging"); setEvents([]); setProgress(0);
           setResultUrl(null); setResultBlob(null); setCloudSaved(false); setClipUrl(null);
-          gameIdRef.current = `g-${Date.now()}`;
+          const autoGame = gameOptions[0] ?? null;
+          setLinkedGame(autoGame);
+          gameIdRef.current = autoGame?.id ?? `g-${Date.now()}`;
         }}
         className="text-sm text-gray-500 text-center py-1"
       >
