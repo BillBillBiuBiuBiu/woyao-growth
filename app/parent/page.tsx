@@ -44,6 +44,7 @@ export default function ParentHome() {
   const [linkToast, setLinkToast] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [expandedClipId, setExpandedClipId] = useState<string | null>(null);
+  const [statsCopied, setStatsCopied] = useState(false);
 
   useEffect(() => {
     apiLoadGames().then((games) => { if (games.length > 0) setRecentGames(games.slice(0, 10)); }).catch(() => {});
@@ -52,6 +53,7 @@ export default function ParentHome() {
   async function openGameDetail(game: GameRecord) {
     setSelectedGame(game);
     setGameDetail({ loading: true, stats: [], clips: [] });
+    setStatsCopied(false);
     const [events, clips] = await Promise.all([
       apiLoadEvents(game.id).catch(() => [] as StoredEvent[]),
       apiLoadClips(game.id).catch(() => [] as ClipRecord[]),
@@ -386,11 +388,36 @@ export default function ParentHome() {
                     暂无集锦 · 教练赛后在「打点中心」生成后会出现在这里
                   </div>
                 )}
+
+                {selectedGame && gameDetail.stats.length > 0 && (
+                  <button
+                    onClick={async () => {
+                      const top = gameDetail.stats.slice(0, 5);
+                      const lines = top.map(p => `  #${p.num || "-"} ${p.name}：${p.pts}分 ${p.reb}板 ${p.ast}助 ${p.stl}断`).join("\n");
+                      const msg = `🏀 ${fmtMatchDate(selectedGame.ts)} 比赛战报\n${selectedGame.homeTeam} ${selectedGame.homeScore} — ${selectedGame.awayScore} ${selectedGame.awayTeam}\n\n球员数据：\n${lines}\n\n来自「我耀成长」`;
+                      try {
+                        await navigator.clipboard.writeText(msg);
+                        setStatsCopied(true);
+                        setTimeout(() => setStatsCopied(false), 2000);
+                      } catch {
+                        setShareLink(msg);
+                      }
+                    }}
+                    className="w-full mt-1 mb-3 py-2.5 rounded-xl text-sm font-bold border active:opacity-80 transition-colors"
+                    style={{
+                      borderColor: statsCopied ? "rgba(34,197,94,0.4)" : "rgba(249,115,22,0.3)",
+                      color: statsCopied ? "#16a34a" : "#F97316",
+                      background: statsCopied ? "rgba(34,197,94,0.06)" : "rgba(249,115,22,0.06)",
+                    }}
+                  >
+                    {statsCopied ? "✅ 战报已复制！" : "📤 复制战报 · 发给家人"}
+                  </button>
+                )}
               </>
             )}
 
             <button
-              onClick={() => { setGameDetail(null); setSelectedGame(null); setExpandedClipId(null); }}
+              onClick={() => { setGameDetail(null); setSelectedGame(null); setExpandedClipId(null); setStatsCopied(false); }}
               className="w-full mt-2 py-3 rounded-xl border border-gray-200 text-sm text-gray-400 active:bg-gray-50"
             >
               关闭
