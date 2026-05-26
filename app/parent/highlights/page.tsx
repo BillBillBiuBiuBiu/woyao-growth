@@ -851,7 +851,9 @@ export default function HighlightsPage() {
       try {
         const rec = { date: new Date().toISOString(), name: videoFile.name, dur: Math.round(totalClipDur) };
         const prev = JSON.parse(localStorage.getItem("my_highlights") || "[]");
-        localStorage.setItem("my_highlights", JSON.stringify([rec, ...prev].slice(0, 10)));
+        const next = [rec, ...prev].slice(0, 10);
+        localStorage.setItem("my_highlights", JSON.stringify(next));
+        setMyHighlights(next);
       } catch {}
 
     } catch(e) {
