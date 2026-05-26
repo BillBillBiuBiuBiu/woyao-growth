@@ -370,6 +370,34 @@ export default function GcLivePage() {
                   </div>
                 ))}
               </div>
+              {detailStats.all.length > 0 && (() => {
+                const maxQ = Math.max(...detailStats.all.map(e => e.quarter));
+                const qRows = Array.from({ length: maxQ }, (_, i) => {
+                  const q = i + 1;
+                  const qe = detailStats.all.filter(e => e.quarter === q);
+                  return { q, pts: qe.reduce((s, e) => s + e.pts, 0), reb: qe.filter(e => e.cat === "oreb" || e.cat === "dreb").length, ast: qe.filter(e => e.cat === "ast").length };
+                });
+                if (maxQ === 1 && qRows[0].pts === 0 && qRows[0].reb === 0 && qRows[0].ast === 0) return null;
+                return (
+                  <div className="mb-5">
+                    <div className="text-xs text-gray-500 mb-2">节次分拆</div>
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${maxQ}, 1fr)` }}>
+                      {qRows.map(({ q, pts, reb, ast }) => (
+                        <div key={q} className="bg-white/5 rounded-xl py-2.5 px-1 text-center">
+                          <div className="text-[10px] text-gray-600 mb-1.5">Q{q}</div>
+                          <div className="text-lg font-black text-orange-400">{pts}</div>
+                          <div className="text-[10px] text-gray-600">分</div>
+                          {(reb > 0 || ast > 0) && (
+                            <div className="text-[10px] text-gray-500 mt-1">
+                              {reb > 0 && `${reb}板`}{reb > 0 && ast > 0 && " "}{ast > 0 && `${ast}助`}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               <div className="text-xs text-gray-500 mb-2">全场事件时间线</div>
               <div className="flex flex-col gap-0">
                 {[...detailStats.all].sort((a, b) => a.videoTs - b.videoTs).map(e => (
