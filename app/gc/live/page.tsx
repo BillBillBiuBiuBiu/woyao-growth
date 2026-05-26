@@ -24,6 +24,7 @@ const ACTIONS = [
   { label: "盖帽",     pts: 0, cat: "blk" },
   { label: "失误",     pts: 0, cat: "tov" },
   { label: "被犯规",   pts: 0, cat: "foul_drawn" },
+  { label: "犯规",     pts: 0, cat: "foul" },
   { label: "换人",     pts: 0, cat: "sub" },
 ] as const;
 
@@ -272,6 +273,7 @@ export default function GcLivePage() {
           blk:  pe.filter(e => e.cat === "blk").length,
           tov:  pe.filter(e => e.cat === "tov").length,
           fts:  pe.filter(e => e.cat === "ft").length,
+          pf:   pe.filter(e => e.cat === "foul").length,
           all:  pe,
         };
       })
@@ -307,9 +309,9 @@ export default function GcLivePage() {
               </div>
 
               {/* Summary row */}
-              <div className="grid grid-cols-6 gap-1 mb-5">
+              <div className="grid grid-cols-7 gap-1 mb-5">
                 {[["分", detailStats.pts], ["板", detailStats.reb], ["助", detailStats.ast],
-                  ["断", detailStats.stl], ["帽", detailStats.blk], ["误", detailStats.tov]].map(([label, val]) => (
+                  ["断", detailStats.stl], ["帽", detailStats.blk], ["误", detailStats.tov], ["犯", detailStats.pf]].map(([label, val]) => (
                   <div key={label as string} className="bg-white/5 rounded-lg py-2 text-center">
                     <div className="text-sm font-black text-orange-400">{val}</div>
                     <div className="text-xs text-gray-500">{label}</div>
@@ -402,7 +404,7 @@ export default function GcLivePage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="bg-white/5 border-b border-white/10">
-                    {["球员", "分", "板", "助", "断", "帽", "误"].map((h, i) => (
+                    {["球员", "分", "板", "助", "断", "帽", "误", "犯"].map((h, i) => (
                       <th key={h} className={`py-2 font-medium text-gray-400 ${i === 0 ? "text-left px-3" : "text-center px-1.5"}`}>
                         {h}
                       </th>
@@ -428,6 +430,7 @@ export default function GcLivePage() {
                       <td className="px-1.5 py-2.5 text-center text-gray-300">{p.stl}</td>
                       <td className="px-1.5 py-2.5 text-center text-gray-300">{p.blk}</td>
                       <td className="px-1.5 py-2.5 text-center text-gray-300">{p.tov}</td>
+                      <td className={`px-1.5 py-2.5 text-center font-bold ${p.pf >= 5 ? "text-gray-500" : p.pf >= 3 ? "text-red-400" : "text-gray-300"}`}>{p.pf}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -548,14 +551,25 @@ export default function GcLivePage() {
         ) : (
           currentTeam.players.map(p => {
             const active = selPlayer === p.id;
+            const fouls = events.filter(e => e.playerId === p.id && e.cat === "foul").length;
+            const inTrouble = fouls >= 3;
+            const fouledOut = fouls >= 5;
             return (
               <button key={p.id} onClick={() => setSelPlayer(active ? null : p.id)}
-                className="px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors"
+                className="relative px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors"
                 style={active
                   ? { background: currentTeam.color, borderColor: currentTeam.color, color: "#fff" }
-                  : { background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#6B7280" }}
+                  : fouledOut
+                    ? { background: "rgba(107,114,128,0.1)", borderColor: "rgba(107,114,128,0.3)", color: "#4B5563" }
+                    : { background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", color: "#6B7280" }}
               >
                 #{p.num} {p.name}
+                {fouls > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full text-[9px] font-black flex items-center justify-center"
+                    style={{ background: fouledOut ? "#4B5563" : inTrouble ? "#EF4444" : "#F97316", color: "#fff" }}>
+                    {fouls}
+                  </span>
+                )}
               </button>
             );
           })
@@ -601,7 +615,7 @@ export default function GcLivePage() {
             <div className="grid grid-cols-3 gap-1.5 px-3 pt-1.5 shrink-0">
               {misses.map(a => btn(a, "py-3", "text-xs", "rgba(239,68,68,0.18)", "#F87171"))}
             </div>
-            <div className="grid grid-cols-4 gap-1.5 px-3 pt-1.5 shrink-0">
+            <div className="grid grid-cols-3 gap-1.5 px-3 pt-1.5 shrink-0">
               {stats.map(a => btn(a, "py-2.5", "text-xs", "rgba(255,255,255,0.10)", "#D1D5DB"))}
             </div>
           </>
