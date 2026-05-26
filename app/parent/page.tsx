@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { mockStudent, mockReport, mockBadges, mockStudentCards } from "@/lib/mock-data";
 import BasketballCard from "@/components/BasketballCard";
-import { apiLoadGames } from "@/lib/gc-api";
+import { apiLoadGames, apiLoadEvents, apiLoadClips, type StoredEvent, type ClipRecord } from "@/lib/gc-api";
 import type { GameRecord } from "@/lib/gc-teams";
 
 function fmtMatchDate(ts: string): string {
@@ -11,14 +11,62 @@ function fmtMatchDate(ts: string): string {
   return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
 }
 
+interface PlayerStat {
+  name: string; num: string; team: "home" | "away";
+  pts: number; reb: number; ast: number; stl: number;
+}
+
+function computeStats(events: StoredEvent[]): PlayerStat[] {
+  const map = new Map<string, PlayerStat>();
+  for (const e of events) {
+    if (!map.has(e.playerId)) {
+      map.set(e.playerId, { name: e.playerName, num: e.playerNum, team: e.team, pts: 0, reb: 0, ast: 0, stl: 0 });
+    }
+    const s = map.get(e.playerId)!;
+    s.pts += e.pts;
+    if (e.cat === "oreb" || e.cat === "dreb") s.reb++;
+    if (e.cat === "ast") s.ast++;
+    if (e.cat === "stl") s.stl++;
+  }
+  return [...map.values()].sort((a, b) => b.pts - a.pts || b.reb - a.reb);
+}
+
 export default function ParentHome() {
   const badge = mockBadges[0];
   const card = mockStudentCards.find((c) => c.id === mockStudent.id)!;
-  const [lastGame, setLastGame] = useState<GameRecord | null>(null);
+  const [recentGames, setRecentGames] = useState<GameRecord[]>([]);
+  const [selectedGame, setSelectedGame] = useState<GameRecord | null>(null);
+  const [gameDetail, setGameDetail] = useState<{
+    loading: boolean;
+    stats: PlayerStat[];
+    clips: ClipRecord[];
+  } | null>(null);
+  const [linkToast, setLinkToast] = useState<string | null>(null);
+  const [shareLink, setShareLink] = useState<string | null>(null);
 
   useEffect(() => {
-    apiLoadGames().then((games) => { if (games.length > 0) setLastGame(games[0]); }).catch(() => {});
+    apiLoadGames().then((games) => { if (games.length > 0) setRecentGames(games.slice(0, 10)); }).catch(() => {});
   }, []);
+
+  async function openGameDetail(game: GameRecord) {
+    setSelectedGame(game);
+    setGameDetail({ loading: true, stats: [], clips: [] });
+    const [events, clips] = await Promise.all([
+      apiLoadEvents(game.id).catch(() => [] as StoredEvent[]),
+      apiLoadClips(game.id).catch(() => [] as ClipRecord[]),
+    ]);
+    setGameDetail({ loading: false, stats: computeStats(events), clips });
+  }
+
+  async function copyClipLink(url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkToast(url);
+      setTimeout(() => setLinkToast(null), 2000);
+    } catch {
+      setShareLink(url);
+    }
+  }
 
   return (
     <div className="-mx-4 -mt-6 pb-10" style={{ background: "linear-gradient(160deg, #fff3e0 0%, #ffe9cc 40%, #fff8ec 100%)" }}>
@@ -95,19 +143,28 @@ export default function ParentHome() {
           </div>
         </Link>
 
-        {/* Last real game — fetched from Supabase */}
-        {lastGame && (
-          <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-center justify-between">
-            <div>
-              <div className="text-xs text-orange-500 mb-1 font-medium">🏀 最近比赛</div>
-              <div className="font-bold text-gray-800">
-                {lastGame.homeTeam} <span style={{ color: "#F97316" }}>{lastGame.homeScore}</span>
-                <span className="text-gray-300 mx-1.5">—</span>
-                <span style={{ color: "#F97316" }}>{lastGame.awayScore}</span> {lastGame.awayTeam}
-              </div>
-              <div className="text-xs text-gray-400 mt-1">{lastGame.eventCount}个打点 · {fmtMatchDate(lastGame.ts)}</div>
-            </div>
-            <div className="text-2xl">🏀</div>
+        {/* Recent games list — each row clickable, opens detail sheet */}
+        {recentGames.length > 0 && (
+          <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm overflow-hidden">
+            <div className="px-4 pt-3 pb-2 text-sm font-bold text-gray-800">🏀 比赛记录</div>
+            {recentGames.map((game, i) => (
+              <button
+                key={game.id}
+                onClick={() => openGameDetail(game)}
+                className="w-full flex items-center justify-between px-4 py-3 active:bg-orange-50 transition-colors text-left"
+                style={{ borderTop: i === 0 ? "none" : "1px solid rgba(249,115,22,0.08)" }}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold text-gray-800 text-sm">
+                    {game.homeTeam} <span style={{ color: "#F97316" }}>{game.homeScore}</span>
+                    <span className="text-gray-300 mx-1">—</span>
+                    <span style={{ color: "#F97316" }}>{game.awayScore}</span> {game.awayTeam}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-0.5">{game.eventCount}个打点 · {fmtMatchDate(game.ts)}</div>
+                </div>
+                <div className="text-orange-300 ml-2 shrink-0">›</div>
+              </button>
+            ))}
           </div>
         )}
 
@@ -190,6 +247,160 @@ export default function ParentHome() {
           </div>
         </Link>
       </div>
+
+      {/* Game detail bottom sheet */}
+      {gameDetail !== null && selectedGame !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-end"
+          style={{ background: "rgba(0,0,0,0.55)" }}
+          onClick={() => { setGameDetail(null); setSelectedGame(null); }}
+        >
+          <div
+            className="w-full max-h-[80vh] overflow-y-auto rounded-t-3xl px-4 pt-4 pb-10 bg-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4" />
+
+            {/* Score header */}
+            <div className="text-center mb-4">
+              <div className="text-xs text-orange-500 mb-1 font-medium">🏀 比赛详情</div>
+              <div className="font-black text-lg text-gray-800">
+                {selectedGame.homeTeam}{" "}
+                <span style={{ color: "#F97316" }}>{selectedGame.homeScore}</span>
+                <span className="text-gray-300 mx-2">—</span>
+                <span style={{ color: "#F97316" }}>{selectedGame.awayScore}</span>{" "}
+                {selectedGame.awayTeam}
+              </div>
+              <div className="text-xs text-gray-400 mt-0.5">{fmtMatchDate(selectedGame.ts)}</div>
+            </div>
+
+            {gameDetail.loading ? (
+              <div className="text-center text-gray-400 text-sm py-10">加载中…</div>
+            ) : (
+              <>
+                {/* Player stats */}
+                {gameDetail.stats.length > 0 && (
+                  <div className="mb-4">
+                    <div className="text-xs font-bold text-gray-500 mb-2 px-1">球员数据</div>
+                    <div className="rounded-xl overflow-hidden border border-gray-100">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="bg-gray-50">
+                            <th className="text-left px-3 py-2 text-gray-400 font-medium">球员</th>
+                            <th className="text-center px-2 py-2 text-gray-400 font-medium">分</th>
+                            <th className="text-center px-2 py-2 text-gray-400 font-medium">板</th>
+                            <th className="text-center px-2 py-2 text-gray-400 font-medium">助</th>
+                            <th className="text-center px-2 py-2 text-gray-400 font-medium">断</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {gameDetail.stats.map((p, i) => (
+                            <tr
+                              key={`${p.team}-${p.name}-${i}`}
+                              className="border-t border-gray-50"
+                              style={{ background: i % 2 === 0 ? "white" : "#FFFBF5" }}
+                            >
+                              <td className="px-3 py-2.5">
+                                <div className="flex items-center gap-1.5">
+                                  <div
+                                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                                    style={{ background: p.team === "home" ? "#F97316" : "#3B82F6" }}
+                                  />
+                                  <span className="font-medium text-gray-800">
+                                    {p.num && p.num !== "-" ? `#${p.num} ` : ""}{p.name}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-2 py-2.5 text-center font-bold text-orange-500">{p.pts}</td>
+                              <td className="px-2 py-2.5 text-center text-gray-500">{p.reb}</td>
+                              <td className="px-2 py-2.5 text-center text-gray-500">{p.ast}</td>
+                              <td className="px-2 py-2.5 text-center text-gray-500">{p.stl}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Clips */}
+                {gameDetail.clips.length > 0 && (
+                  <div className="mb-4">
+                    <div className="text-xs font-bold text-gray-500 mb-2 px-1">集锦切片</div>
+                    <div className="flex flex-col gap-2">
+                      {gameDetail.clips.map((clip) => (
+                        <div
+                          key={clip.id}
+                          className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium text-gray-800 truncate">
+                              {clip.label || "集锦片段"}
+                            </div>
+                            <div className="text-xs text-gray-400">{fmtMatchDate(clip.created_at)}</div>
+                          </div>
+                          <button
+                            onClick={() => copyClipLink(clip.public_url)}
+                            className="shrink-0 ml-3 px-3 py-1.5 rounded-full text-xs font-bold border active:opacity-70 transition-colors"
+                            style={{
+                              borderColor: linkToast === clip.public_url ? "rgba(34,197,94,0.4)" : "rgba(249,115,22,0.4)",
+                              color: linkToast === clip.public_url ? "#4ade80" : "#F97316",
+                              background: linkToast === clip.public_url ? "rgba(34,197,94,0.08)" : "rgba(249,115,22,0.08)",
+                            }}
+                          >
+                            {linkToast === clip.public_url ? "✅ 已复制" : "🔗 复制链接"}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {gameDetail.stats.length === 0 && gameDetail.clips.length === 0 && (
+                  <div className="text-center text-gray-400 text-sm py-6">暂无数据</div>
+                )}
+
+                {gameDetail.clips.length === 0 && gameDetail.stats.length > 0 && (
+                  <div className="text-xs text-gray-400 text-center mb-3">
+                    暂无集锦 · 教练赛后在「打点中心」生成后会出现在这里
+                  </div>
+                )}
+              </>
+            )}
+
+            <button
+              onClick={() => { setGameDetail(null); setSelectedGame(null); }}
+              className="w-full mt-2 py-3 rounded-xl border border-gray-200 text-sm text-gray-400 active:bg-gray-50"
+            >
+              关闭
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Clipboard fallback sheet for WeChat / restricted environments */}
+      {shareLink !== null && (
+        <div className="fixed inset-0 z-[60] flex items-end" style={{ background: "rgba(0,0,0,0.72)" }}>
+          <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
+            <div className="text-sm font-bold text-white mb-1">🔗 集锦链接</div>
+            <div className="text-xs text-gray-500 mb-3">长按下方链接 → 全选 → 复制，在浏览器打开观看</div>
+            <textarea
+              readOnly
+              value={shareLink}
+              className="w-full rounded-xl text-xs text-gray-300 p-3 resize-none"
+              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", height: 60, fontFamily: "monospace" }}
+              onFocus={(e) => e.target.select()}
+            />
+            <button
+              onClick={() => setShareLink(null)}
+              className="w-full mt-3 py-3 rounded-xl border border-white/15 text-sm text-gray-400"
+            >
+              关闭
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
