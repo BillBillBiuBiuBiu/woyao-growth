@@ -154,8 +154,8 @@ export default function ParentHome() {
                 </>
               ) : (
                 <>
-                  <div className="text-xs font-medium text-yellow-100 mb-1">✨ 今日成长</div>
-                  <div className="text-sm font-bold leading-snug line-clamp-3" style={{ color: "#7C3810" }}>{mockReport.heroSummary}</div>
+                  <div className="text-xs font-medium text-yellow-100 mb-1">🏀 期待第一场</div>
+                  <div className="text-sm font-bold leading-snug" style={{ color: "#7C3810" }}>请教练打开我耀<br/>现场记录 → 开始打点</div>
                 </>
               )}
             </div>
