@@ -31,6 +31,7 @@ const ACTIONS = [
 export interface GameEvent {
   id: string;
   videoTs: number;
+  quarter: number;
   teamId: TeamId;
   playerId: string;
   playerName: string;
@@ -131,6 +132,7 @@ export default function GcLivePage() {
     return {
       id: `e-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
       videoTs: recSecs,
+      quarter,
       teamId, playerId, playerName, playerNum,
       action: action.label, pts: action.pts, cat: action.cat,
     };
@@ -393,6 +395,38 @@ export default function GcLivePage() {
           <div className="text-center text-xs text-gray-600 mt-1">
             录制时长 {fmt(recSecs)} · {events.length} 个事件
           </div>
+
+          {/* Quarter breakdown */}
+          {events.length > 0 && (() => {
+            const maxQ = Math.max(...events.map(e => e.quarter));
+            const qs = Array.from({ length: maxQ }, (_, i) => {
+              const q = i + 1;
+              const qe = events.filter(e => e.quarter === q);
+              return {
+                q,
+                home: qe.filter(e => e.teamId === "home").reduce((s, e) => s + e.pts, 0),
+                away: qe.filter(e => e.teamId === "away").reduce((s, e) => s + e.pts, 0),
+              };
+            });
+            return (
+              <div className="mt-4 pt-3 border-t border-white/10">
+                <div className={`grid gap-2 max-w-xs mx-auto`} style={{ gridTemplateColumns: `repeat(${maxQ}, 1fr)` }}>
+                  {qs.map(({ q, home, away }) => {
+                    const homeWins = home > away;
+                    const awayWins = away > home;
+                    return (
+                      <div key={q} className="text-center bg-white/5 rounded-lg py-2 px-1">
+                        <div className="text-[10px] text-gray-600 mb-1.5">Q{q}</div>
+                        <div className="text-sm font-black" style={{ color: homeWins ? "#F97316" : "#6B7280" }}>{home}</div>
+                        <div className="text-[10px] text-gray-700 my-0.5">—</div>
+                        <div className="text-sm font-black" style={{ color: awayWins ? "#3B82F6" : "#6B7280" }}>{away}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Auto-generated clips */}
