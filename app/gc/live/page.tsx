@@ -100,6 +100,11 @@ export default function GcLivePage() {
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
+  function switchToTeam(teamId: TeamId) {
+    setSelTeam(teamId);
+    if (!(teamId === "away" && awayTrackMode === "team")) setSelPlayer(null);
+  }
+
   function clearCtx() {
     if (ctxTimerRef.current) { clearTimeout(ctxTimerRef.current); ctxTimerRef.current = null; }
     setCtxPrompt(null);
@@ -170,16 +175,21 @@ export default function GcLivePage() {
     const player = orebPlayer ?? resolvePlayer(rebTeamId) ?? { id: TEAM_PLAYER_ID(rebTeamId), name: "全队", num: "-" };
     const action = ACTIONS.find(a => a.cat === type)!;
     setEvents(prev => [makeEvent(rebTeamId, player.id, player.name, player.num, action), ...prev]);
+    // Defensive rebound = possession change
+    if (type === "dreb") switchToTeam(rebTeamId);
   }
 
   function logAssist(assistPlayerId: string) {
     if (!ctxPrompt || ctxPrompt.type !== "assist") return;
     const { scoringTeam } = ctxPrompt;
+    const otherTeam: TeamId = scoringTeam === "home" ? "away" : "home";
     clearCtx();
     const player = resolvePlayer(scoringTeam, assistPlayerId);
     if (!player) return;
     const action = ACTIONS.find(a => a.cat === "ast")!;
     setEvents(prev => [makeEvent(scoringTeam, player.id, player.name, player.num, action), ...prev]);
+    // After made basket → opponent takes possession
+    switchToTeam(otherTeam);
   }
 
   function selectFTCount(count: 1 | 2 | 3) {
@@ -193,8 +203,19 @@ export default function GcLivePage() {
     const player = resolvePlayer(selTeam, selPlayer) ?? { id: TEAM_PLAYER_ID(selTeam), name: "全队", num: "-" };
     const action = ACTIONS.find(a => a.cat === (made ? "ft" : "ft_miss"))!;
     setEvents(prev => [makeEvent(selTeam, player.id, player.name, player.num, action), ...prev]);
-    if (current >= total) { clearCtx(); }
-    else { setCtxPrompt({ type: "ft_seq", total, current: current + 1 }); }
+    if (current >= total) {
+      if (made) {
+        // Made last FT → opponent takes possession
+        clearCtx();
+        const otherTeam: TeamId = selTeam === "home" ? "away" : "home";
+        switchToTeam(otherTeam);
+      } else {
+        // Missed last FT → rebound expected
+        setCtxTimed({ type: "rebound", shootingTeam: selTeam }, 6000);
+      }
+    } else {
+      setCtxPrompt({ type: "ft_seq", total, current: current + 1 });
+    }
   }
 
   function logSteal(playerId?: string) {
@@ -207,6 +228,8 @@ export default function GcLivePage() {
     if (!p) return;
     const action = ACTIONS.find(a => a.cat === "stl")!;
     setEvents(prev => [makeEvent(stealTeam, p.id, p.name, p.num, action), ...prev]);
+    // Steal = possession change to stealing team
+    switchToTeam(stealTeam);
   }
 
   function useTimeout(side: TeamId) {
@@ -666,7 +689,11 @@ export default function GcLivePage() {
                     ));
                 })()}
               </div>
-              <button onClick={clearCtx} className="w-full text-xs text-gray-600 py-2 text-center">无助攻</button>
+              <button onClick={() => {
+                const other: TeamId = ctxPrompt.scoringTeam === "home" ? "away" : "home";
+                clearCtx();
+                switchToTeam(other);
+              }} className="w-full text-xs text-gray-600 py-2 text-center">无助攻</button>
             </>)}
 
             {/* FT COUNT */}
