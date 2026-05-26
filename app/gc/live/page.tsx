@@ -83,6 +83,8 @@ export default function GcLivePage() {
   const [detailPlayer,  setDetailPlayer]  = useState<string | null>(null);
   const [lastFlash,     setLastFlash]     = useState<string | null>(null);
   const [timeouts,      setTimeouts]      = useState<{ home: number; away: number }>({ home: 5, away: 5 });
+  const [shareText,     setShareText]     = useState<string | null>(null);
+  const [copyToast,     setCopyToast]     = useState(false);
 
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
   const ctxTimerRef = useRef<ReturnType<typeof setTimeout>  | null>(null);
@@ -302,6 +304,51 @@ export default function GcLivePage() {
     home: events.filter(e => e.teamId === "home").reduce((s, e) => s + e.pts, 0),
     away: events.filter(e => e.teamId === "away").reduce((s, e) => s + e.pts, 0),
   };
+
+  // ── Share text builder ───────────────────────────────────────────────────────
+
+  function buildShareText(
+    homeTeam: string, awayTeam: string,
+    homeScore: number, awayScore: number,
+    qs: { q: number; home: number; away: number }[],
+    stats: { name: string; num: string; teamId: TeamId; pts: number; reb: number; ast: number; stl: number }[],
+  ): string {
+    const winner = homeScore > awayScore ? homeTeam : awayScore > homeScore ? awayTeam : null;
+    const qLine = qs.map(({ q, home, away }) => `Q${q} ${home}-${away}`).join("  ");
+    const homePlayers = stats.filter(p => p.teamId === "home")
+      .sort((a, b) => b.pts - a.pts)
+      .map(p => `  ${p.num !== "-" ? `#${p.num} ` : ""}${p.name}  ${p.pts}分${p.reb > 0 ? ` ${p.reb}板` : ""}${p.ast > 0 ? ` ${p.ast}助` : ""}${p.stl > 0 ? ` ${p.stl}断` : ""}`)
+      .join("\n");
+    const awayPlayers = stats.filter(p => p.teamId === "away")
+      .sort((a, b) => b.pts - a.pts)
+      .map(p => `  ${p.num !== "-" ? `#${p.num} ` : ""}${p.name}  ${p.pts}分${p.reb > 0 ? ` ${p.reb}板` : ""}${p.ast > 0 ? ` ${p.ast}助` : ""}${p.stl > 0 ? ` ${p.stl}断` : ""}`)
+      .join("\n");
+    const today = new Date().toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" });
+    return [
+      `🏀 ${homeTeam} ${homeScore} — ${awayScore} ${awayTeam}`,
+      winner ? `🏆 ${winner} 获胜` : "平局",
+      "",
+      qLine,
+      "",
+      `【${homeTeam}】`,
+      homePlayers || "  暂无数据",
+      "",
+      `【${awayTeam}】`,
+      awayPlayers || "  暂无数据",
+      "",
+      `${today} 我耀成长证据系统`,
+    ].join("\n");
+  }
+
+  async function handleShare(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyToast(true);
+      setTimeout(() => setCopyToast(false), 2000);
+    } catch {
+      setShareText(text);
+    }
+  }
 
   // ── POST-GAME SUMMARY ────────────────────────────────────────────────────────
 
@@ -528,6 +575,26 @@ export default function GcLivePage() {
         )}
 
         <div className="flex flex-col gap-3 px-4 pt-2 pb-8">
+          {events.length > 0 && (() => {
+            const maxQ = Math.max(...events.map(e => e.quarter));
+            const qs = Array.from({ length: maxQ }, (_, i) => {
+              const q = i + 1;
+              const qe = events.filter(e => e.quarter === q);
+              return { q, home: qe.filter(e => e.teamId === "home").reduce((s, e) => s + e.pts, 0), away: qe.filter(e => e.teamId === "away").reduce((s, e) => s + e.pts, 0) };
+            });
+            const homeName = teams.find(t => t.id === "home")?.name ?? "主场";
+            const awayName = teams.find(t => t.id === "away")?.name ?? "客场";
+            const text = buildShareText(homeName, awayName, score.home, score.away, qs, playerStats);
+            return (
+              <button
+                onClick={() => handleShare(text)}
+                className="w-full py-3 rounded-xl text-sm font-bold border active:opacity-80"
+                style={{ borderColor: "rgba(249,115,22,0.4)", color: "#F97316", background: "rgba(249,115,22,0.08)" }}
+              >
+                {copyToast ? "✅ 战报已复制！" : "📤 复制战报"}
+              </button>
+            );
+          })()}
           <Link href="/coach/reports/generate" className="block">
             <div className="bg-orange-500 text-white text-center font-bold text-sm rounded-xl py-3 active:opacity-80">
               📋 生成本场报告 →
@@ -542,6 +609,30 @@ export default function GcLivePage() {
             </Link>
           </div>
         </div>
+
+        {/* Share text fallback sheet (clipboard unavailable) */}
+        {shareText !== null && (
+          <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.72)" }}>
+            <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+              <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
+              <div className="text-sm font-bold text-white mb-1">📤 复制战报</div>
+              <div className="text-xs text-gray-500 mb-3">长按下方文字 → 全选 → 复制，粘贴到微信群</div>
+              <textarea
+                readOnly
+                value={shareText}
+                className="w-full rounded-xl text-xs text-gray-300 p-3 resize-none"
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", height: 200, fontFamily: "monospace" }}
+                onFocus={e => e.target.select()}
+              />
+              <button
+                onClick={() => setShareText(null)}
+                className="w-full mt-3 py-3 rounded-xl border border-white/15 text-sm text-gray-400"
+              >
+                关闭
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
