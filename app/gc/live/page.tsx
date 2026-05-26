@@ -275,6 +275,13 @@ export default function GcLivePage() {
     setTimeouts(prev => ({ ...prev, [side]: Math.max(0, prev[side] - 1) }));
   }
 
+  function resumeToLive() {
+    if (!timerRef.current) {
+      timerRef.current = setInterval(() => setRecSecs((s) => s + 1), 1000);
+    }
+    setPhase("live");
+  }
+
   function endGame() {
     try { localStorage.removeItem("gc_live_draft"); } catch {}
     if (timerRef.current)    { clearInterval(timerRef.current);  timerRef.current = null; }
@@ -628,6 +635,13 @@ export default function GcLivePage() {
               </button>
             );
           })()}
+          <button
+            onClick={resumeToLive}
+            className="w-full py-3 rounded-xl border text-sm font-bold active:opacity-80"
+            style={{ borderColor: "rgba(255,255,255,0.15)", color: "#D1D5DB" }}
+          >
+            📝 补录事件
+          </button>
           <Link href="/gc/review" className="block">
             <div className="bg-orange-500 text-white text-center font-bold text-sm rounded-xl py-3 active:opacity-80">
               🎬 赛后视频打点 →
