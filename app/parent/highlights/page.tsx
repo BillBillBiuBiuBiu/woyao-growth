@@ -959,7 +959,7 @@ export default function HighlightsPage() {
 
       <button onClick={run} disabled={!canRun}
         className={`w-full py-4 rounded-2xl text-base font-bold shadow transition-all ${canRun?"bg-orange-500 text-white active:scale-95":"bg-gray-100 text-gray-400 cursor-not-allowed"}`}>
-        {isProcessing?"处理中…":"✨ 开始生成集锦"}
+        {isProcessing ? "处理中…" : (videoFile && photoFile) ? "✨ 开始生成集锦" : (videoFile && !photoFile) ? "还差球员照片 ②" : (!videoFile && photoFile) ? "还差比赛视频 ①" : "✨ 开始生成集锦"}
       </button>
 
       {isProcessing&&(
