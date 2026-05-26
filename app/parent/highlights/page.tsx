@@ -893,16 +893,18 @@ export default function HighlightsPage() {
       <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
         <div className="text-sm font-bold text-gray-700 mb-1">② 上传球员参考照片</div>
         <div className="text-xs text-gray-400 mb-3">全身照效果最佳 · 按队服颜色识别（同队多人会同时追踪，号码识别暂不支持）</div>
-        <label className={`flex gap-4 items-center rounded-xl border-2 border-dashed p-4 cursor-pointer ${photoFile?"border-orange-300 bg-orange-50":"border-gray-200 bg-gray-50"}`}>
+        <label className={`flex flex-col items-center rounded-xl border-2 border-dashed cursor-pointer overflow-hidden ${photoFile?"border-orange-300 bg-orange-50":"border-gray-200 bg-gray-50 p-6"}`}>
           <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} disabled={isProcessing}/>
           {photoPreview?(
-            <><img src={photoPreview} alt="参考照片" className="w-20 h-20 object-cover rounded-xl border border-orange-200 shrink-0"/>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-orange-700 break-all">{photoFile?.name}</div>
-              <div className="text-xs text-gray-400 mt-1">点击更换</div>
-            </div></>
+            <>
+              <img src={photoPreview} alt="参考照片" className="w-full object-contain" style={{maxHeight:220}}/>
+              <div className="w-full flex items-center justify-between px-3 py-2 bg-orange-50 border-t border-orange-100">
+                <span className="text-xs font-medium text-orange-700 truncate flex-1 mr-2">{photoFile?.name}</span>
+                <span className="text-xs text-gray-400 shrink-0">点击更换</span>
+              </div>
+            </>
           ):(
-            <div className="flex flex-col items-center gap-2 w-full py-3">
+            <div className="flex flex-col items-center gap-2 py-3">
               <span className="text-3xl text-gray-300">🏀</span>
               <span className="text-sm text-gray-500">点击选择球员照片</span>
             </div>
