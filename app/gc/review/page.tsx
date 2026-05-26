@@ -77,19 +77,29 @@ function mergeSegs(segs: [number, number][]): [number, number][] {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+interface LiveSession {
+  ts: string;
+  teams: Record<string, { name: string; color: string }>;
+  score: { home: number; away: number };
+  duration: number;
+  events: GameEvent[];
+}
+
 export default function GcReviewPage() {
-  const [teams,      setTeams]      = useState<RuntimeTeam[]>(() => teamsFromConfig(DEFAULT_TEAMS));
-  const [phase,      setPhase]      = useState<Phase>("setup");
-  const [videoFile,  setVideoFile]  = useState<File | null>(null);
-  const [videoUrl,   setVideoUrl]   = useState<string | null>(null);
-  const [events,     setEvents]     = useState<GameEvent[]>([]);
-  const [selTeam,    setSelTeam]    = useState<TeamId>("home");
-  const [selPlayer,  setSelPlayer]  = useState<string | null>(null);
-  const [progress,   setProgress]   = useState(0);
-  const [statusMsg,  setStatusMsg]  = useState("");
-  const [resultUrl,  setResultUrl]  = useState<string | null>(null);
-  const [resultName, setResultName] = useState("highlight.mp4");
-  const [error,      setError]      = useState<string | null>(null);
+  const [teams,       setTeams]       = useState<RuntimeTeam[]>(() => teamsFromConfig(DEFAULT_TEAMS));
+  const [phase,       setPhase]       = useState<Phase>("setup");
+  const [videoFile,   setVideoFile]   = useState<File | null>(null);
+  const [videoUrl,    setVideoUrl]    = useState<string | null>(null);
+  const [events,      setEvents]      = useState<GameEvent[]>([]);
+  const [selTeam,     setSelTeam]     = useState<TeamId>("home");
+  const [selPlayer,   setSelPlayer]   = useState<string | null>(null);
+  const [progress,    setProgress]    = useState(0);
+  const [statusMsg,   setStatusMsg]   = useState("");
+  const [resultUrl,   setResultUrl]   = useState<string | null>(null);
+  const [resultName,  setResultName]  = useState("highlight.mp4");
+  const [error,       setError]       = useState<string | null>(null);
+  const [liveSession, setLiveSession] = useState<LiveSession | null>(null);
+  const [filterPlayer, setFilterPlayer] = useState<string | null>(null); // done phase player filter
 
   const videoRef      = useRef<HTMLVideoElement | null>(null);
   const replayRef     = useRef<HTMLVideoElement | null>(null);
@@ -105,6 +115,11 @@ export default function GcReviewPage() {
 
   useEffect(() => {
     try { setTeams(teamsFromConfig(loadTeamsConfig())); } catch {}
+    // Check for live session data
+    try {
+      const raw = localStorage.getItem("gc_last_session");
+      if (raw) setLiveSession(JSON.parse(raw) as LiveSession);
+    } catch {}
   }, []);
 
   // Revoke blob URLs on unmount
@@ -349,6 +364,38 @@ export default function GcReviewPage() {
             </label>
           </div>
         </div>
+
+        {/* Live session import banner */}
+        {liveSession && (
+          <div className="px-4">
+            <div className="rounded-2xl border border-blue-500/30 p-4" style={{ background: "rgba(59,130,246,0.08)" }}>
+              <div className="flex items-start gap-3">
+                <span className="text-xl shrink-0">📋</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold text-blue-400 mb-0.5">检测到现场打点记录</div>
+                  <div className="text-xs text-gray-400 mb-3">
+                    {liveSession.events.length} 个事件 · {new Date(liveSession.ts).toLocaleDateString("zh-CN")}
+                    {" · "}{liveSession.teams["home"]?.name} vs {liveSession.teams["away"]?.name}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEvents(liveSession.events);
+                      if (videoFile) setPhase("tagging");
+                    }}
+                    disabled={!videoFile}
+                    className={`w-full py-2 rounded-xl text-xs font-bold text-center transition-colors ${
+                      videoFile
+                        ? "bg-blue-500 text-white active:scale-95"
+                        : "bg-white/5 text-gray-600"
+                    }`}
+                  >
+                    {videoFile ? "导入打点数据 → 开始生成" : "请先上传视频再导入"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="px-4 rounded-2xl">
           <div className="bg-[#1a1d27] border border-white/10 rounded-2xl p-4 text-xs text-gray-500 leading-relaxed">
@@ -656,12 +703,80 @@ export default function GcReviewPage() {
         </a>
       )}
 
+      {/* Per-player stats */}
+      {events.length > 0 && (() => {
+        const playerIds = [...new Set(events.map(e => e.playerId))];
+        const stats = playerIds.map(pid => {
+          const pe   = events.filter(e => e.playerId === pid);
+          const team = teams.find(t => t.id === pe[0]?.teamId);
+          return {
+            id:   pid,
+            name: pe[0]?.playerName ?? "?",
+            num:  pe[0]?.playerNum  ?? "-",
+            color: team?.color ?? "#6B7280",
+            pts:  pe.reduce((s, e) => s + e.pts, 0),
+            reb:  pe.filter(e => e.cat === "oreb" || e.cat === "dreb").length,
+            ast:  pe.filter(e => e.cat === "ast").length,
+            stl:  pe.filter(e => e.cat === "stl").length,
+            blk:  pe.filter(e => e.cat === "blk").length,
+            tov:  pe.filter(e => e.cat === "tov").length,
+          };
+        }).filter(p => p.pts + p.reb + p.ast + p.stl + p.blk + p.tov > 0);
+
+        if (stats.length === 0) return null;
+        return (
+          <div className="rounded-2xl bg-[#1a1d27] border border-white/10 overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-white/10">
+              <span className="text-sm font-bold text-white">📊 球员数据</span>
+              <span className="text-xs text-gray-500 ml-2">点击球员筛选回放</span>
+            </div>
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-white/5 border-b border-white/10">
+                  {["球员","分","板","助","断","帽","误"].map((h, i) => (
+                    <th key={h} className={`py-2 font-medium text-gray-400 ${i === 0 ? "text-left px-3" : "text-center px-1"}`}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {stats.map(p => (
+                  <tr key={p.id}
+                    className={`border-b border-white/5 last:border-0 cursor-pointer transition-colors ${filterPlayer === p.id ? "bg-white/10" : "active:bg-white/5"}`}
+                    onClick={() => setFilterPlayer(filterPlayer === p.id ? null : p.id)}>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: p.color }} />
+                        <span className="font-medium">{p.num !== "-" ? `#${p.num} ` : ""}{p.name}</span>
+                        {filterPlayer === p.id && <span className="text-orange-400 text-xs">▶</span>}
+                      </div>
+                    </td>
+                    <td className="px-1 py-2 text-center font-bold text-orange-400">{p.pts}</td>
+                    <td className="px-1 py-2 text-center text-gray-300">{p.reb}</td>
+                    <td className="px-1 py-2 text-center text-gray-300">{p.ast}</td>
+                    <td className="px-1 py-2 text-center text-gray-300">{p.stl}</td>
+                    <td className="px-1 py-2 text-center text-gray-300">{p.blk}</td>
+                    <td className="px-1 py-2 text-center text-gray-300">{p.tov}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      })()}
+
       {/* Per-event replay using original video */}
       {videoUrl && events.length > 0 && (
         <div className="rounded-2xl bg-[#1a1d27] border border-white/10 overflow-hidden">
-          <div className="px-4 py-2.5 border-b border-white/10 flex items-center gap-2">
-            <span className="text-sm font-bold text-white">🎯 打点回放</span>
-            <span className="text-xs text-gray-500">点击事件跳到对应时间点</span>
+          <div className="px-4 py-2.5 border-b border-white/10 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-white">🎯 打点回放</span>
+              {filterPlayer && (
+                <span className="text-xs text-orange-400">
+                  已筛选 · <button onClick={() => setFilterPlayer(null)} className="underline">清除</button>
+                </span>
+              )}
+            </div>
+            <span className="text-xs text-gray-500">点击跳到对应时间点</span>
           </div>
           <video
             ref={replayRef}
@@ -673,6 +788,7 @@ export default function GcReviewPage() {
           />
           <div className="flex flex-col divide-y divide-white/5">
             {[...events]
+              .filter(e => !filterPlayer || e.playerId === filterPlayer)
               .sort((a, b) => a.videoTs - b.videoTs)
               .map((e) => {
                 const team = teams.find((t) => t.id === e.teamId);
@@ -686,12 +802,10 @@ export default function GcReviewPage() {
                     <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: team?.color ?? "#6B7280" }} />
                     <span className="text-xs font-mono text-gray-500 shrink-0 w-10">{fmt(e.videoTs)}</span>
                     <span className="flex-1 text-sm text-gray-300 truncate">
-                      #{e.playerNum} {e.playerName}
+                      {e.playerNum !== "-" ? `#${e.playerNum} ` : ""}{e.playerName}
                       <span className="text-gray-500 ml-1">· {e.action}</span>
                     </span>
-                    {e.pts > 0 && (
-                      <span className="text-xs font-bold text-orange-400 shrink-0">+{e.pts}</span>
-                    )}
+                    {e.pts > 0 && <span className="text-xs font-bold text-orange-400 shrink-0">+{e.pts}</span>}
                   </button>
                 );
               })}
