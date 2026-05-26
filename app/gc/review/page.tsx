@@ -111,6 +111,10 @@ export default function GcReviewPage() {
   const [liveSession,   setLiveSession]   = useState<LiveSession | null>(null);
   const [filterPlayer,  setFilterPlayer]  = useState<string | null>(null);
   const [savedDraft,    setSavedDraft]    = useState<GameEvent[] | null>(null);
+  const [tsToast,       setTsToast]       = useState(false);
+  const [tsText,        setTsText]        = useState<string | null>(null);
+
+  const isWeChat = typeof navigator !== "undefined" && /MicroMessenger/i.test(navigator.userAgent);
 
   const videoRef      = useRef<HTMLVideoElement | null>(null);
   const replayRef     = useRef<HTMLVideoElement | null>(null);
@@ -296,6 +300,23 @@ export default function GcReviewPage() {
       pts: 0,
       cat: action.cat,
     }, ...prev]);
+  }
+
+  // ── WeChat fallback: export timestamps ──────────────────────────────────────
+
+  function handleCopyTimestamps() {
+    const lines = [...events]
+      .sort((a, b) => a.videoTs - b.videoTs)
+      .map(e => `${fmt(e.videoTs)}  ${e.playerNum !== "-" ? `#${e.playerNum} ` : ""}${e.playerName}  ${e.action}`)
+      .join("\n");
+    const text = `打点记录（共 ${events.length} 个）\n${"─".repeat(28)}\n${lines}\n\n用剪辑软件按时间戳裁切视频`;
+    try {
+      navigator.clipboard.writeText(text);
+      setTsToast(true);
+      setTimeout(() => setTsToast(false), 2500);
+    } catch {
+      setTsText(text);
+    }
   }
 
   // ── Generate highlight ───────────────────────────────────────────────────────
@@ -920,25 +941,73 @@ export default function GcReviewPage() {
           )}
         </div>
 
-        <div className="flex gap-3 pt-2">
-          <button
-            onClick={() => setPhase("tagging")}
-            className="flex-1 py-3 rounded-xl border border-white/20 text-sm font-bold text-gray-300"
-          >
-            ← 继续打点
-          </button>
-          <button
-            onClick={generateHighlight}
-            disabled={events.length === 0}
-            className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
-              events.length > 0
-                ? "bg-orange-500 text-white active:scale-95"
-                : "bg-white/5 text-gray-600 cursor-not-allowed"
-            }`}
-          >
-            ✨ 生成集锦 ({events.length})
-          </button>
-        </div>
+        {isWeChat ? (
+          <div className="flex flex-col gap-3 pt-2">
+            <div className="rounded-xl p-4" style={{ background: "rgba(249,115,22,0.10)", border: "1px solid rgba(249,115,22,0.35)" }}>
+              <div className="text-xs font-bold text-orange-400 mb-1.5">⚠️ 微信内无法处理视频</div>
+              <div className="text-xs text-gray-400 leading-relaxed mb-3">
+                视频生成需要大量内存，微信浏览器不支持。<br />
+                打点数据已自动保存，两个方案：<br />
+                <span className="text-gray-300">① 右上角「···」→「在浏览器中打开」→ 重新上传视频</span><br />
+                <span className="text-gray-300">② 复制打点时间戳，用剪辑软件手动裁切</span>
+              </div>
+              <button
+                onClick={handleCopyTimestamps}
+                disabled={events.length === 0}
+                className="w-full py-2.5 rounded-xl text-sm font-bold bg-orange-500 text-white active:scale-95 transition-transform"
+              >
+                {tsToast ? "✅ 已复制" : `📋 复制打点时间戳 (${events.length})`}
+              </button>
+            </div>
+            <button
+              onClick={() => setPhase("tagging")}
+              className="w-full py-3 rounded-xl border border-white/20 text-sm font-bold text-gray-300"
+            >
+              ← 继续打点
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => setPhase("tagging")}
+              className="flex-1 py-3 rounded-xl border border-white/20 text-sm font-bold text-gray-300"
+            >
+              ← 继续打点
+            </button>
+            <button
+              onClick={generateHighlight}
+              disabled={events.length === 0}
+              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
+                events.length > 0
+                  ? "bg-orange-500 text-white active:scale-95"
+                  : "bg-white/5 text-gray-600 cursor-not-allowed"
+              }`}
+            >
+              ✨ 生成集锦 ({events.length})
+            </button>
+          </div>
+        )}
+
+        {tsText && (
+          <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.75)" }}
+            onClick={(e) => { if (e.target === e.currentTarget) setTsText(null); }}>
+            <div className="w-full rounded-t-2xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+              <div className="text-sm font-bold text-white mb-2">📋 打点时间戳</div>
+              <div className="text-xs text-gray-500 mb-3">长按全选后复制</div>
+              <textarea
+                readOnly
+                value={tsText}
+                onFocus={(e) => e.target.select()}
+                className="w-full rounded-xl p-3 text-xs text-gray-300 bg-white/5 border border-white/10 resize-none font-mono"
+                style={{ height: 220 }}
+              />
+              <button onClick={() => setTsText(null)}
+                className="w-full mt-3 py-2 text-xs text-gray-600">
+                关闭
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1155,6 +1224,28 @@ export default function GcReviewPage() {
           </div>
         </Link>
       </div>
+
+      {/* Timestamp fallback sheet (clipboard blocked in WeChat) */}
+      {tsText && (
+        <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.75)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setTsText(null); }}>
+          <div className="w-full rounded-t-2xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+            <div className="text-sm font-bold text-white mb-2">📋 打点时间戳</div>
+            <div className="text-xs text-gray-500 mb-3">长按全选后复制</div>
+            <textarea
+              readOnly
+              value={tsText}
+              onFocus={(e) => e.target.select()}
+              className="w-full rounded-xl p-3 text-xs text-gray-300 bg-white/5 border border-white/10 resize-none font-mono"
+              style={{ height: 220 }}
+            />
+            <button onClick={() => setTsText(null)}
+              className="w-full mt-3 py-2 text-xs text-gray-600">
+              关闭
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
