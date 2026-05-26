@@ -176,7 +176,7 @@ export default function GcLivePage() {
 
     clearCtx();
 
-    if (action.pts > 0) {
+    if (action.pts > 0 && action.cat !== "ft") {
       setCtxTimed({ type: "assist", scoringTeam: teamId, scorerId: p.id }, 5000);
     } else if (["2pt_miss", "3pt_miss"].includes(action.cat)) {
       setCtxTimed({ type: "rebound", shootingTeam: teamId }, 6000);
