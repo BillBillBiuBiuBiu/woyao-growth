@@ -449,6 +449,7 @@ export default function HighlightsPage() {
   const [bgmUserFile,    setBgmUserFile]    = useState<File|null>(null);
   const [videoDuration,  setVideoDuration]  = useState<number>(0);
   const [childName,      setChildName]      = useState("");
+  const [myHighlights,   setMyHighlights]   = useState<Array<{date:string;name:string;dur:number}>>([]);
   const ffmpegRef     = useRef<FFmpeg|null>(null);
   const ffmpegInitRef = useRef<Promise<void>|null>(null);
 
@@ -493,6 +494,7 @@ export default function HighlightsPage() {
   useEffect(() => {
     setIsWeChat(/MicroMessenger/i.test(navigator.userAgent));
     try { const n = localStorage.getItem("child_name"); if (n) setChildName(n); } catch {}
+    try { const h = JSON.parse(localStorage.getItem("my_highlights") || "[]"); if (Array.isArray(h)) setMyHighlights(h.slice(0, 5)); } catch {}
   }, []);
 
   // Revoke blob URLs on change/unmount to prevent memory leaks
@@ -1062,6 +1064,24 @@ export default function HighlightsPage() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {stage==="idle"&&myHighlights.length>0&&(
+        <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
+          <div className="text-sm font-bold text-gray-700 mb-2">📼 历史集锦</div>
+          <div className="flex flex-col">
+            {myHighlights.map((hl,i)=>(
+              <div key={i} className="flex items-center justify-between py-2.5 border-t border-gray-50 first:border-0">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm text-gray-800 font-medium truncate">{hl.name.replace(/\.[^.]+$/,"")}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{new Date(hl.date).toLocaleDateString("zh-CN",{month:"numeric",day:"numeric"})} · {hl.dur}秒</div>
+                </div>
+                <div className="text-xs text-gray-300 shrink-0 ml-3">已过期</div>
+              </div>
+            ))}
+          </div>
+          <div className="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-50">本地生成的视频不会保存，可随时重新生成</div>
         </div>
       )}
 
