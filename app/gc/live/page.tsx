@@ -137,14 +137,18 @@ export default function GcLivePage() {
           <div className="text-xs text-gray-500 text-center uppercase tracking-wider mb-3">最终比分</div>
           <div className="flex items-center justify-between max-w-xs mx-auto">
             <div className="text-center">
-              <div className="text-xs font-bold text-orange-400 mb-1">PAB篮球</div>
+              <div className="text-xs font-bold text-orange-400 mb-1">
+                {teams.find((t) => t.id === "home")?.name ?? "主场"}
+              </div>
               <div className={`text-5xl font-black ${score.home >= score.away ? "text-orange-400" : "text-gray-500"}`}>
                 {score.home}
               </div>
             </div>
             <div className="text-gray-600 text-2xl font-bold">—</div>
             <div className="text-center">
-              <div className="text-xs font-bold text-blue-400 mb-1">STB铁骑</div>
+              <div className="text-xs font-bold text-blue-400 mb-1">
+                {teams.find((t) => t.id === "away")?.name ?? "客场"}
+              </div>
               <div className={`text-5xl font-black ${score.away >= score.home ? "text-blue-400" : "text-gray-500"}`}>
                 {score.away}
               </div>
@@ -183,6 +187,19 @@ export default function GcLivePage() {
                 </div>
               ))}
             </div>
+            <Link href="/gc/review" className="block mt-3">
+              <div
+                className="rounded-xl border p-3 flex items-center gap-3 active:opacity-80"
+                style={{ borderColor: "rgba(249,115,22,0.35)", background: "rgba(249,115,22,0.08)" }}
+              >
+                <span className="text-xl shrink-0">🎬</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold text-orange-400">上传视频 · 生成真实集锦</div>
+                  <div className="text-xs text-gray-500 mt-0.5">把今天的比赛视频上传，按时间戳切出每个片段</div>
+                </div>
+                <span className="text-orange-400 text-lg shrink-0">›</span>
+              </div>
+            </Link>
           </div>
         )}
 
