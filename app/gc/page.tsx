@@ -10,7 +10,33 @@ import {
   type TeamId,
   type GameRecord,
 } from "@/lib/gc-teams";
-import { apiLoadGames } from "@/lib/gc-api";
+import { apiLoadGames, apiLoadEvents, type StoredEvent } from "@/lib/gc-api";
+
+interface PlayerStat {
+  playerId: string;
+  name: string;
+  num: string;
+  team: "home" | "away";
+  pts: number;
+  reb: number;
+  ast: number;
+  stl: number;
+}
+
+function computeStats(events: StoredEvent[]): PlayerStat[] {
+  const map = new Map<string, PlayerStat>();
+  for (const e of events) {
+    if (!map.has(e.playerId)) {
+      map.set(e.playerId, { playerId: e.playerId, name: e.playerName, num: e.playerNum, team: e.team, pts: 0, reb: 0, ast: 0, stl: 0 });
+    }
+    const s = map.get(e.playerId)!;
+    s.pts += e.pts;
+    if (e.cat === "oreb" || e.cat === "dreb") s.reb++;
+    if (e.cat === "ast") s.ast++;
+    if (e.cat === "stl") s.stl++;
+  }
+  return [...map.values()].sort((a, b) => b.pts - a.pts || b.reb - a.reb);
+}
 
 function fmtGameDate(ts: string): string {
   const d = new Date(ts);
@@ -32,6 +58,11 @@ export default function GcSetupPage() {
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [history, setHistory] = useState<GameRecord[]>([]);
+  const [detailGame, setDetailGame] = useState<{
+    record: GameRecord;
+    loading: boolean;
+    stats: PlayerStat[] | null;
+  } | null>(null);
 
   useEffect(() => {
     setCfg(loadTeamsConfig());
@@ -95,6 +126,15 @@ export default function GcSetupPage() {
   function handleCancel() {
     setCfg(loadTeamsConfig());
     setEditing(false);
+  }
+
+  function openDetail(record: GameRecord) {
+    setDetailGame({ record, loading: true, stats: null });
+    apiLoadEvents(record.id).then((events) => {
+      setDetailGame((prev) => prev ? { ...prev, loading: false, stats: computeStats(events) } : null);
+    }).catch(() => {
+      setDetailGame((prev) => prev ? { ...prev, loading: false, stats: [] } : null);
+    });
   }
 
   // ── EDITING MODE ────────────────────────────────────────────────────────────
@@ -321,7 +361,7 @@ export default function GcSetupPage() {
               const homeWon = g.homeScore > g.awayScore;
               const awayWon = g.awayScore > g.homeScore;
               return (
-                <div key={g.id} className="rounded-xl border border-white/8 px-4 py-3" style={{ background: "#1a1d27" }}>
+                <div key={g.id} onClick={() => openDetail(g)} className="rounded-xl border border-white/8 px-4 py-3 cursor-pointer active:bg-white/5" style={{ background: "#1a1d27" }}>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] text-gray-600">{fmtGameDate(g.ts)}</span>
                     <span className="text-[10px] text-gray-700">{g.eventCount} 事件 · {fmtDur(g.duration)}</span>
@@ -353,6 +393,73 @@ export default function GcSetupPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Game detail bottom sheet */}
+      {detailGame && (
+        <div
+          className="fixed inset-0 z-50 flex items-end"
+          style={{ background: "rgba(0,0,0,0.78)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setDetailGame(null); }}
+        >
+          <div className="w-full rounded-t-3xl max-h-[80vh] overflow-y-auto" style={{ background: "#1a1d27" }}>
+            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mt-3 mb-1" />
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-white/8">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-black text-orange-400">{detailGame.record.homeTeam}</span>
+                  <span className="text-base font-black text-white">{detailGame.record.homeScore}</span>
+                  <span className="text-gray-600 text-sm">—</span>
+                  <span className="text-base font-black text-white">{detailGame.record.awayScore}</span>
+                  <span className="text-sm font-black text-blue-400">{detailGame.record.awayTeam}</span>
+                </div>
+                <div className="text-[10px] text-gray-600 mt-0.5">{fmtGameDate(detailGame.record.ts)} · {detailGame.record.eventCount} 事件</div>
+              </div>
+              <button onClick={() => setDetailGame(null)} className="text-gray-500 text-xl px-1">✕</button>
+            </div>
+
+            {/* Content */}
+            <div className="px-5 py-4">
+              {detailGame.loading && (
+                <div className="text-center py-8 text-gray-500 text-sm">加载中…</div>
+              )}
+              {!detailGame.loading && detailGame.stats !== null && detailGame.stats.length === 0 && (
+                <div className="text-center py-8 text-gray-600 text-sm">暂无球员数据</div>
+              )}
+              {!detailGame.loading && detailGame.stats !== null && detailGame.stats.length > 0 && (() => {
+                const home = detailGame.stats.filter(p => p.team === "home");
+                const away = detailGame.stats.filter(p => p.team === "away");
+                const renderTeam = (players: PlayerStat[], color: string, label: string) => (
+                  <div className="mb-4">
+                    <div className="text-xs font-bold mb-2" style={{ color }}>{label}</div>
+                    <div className="rounded-xl overflow-hidden border border-white/8">
+                      <div className="grid text-[10px] text-gray-600 px-3 py-1.5 border-b border-white/5" style={{ gridTemplateColumns: "1fr 28px 28px 28px 28px" }}>
+                        <span>球员</span><span className="text-center">分</span><span className="text-center">板</span><span className="text-center">助</span><span className="text-center">断</span>
+                      </div>
+                      {players.map((p) => (
+                        <div key={p.playerId} className="grid items-center px-3 py-2 border-b border-white/5 last:border-0" style={{ gridTemplateColumns: "1fr 28px 28px 28px 28px" }}>
+                          <span className="text-xs text-gray-300 truncate">{p.num !== "-" && p.num ? `#${p.num} ` : ""}{p.name}</span>
+                          <span className="text-xs font-black text-center" style={{ color: p.pts > 0 ? color : "#4B5563" }}>{p.pts || "—"}</span>
+                          <span className="text-xs text-center text-gray-400">{p.reb || "—"}</span>
+                          <span className="text-xs text-center text-gray-400">{p.ast || "—"}</span>
+                          <span className="text-xs text-center text-gray-400">{p.stl || "—"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+                return (
+                  <>
+                    {home.length > 0 && renderTeam(home, "#F97316", detailGame.record.homeTeam + " 主场")}
+                    {away.length > 0 && renderTeam(away, "#60A5FA", detailGame.record.awayTeam + " 客场")}
+                  </>
+                );
+              })()}
+            </div>
           </div>
         </div>
       )}
