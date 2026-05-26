@@ -58,6 +58,7 @@ export default function ParentHome() {
   const [linkToast, setLinkToast] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [expandedClipId, setExpandedClipId] = useState<string | null>(null);
+  const [homeExpandedClipId, setHomeExpandedClipId] = useState<string | null>(null);
   const [statsCopied, setStatsCopied] = useState(false);
   const [childName, setChildName] = useState("");
   const [editingName, setEditingName] = useState(false);
@@ -336,12 +337,12 @@ export default function ParentHome() {
             <div className="text-sm font-bold text-gray-800 mb-3">🎞️ 最新集锦切片</div>
             <div className="flex flex-col gap-2">
               {latestClips.slice(0, 3).map((clip) => {
-                const isExpanded = expandedClipId === clip.id;
+                const isExpanded = homeExpandedClipId === clip.id;
                 return (
                   <div key={clip.id} className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
                     <button
                       className="flex items-center justify-between w-full px-3 py-2.5 text-left active:bg-orange-50 transition-colors"
-                      onClick={() => setExpandedClipId(isExpanded ? null : clip.id)}
+                      onClick={() => setHomeExpandedClipId(isExpanded ? null : clip.id)}
                     >
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-medium text-gray-800 truncate">{clip.label || "集锦片段"}</div>
