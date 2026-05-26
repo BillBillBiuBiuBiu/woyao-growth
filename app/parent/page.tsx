@@ -43,6 +43,7 @@ export default function ParentHome() {
   } | null>(null);
   const [linkToast, setLinkToast] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
+  const [expandedClipId, setExpandedClipId] = useState<string | null>(null);
 
   useEffect(() => {
     apiLoadGames().then((games) => { if (games.length > 0) setRecentGames(games.slice(0, 10)); }).catch(() => {});
@@ -328,30 +329,50 @@ export default function ParentHome() {
                   <div className="mb-4">
                     <div className="text-xs font-bold text-gray-500 mb-2 px-1">集锦切片</div>
                     <div className="flex flex-col gap-2">
-                      {gameDetail.clips.map((clip) => (
-                        <div
-                          key={clip.id}
-                          className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <div className="text-sm font-medium text-gray-800 truncate">
-                              {clip.label || "集锦片段"}
-                            </div>
-                            <div className="text-xs text-gray-400">{fmtMatchDate(clip.created_at)}</div>
-                          </div>
-                          <button
-                            onClick={() => copyClipLink(clip.public_url)}
-                            className="shrink-0 ml-3 px-3 py-1.5 rounded-full text-xs font-bold border active:opacity-70 transition-colors"
-                            style={{
-                              borderColor: linkToast === clip.public_url ? "rgba(34,197,94,0.4)" : "rgba(249,115,22,0.4)",
-                              color: linkToast === clip.public_url ? "#4ade80" : "#F97316",
-                              background: linkToast === clip.public_url ? "rgba(34,197,94,0.08)" : "rgba(249,115,22,0.08)",
-                            }}
+                      {gameDetail.clips.map((clip) => {
+                        const expanded = expandedClipId === clip.id;
+                        return (
+                          <div
+                            key={clip.id}
+                            className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden"
                           >
-                            {linkToast === clip.public_url ? "✅ 已复制" : "🔗 复制链接"}
-                          </button>
-                        </div>
-                      ))}
+                            <button
+                              className="flex items-center justify-between w-full px-3 py-2.5 text-left active:bg-orange-50 transition-colors"
+                              onClick={() => setExpandedClipId(expanded ? null : clip.id)}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="text-sm font-medium text-gray-800 truncate">
+                                  {clip.label || "集锦片段"}
+                                </div>
+                                <div className="text-xs text-gray-400">{fmtMatchDate(clip.created_at)}</div>
+                              </div>
+                              <span className="shrink-0 ml-3 text-orange-400 text-sm transition-transform" style={{ display: "inline-block", transform: expanded ? "rotate(180deg)" : "none" }}>▾</span>
+                            </button>
+                            {expanded && (
+                              <div className="px-2 pb-2 flex flex-col gap-2">
+                                <video
+                                  src={clip.public_url}
+                                  controls
+                                  playsInline
+                                  className="w-full rounded-xl bg-black"
+                                  style={{ maxHeight: 240 }}
+                                />
+                                <button
+                                  onClick={() => copyClipLink(clip.public_url)}
+                                  className="w-full py-1.5 rounded-lg text-xs font-bold border active:opacity-70 transition-colors"
+                                  style={{
+                                    borderColor: linkToast === clip.public_url ? "rgba(34,197,94,0.4)" : "rgba(249,115,22,0.4)",
+                                    color: linkToast === clip.public_url ? "#4ade80" : "#F97316",
+                                    background: linkToast === clip.public_url ? "rgba(34,197,94,0.08)" : "rgba(249,115,22,0.08)",
+                                  }}
+                                >
+                                  {linkToast === clip.public_url ? "✅ 已复制" : "🔗 复制链接"}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -369,7 +390,7 @@ export default function ParentHome() {
             )}
 
             <button
-              onClick={() => { setGameDetail(null); setSelectedGame(null); }}
+              onClick={() => { setGameDetail(null); setSelectedGame(null); setExpandedClipId(null); }}
               className="w-full mt-2 py-3 rounded-xl border border-gray-200 text-sm text-gray-400 active:bg-gray-50"
             >
               关闭
