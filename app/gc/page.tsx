@@ -10,6 +10,7 @@ import {
   type TeamId,
   type GameRecord,
 } from "@/lib/gc-teams";
+import { apiLoadGames } from "@/lib/gc-api";
 
 function fmtGameDate(ts: string): string {
   const d = new Date(ts);
@@ -34,7 +35,11 @@ export default function GcSetupPage() {
 
   useEffect(() => {
     setCfg(loadTeamsConfig());
+    // Show localStorage records instantly, then replace with backend data
     setHistory(loadGameHistory().slice(0, 5));
+    apiLoadGames().then((games) => {
+      if (games.length > 0) setHistory(games.slice(0, 10));
+    }).catch(() => {});
   }, []);
 
   function updateTeamName(side: TeamId, name: string) {

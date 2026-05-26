@@ -10,6 +10,7 @@ import {
   type RuntimeTeam,
   type TeamsConfig,
 } from "@/lib/gc-teams";
+import { apiSaveGame, apiSaveEvents, type StoredEvent } from "@/lib/gc-api";
 
 const ACTIONS = [
   { label: "2分命中",  pts: 2, cat: "2pt" },
@@ -307,8 +308,9 @@ export default function GcLivePage() {
         const qe = events.filter(e => e.quarter === q);
         return { q, home: qe.filter(e => e.teamId === "home").reduce((s, e) => s + e.pts, 0), away: qe.filter(e => e.teamId === "away").reduce((s, e) => s + e.pts, 0) };
       });
-      saveGameRecord({
-        id: `g-${Date.now()}`,
+      const gameId = `g-${Date.now()}`;
+      const record = {
+        id: gameId,
         ts: now,
         homeTeam: teams.find(t => t.id === "home")?.name ?? "主场",
         awayTeam: teams.find(t => t.id === "away")?.name ?? "客场",
@@ -317,7 +319,27 @@ export default function GcLivePage() {
         quarterScores,
         eventCount: events.length,
         duration: recSecs,
-      });
+      };
+      saveGameRecord(record);
+      // Fire-and-forget backend save
+      void apiSaveGame({ ...record, source: "live" });
+      void apiSaveEvents(
+        gameId,
+        events.map((e, i): StoredEvent => ({
+          id: e.id,
+          seq: i,
+          playerId: e.playerId,
+          playerName: e.playerName,
+          playerNum: e.playerNum,
+          team: e.teamId,
+          cat: e.cat,
+          pts: e.pts,
+          quarter: e.quarter,
+          gameClock: 0,
+          videoTs: e.videoTs,
+          note: e.action,
+        }))
+      );
     } catch {}
 
     setPhase("postgame");

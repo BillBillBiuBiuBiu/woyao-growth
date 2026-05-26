@@ -11,6 +11,7 @@ import {
   type TeamId,
   type RuntimeTeam,
 } from "@/lib/gc-teams";
+import { apiSaveGame, apiSaveEvents, apiUploadClip, type StoredEvent } from "@/lib/gc-api";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -124,6 +125,7 @@ export default function GcReviewPage() {
   const clipVideoRef  = useRef<HTMLVideoElement | null>(null);
   const ffmpegRef     = useRef<FFmpeg | null>(null);
   const ffmpegInitRef = useRef<Promise<void> | null>(null);
+  const gameIdRef     = useRef<string>(`g-${Date.now()}`);
 
   function seekTo(videoTs: number) {
     const v = replayRef.current;
@@ -441,12 +443,50 @@ export default function GcReviewPage() {
 
       setResultBlob(blob);
       setResultUrl(URL.createObjectURL(blob));
-      setResultName((videoFile.name.replace(/\.[^.]+$/, "") || "game") + "_highlight.mp4");
+      const clipName = (videoFile.name.replace(/\.[^.]+$/, "") || "game") + "_highlight.mp4";
+      setResultName(clipName);
       setStatusMsg(`${events.length} 个打点 · ${segs.length} 个片段 · 共 ${totalDur.toFixed(0)}s`);
       setProgress(100);
       setPhase("done");
       try { localStorage.removeItem("gc_review_events_draft"); } catch {}
       setSavedDraft(null);
+
+      // Save to backend (fire-and-forget)
+      const gameId = gameIdRef.current;
+      const homeTeam = teams.find(t => t.id === "home");
+      const awayTeam = teams.find(t => t.id === "away");
+      const homeScore = events.filter(e => e.teamId === "home").reduce((s, e) => s + e.pts, 0);
+      const awayScore = events.filter(e => e.teamId === "away").reduce((s, e) => s + e.pts, 0);
+      void apiSaveGame({
+        id: gameId,
+        ts: new Date().toISOString(),
+        homeTeam: homeTeam?.name ?? "主场",
+        awayTeam: awayTeam?.name ?? "客场",
+        homeScore,
+        awayScore,
+        quarterScores: [],
+        eventCount: events.length,
+        duration: Math.round(totalDur),
+        source: "review",
+      });
+      void apiSaveEvents(
+        gameId,
+        events.map((e, i): StoredEvent => ({
+          id: e.id,
+          seq: i,
+          playerId: e.playerId,
+          playerName: e.playerName,
+          playerNum: e.playerNum,
+          team: e.teamId,
+          cat: e.cat,
+          pts: e.pts,
+          quarter: 1,
+          gameClock: 0,
+          videoTs: e.videoTs,
+          note: e.action,
+        }))
+      );
+      void apiUploadClip(gameId, blob, `${events.length}个打点集锦`, clipName);
 
     } catch (e) {
       if (ffmpegRef.current) {
