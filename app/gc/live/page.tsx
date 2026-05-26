@@ -536,6 +536,21 @@ export default function GcLivePage() {
           </div>
         )}
 
+        {(() => {
+          const tbdEvents = events.filter(e => e.playerId.endsWith("-tbd"));
+          const tbdPts = tbdEvents.reduce((s, e) => s + e.pts, 0);
+          if (tbdEvents.length === 0) return null;
+          return (
+            <div className="mx-4 mb-3 px-3 py-2 rounded-xl flex items-center gap-2"
+              style={{ background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.3)" }}>
+              <span className="text-orange-400 text-sm shrink-0">⚠️</span>
+              <span className="text-xs text-orange-300">
+                {tbdEvents.length} 个事件未归属球员{tbdPts > 0 ? `（含 ${tbdPts} 分）` : ""}，未计入以下统计
+              </span>
+            </div>
+          );
+        })()}
+
         {playerStats.length > 0 && (
           <div className="px-4 pb-4">
             <div className="text-sm font-bold mb-3">📊 球员数据 <span className="text-xs text-gray-600 font-normal">（点击查看详情）</span></div>
