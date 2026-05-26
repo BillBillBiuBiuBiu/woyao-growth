@@ -45,10 +45,20 @@ export default function ParentHome() {
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [expandedClipId, setExpandedClipId] = useState<string | null>(null);
   const [statsCopied, setStatsCopied] = useState(false);
+  const [childName, setChildName] = useState("");
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
 
   useEffect(() => {
     apiLoadGames().then((games) => { if (games.length > 0) setRecentGames(games.slice(0, 10)); }).catch(() => {});
+    try { const n = localStorage.getItem("child_name"); if (n) setChildName(n); } catch {}
   }, []);
+
+  function saveName() {
+    const trimmed = nameInput.trim();
+    if (trimmed) { setChildName(trimmed); try { localStorage.setItem("child_name", trimmed); } catch {} }
+    setEditingName(false);
+  }
 
   async function openGameDetail(game: GameRecord) {
     setSelectedGame(game);
@@ -80,12 +90,30 @@ export default function ParentHome() {
         <span className="absolute top-10 right-10 text-orange-300 text-sm select-none">✦</span>
         <span className="absolute top-4 right-6 text-yellow-300 text-xs select-none">✦</span>
 
-        <h1
-          className="text-2xl font-black text-center mb-1 leading-tight"
-          style={{ color: "#7C3810" }}
-        >
-          {mockStudent.name}的篮球成长日记
-        </h1>
+        {editingName ? (
+          <div className="flex items-center gap-2 mb-1">
+            <input
+              autoFocus
+              value={nameInput}
+              onChange={e => setNameInput(e.target.value)}
+              onBlur={saveName}
+              onKeyDown={e => { if (e.key === "Enter") saveName(); if (e.key === "Escape") setEditingName(false); }}
+              placeholder="输入孩子的名字"
+              className="text-xl font-black text-center rounded-xl px-3 py-1 border-2 border-orange-400 outline-none bg-white/90"
+              style={{ color: "#7C3810", minWidth: 0, width: 180 }}
+            />
+          </div>
+        ) : (
+          <button
+            className="flex items-center gap-1.5 mb-1 group"
+            onClick={() => { setNameInput(childName); setEditingName(true); }}
+          >
+            <h1 className="text-2xl font-black text-center leading-tight" style={{ color: "#7C3810" }}>
+              {childName ? `${childName}的篮球成长日记` : <span className="text-lg text-orange-400">点击设置孩子名字 ✏️</span>}
+            </h1>
+            {childName && <span className="text-base text-orange-400/60 group-active:text-orange-400 transition-colors">✏️</span>}
+          </button>
+        )}
         <div className="flex items-center gap-1.5 bg-white/70 border border-orange-200 rounded-full px-3 py-1 mb-4">
           <span className="text-xs font-medium text-orange-700">{mockStudent.age}岁 · {mockStudent.class}</span>
           <span className="text-orange-400 text-xs">♡</span>
