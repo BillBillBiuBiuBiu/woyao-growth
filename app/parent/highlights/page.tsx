@@ -840,6 +840,11 @@ export default function HighlightsPage() {
       setStatusMsg(useMultiSeg
         ? `共 ${segs.length} 个精彩片段 · 总时长 ${totalSegDur.toFixed(0)}s`
         : "");
+      try {
+        const rec = { date: new Date().toISOString(), name: videoFile.name, dur: Math.round(totalClipDur) };
+        const prev = JSON.parse(localStorage.getItem("my_highlights") || "[]");
+        localStorage.setItem("my_highlights", JSON.stringify([rec, ...prev].slice(0, 10)));
+      } catch {}
 
     } catch(e) {
       console.error(e);

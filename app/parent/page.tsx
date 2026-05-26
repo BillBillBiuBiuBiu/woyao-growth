@@ -16,6 +16,8 @@ interface PlayerStat {
   pts: number; reb: number; ast: number; stl: number;
 }
 
+interface HighlightRecord { date: string; name: string; dur: number; }
+
 function computeStats(events: StoredEvent[]): PlayerStat[] {
   const map = new Map<string, PlayerStat>();
   for (const e of events) {
@@ -48,10 +50,12 @@ export default function ParentHome() {
   const [childName, setChildName] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
+  const [myLastHighlight, setMyLastHighlight] = useState<HighlightRecord | null>(null);
 
   useEffect(() => {
     apiLoadGames().then((games) => { if (games.length > 0) setRecentGames(games.slice(0, 10)); }).catch(() => {});
     try { const n = localStorage.getItem("child_name"); if (n) setChildName(n); } catch {}
+    try { const hl = JSON.parse(localStorage.getItem("my_highlights") || "[]"); if (hl.length > 0) setMyLastHighlight(hl[0]); } catch {}
   }, []);
 
   function saveName() {
@@ -174,6 +178,20 @@ export default function ParentHome() {
             </div>
           </div>
         </Link>
+
+        {/* Last highlight record — shown when parent has previously generated a highlight */}
+        {myLastHighlight && (
+          <Link href="/parent/highlights">
+            <div className="rounded-2xl bg-white/90 border border-orange-100 shadow-sm px-4 py-3 flex items-center justify-between active:bg-orange-50 transition-colors">
+              <div className="min-w-0 flex-1">
+                <div className="text-xs text-orange-500 font-medium mb-0.5">✨ 最近集锦</div>
+                <div className="text-sm font-semibold text-gray-800 truncate">{myLastHighlight.name.replace(/\.[^.]+$/, "")}</div>
+                <div className="text-xs text-gray-400 mt-0.5">{fmtMatchDate(myLastHighlight.date)} · {myLastHighlight.dur}秒</div>
+              </div>
+              <div className="text-orange-300 ml-3 shrink-0 text-xl">›</div>
+            </div>
+          </Link>
+        )}
 
         {/* Recent games list — each row clickable, opens detail sheet */}
         {recentGames.length > 0 && (
