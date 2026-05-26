@@ -145,6 +145,15 @@ export default function GcReviewPage() {
         if (Array.isArray(draft) && draft.length > 0) setSavedDraft(draft);
       }
     } catch {}
+    try {
+      const hash = window.location.hash;
+      const match = hash.match(/[#&]ev=([^&]*)/);
+      if (match) {
+        const parsed = JSON.parse(decodeURIComponent(match[1])) as GameEvent[];
+        if (Array.isArray(parsed) && parsed.length > 0) setSavedDraft(parsed);
+        history.replaceState(null, "", window.location.pathname);
+      }
+    } catch {}
   }, []);
 
   // Auto-save events to localStorage during tagging/review so crashes don't lose data
@@ -477,7 +486,7 @@ export default function GcReviewPage() {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-bold text-red-400 mb-0.5">检测到未完成的打点记录</div>
                   <div className="text-xs text-gray-400 mb-3">
-                    上次共 {savedDraft.length} 个打点，因程序中断未完成生成
+                    共 {savedDraft.length} 个打点未完成生成
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -947,16 +956,26 @@ export default function GcReviewPage() {
               <div className="text-xs font-bold text-orange-400 mb-1.5">⚠️ 微信内无法处理视频</div>
               <div className="text-xs text-gray-400 leading-relaxed mb-3">
                 视频生成需要大量内存，微信浏览器不支持。<br />
-                打点数据已自动保存，两个方案：<br />
-                <span className="text-gray-300">① 右上角「···」→「在浏览器中打开」→ 重新上传视频</span><br />
-                <span className="text-gray-300">② 复制打点时间戳，用剪辑软件手动裁切</span>
+                <span className="text-gray-300 font-medium">① 复制外部链接 → 粘贴到 Safari/Chrome → 上传视频 → 生成集锦</span><br />
+                <span className="text-gray-500">② 或复制时间戳，用剪辑软件手动裁切</span>
               </div>
+              <button
+                onClick={() => {
+                  const url = `${window.location.origin}/gc/review#ev=${encodeURIComponent(JSON.stringify(events))}`;
+                  try { navigator.clipboard.writeText(url); setTsToast(true); setTimeout(() => setTsToast(false), 2500); }
+                  catch { setTsText(url); }
+                }}
+                disabled={events.length === 0}
+                className="w-full py-2.5 rounded-xl text-sm font-bold bg-blue-600 text-white active:scale-95 transition-transform mb-2"
+              >
+                {tsToast ? "✅ 已复制链接" : `🔗 复制外部链接（含 ${events.length} 个打点）`}
+              </button>
               <button
                 onClick={handleCopyTimestamps}
                 disabled={events.length === 0}
-                className="w-full py-2.5 rounded-xl text-sm font-bold bg-orange-500 text-white active:scale-95 transition-transform"
+                className="w-full py-2 rounded-xl text-xs font-medium text-gray-400 border border-white/10"
               >
-                {tsToast ? "✅ 已复制" : `📋 复制打点时间戳 (${events.length})`}
+                📋 仅复制时间戳
               </button>
             </div>
             <button
