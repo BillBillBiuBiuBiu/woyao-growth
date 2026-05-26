@@ -447,6 +447,7 @@ export default function HighlightsPage() {
   const [isWeChat,       setIsWeChat]       = useState(false);
   const [bgmEnabled,     setBgmEnabled]     = useState(false);
   const [bgmUserFile,    setBgmUserFile]    = useState<File|null>(null);
+  const [videoDuration,  setVideoDuration]  = useState<number>(0);
   const ffmpegRef     = useRef<FFmpeg|null>(null);
   const ffmpegInitRef = useRef<Promise<void>|null>(null);
 
@@ -501,8 +502,17 @@ export default function HighlightsPage() {
   }, [photoPreview]);
 
   const handleVideoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const f=e.target.files?.[0]; if (f) setVideoFile(f);
-  },[]);
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setVideoFile(f);
+    setVideoDuration(0);
+    const url = URL.createObjectURL(f);
+    const vid = document.createElement("video");
+    vid.preload = "metadata";
+    vid.onloadedmetadata = () => { setVideoDuration(vid.duration); URL.revokeObjectURL(url); };
+    vid.onerror = () => URL.revokeObjectURL(url);
+    vid.src = url;
+  }, []);
   const handlePhotoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const f=e.target.files?.[0]; if (!f) return;
     setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f));
@@ -928,6 +938,13 @@ export default function HighlightsPage() {
           </label>
         )}
       </div>
+
+      {videoDuration > 60 && !isProcessing && (
+        <div className="flex items-center gap-2 px-1 text-xs text-amber-600">
+          <span className="shrink-0">⏱</span>
+          <span>预计处理时间：{Math.round(videoDuration / 10)}–{Math.round(videoDuration / 5)} 秒（视频 {Math.round(videoDuration)} 秒）</span>
+        </div>
+      )}
 
       <button onClick={run} disabled={!canRun}
         className={`w-full py-4 rounded-2xl text-base font-bold shadow transition-all ${canRun?"bg-orange-500 text-white active:scale-95":"bg-gray-100 text-gray-400 cursor-not-allowed"}`}>
