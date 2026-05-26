@@ -281,7 +281,7 @@ export default function ParentHome() {
                     <span className="text-gray-300 mx-1">—</span>
                     <span style={{ color: "#F97316" }}>{game.awayScore}</span> {game.awayTeam}
                   </div>
-                  <div className="text-xs text-gray-400 mt-0.5">{fmtMatchDate(game.ts)}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{fmtRelDate(game.ts)}</div>
                 </div>
                 <div className="flex items-center gap-2 ml-2 shrink-0">
                   {game.eventCount > 0
@@ -346,7 +346,7 @@ export default function ParentHome() {
                     >
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-medium text-gray-800 truncate">{clip.label || "集锦片段"}</div>
-                        <div className="text-xs text-gray-400">{fmtMatchDate(clip.created_at)}</div>
+                        <div className="text-xs text-gray-400">{fmtRelDate(clip.created_at)}</div>
                       </div>
                       <span className="shrink-0 ml-3 text-orange-400 text-sm" style={{ display: "inline-block", transform: isExpanded ? "rotate(180deg)" : "none" }}>▾</span>
                     </button>
@@ -380,39 +380,43 @@ export default function ParentHome() {
           </Link>
         ) : null}
 
-        {/* Next steps */}
-        <div className="rounded-3xl bg-white/90 border border-blue-100 shadow-sm p-4">
-          <div className="text-sm font-bold text-gray-800 mb-3">📌 下阶段建议</div>
-          <ul className="flex flex-col gap-2">
-            {mockReport.nextSteps.map((step, i) => (
-              <li key={i} className="flex gap-2 text-sm text-gray-700">
-                <span className="text-orange-400 font-bold shrink-0">{i + 1}.</span>
-                <span>{step}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Cards showcase */}
-        <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4">
-          <div className="text-sm font-bold text-gray-800 mb-3">🃏 球星卡</div>
-          <div className="flex gap-3 overflow-x-auto pb-1">
-            {mockStudentCards.map((c) => (
-              <div key={c.id} className="shrink-0 flex flex-col items-center gap-1">
-                <BasketballCard
-                  name={c.name}
-                  namePinyin={c.namePinyin}
-                  number={c.number}
-                  position={c.position}
-                  photo={c.photo}
-                  prebuiltCard={c.prebuiltCard}
-                  size="mini"
-                />
-                <div className="text-xs text-gray-500">{c.name}</div>
-              </div>
-            ))}
+        {/* Next steps — shown only in demo state (no real games) */}
+        {recentGames.length === 0 && (
+          <div className="rounded-3xl bg-white/90 border border-blue-100 shadow-sm p-4">
+            <div className="text-sm font-bold text-gray-800 mb-3">📌 下阶段建议</div>
+            <ul className="flex flex-col gap-2">
+              {mockReport.nextSteps.map((step, i) => (
+                <li key={i} className="flex gap-2 text-sm text-gray-700">
+                  <span className="text-orange-400 font-bold shrink-0">{i + 1}.</span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
+        )}
+
+        {/* Cards showcase — shown only in demo state (no real games) */}
+        {recentGames.length === 0 && (
+          <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4">
+            <div className="text-sm font-bold text-gray-800 mb-3">🃏 球星卡</div>
+            <div className="flex gap-3 overflow-x-auto pb-1">
+              {mockStudentCards.map((c) => (
+                <div key={c.id} className="shrink-0 flex flex-col items-center gap-1">
+                  <BasketballCard
+                    name={c.name}
+                    namePinyin={c.namePinyin}
+                    number={c.number}
+                    position={c.position}
+                    photo={c.photo}
+                    prebuiltCard={c.prebuiltCard}
+                    size="mini"
+                  />
+                  <div className="text-xs text-gray-500">{c.name}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Profile link */}
         <Link href={`/parent/profile/${mockStudent.id}`}>
@@ -449,7 +453,7 @@ export default function ParentHome() {
                 <span style={{ color: "#F97316" }}>{selectedGame.awayScore}</span>{" "}
                 {selectedGame.awayTeam}
               </div>
-              <div className="text-xs text-gray-400 mt-0.5">{fmtMatchDate(selectedGame.ts)}</div>
+              <div className="text-xs text-gray-400 mt-0.5">{fmtRelDate(selectedGame.ts)}</div>
             </div>
 
             {gameDetail.loading ? (
@@ -476,7 +480,7 @@ export default function ParentHome() {
                                 <div className="text-sm font-medium text-gray-800 truncate">
                                   {clip.label || "集锦片段"}
                                 </div>
-                                <div className="text-xs text-gray-400">{fmtMatchDate(clip.created_at)}</div>
+                                <div className="text-xs text-gray-400">{fmtRelDate(clip.created_at)}</div>
                               </div>
                               <span className="shrink-0 ml-3 text-orange-400 text-sm transition-transform" style={{ display: "inline-block", transform: expanded ? "rotate(180deg)" : "none" }}>▾</span>
                             </button>
