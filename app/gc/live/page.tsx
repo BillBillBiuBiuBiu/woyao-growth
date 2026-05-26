@@ -754,6 +754,30 @@ export default function GcLivePage() {
         )}
       </div>
 
+      {/* Quarter score breakdown */}
+      {(() => {
+        const maxQ = Math.max(quarter, events.length > 0 ? Math.max(...events.map(e => e.quarter)) : 0);
+        const qs = Array.from({ length: maxQ }, (_, i) => {
+          const q = i + 1;
+          const qe = events.filter(e => e.quarter === q);
+          return { q, home: qe.filter(e => e.teamId === "home").reduce((s, e) => s + e.pts, 0), away: qe.filter(e => e.teamId === "away").reduce((s, e) => s + e.pts, 0) };
+        });
+        if (qs.length === 0) return null;
+        return (
+          <div className="bg-[#1a1d27] border-b border-white/10 px-4 py-1.5 flex items-center justify-center gap-3 shrink-0">
+            {qs.map(({ q, home, away }) => (
+              <div key={q} className="flex items-center gap-1">
+                <span className={`text-[10px] font-bold ${q === quarter ? "text-orange-400" : "text-gray-600"}`}>Q{q}</span>
+                <span className={`text-[10px] font-mono ${home > away ? "text-orange-400" : "text-gray-500"}`}>{home}</span>
+                <span className="text-[10px] text-gray-700">-</span>
+                <span className={`text-[10px] font-mono ${away > home ? "text-blue-400" : "text-gray-500"}`}>{away}</span>
+                {q === quarter && <span className="text-[9px] text-orange-500 animate-pulse">▲</span>}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
       {/* Draft recovery banner */}
       {liveDraft && events.length === 0 && (
         <div className="mx-3 mt-2 px-3 py-2.5 rounded-xl flex items-center gap-2 shrink-0"
