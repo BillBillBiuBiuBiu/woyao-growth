@@ -839,7 +839,9 @@ export default function HighlightsPage() {
 
       setResultBlob(blob);
       setResultUrl(URL.createObjectURL(blob));
-      setResultName(videoFile.name.replace(/\.[^.]+$/,"")+"_highlight.mp4");
+      const childNameForFile = (() => { try { return localStorage.getItem("child_name") || ""; } catch { return ""; } })();
+      const mmdd = (() => { const d = new Date(); return `${(d.getMonth()+1).toString().padStart(2,"0")}${d.getDate().toString().padStart(2,"0")}`; })();
+      setResultName(childNameForFile ? `${childNameForFile}_${mmdd}集锦.mp4` : videoFile.name.replace(/\.[^.]+$/,"")+"_highlight.mp4");
       setStage("done"); setProgress(100);
       setStatusMsg(useMultiSeg
         ? `共 ${segs.length} 个精彩片段 · 总时长 ${totalSegDur.toFixed(0)}s`
