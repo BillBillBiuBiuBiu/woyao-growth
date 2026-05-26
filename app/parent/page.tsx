@@ -1,11 +1,24 @@
 "use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { mockStudent, mockReport, mockBadges, mockStudentCards } from "@/lib/mock-data";
 import BasketballCard from "@/components/BasketballCard";
+import { apiLoadGames } from "@/lib/gc-api";
+import type { GameRecord } from "@/lib/gc-teams";
+
+function fmtMatchDate(ts: string): string {
+  const d = new Date(ts);
+  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+}
 
 export default function ParentHome() {
   const badge = mockBadges[0];
   const card = mockStudentCards.find((c) => c.id === mockStudent.id)!;
+  const [lastGame, setLastGame] = useState<GameRecord | null>(null);
+
+  useEffect(() => {
+    apiLoadGames().then((games) => { if (games.length > 0) setLastGame(games[0]); }).catch(() => {});
+  }, []);
 
   return (
     <div className="-mx-4 -mt-6 pb-10" style={{ background: "linear-gradient(160deg, #fff3e0 0%, #ffe9cc 40%, #fff8ec 100%)" }}>
@@ -81,6 +94,22 @@ export default function ParentHome() {
             </div>
           </div>
         </Link>
+
+        {/* Last real game — fetched from Supabase */}
+        {lastGame && (
+          <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-center justify-between">
+            <div>
+              <div className="text-xs text-orange-500 mb-1 font-medium">🏀 最近比赛</div>
+              <div className="font-bold text-gray-800">
+                {lastGame.homeTeam} <span style={{ color: "#F97316" }}>{lastGame.homeScore}</span>
+                <span className="text-gray-300 mx-1.5">—</span>
+                <span style={{ color: "#F97316" }}>{lastGame.awayScore}</span> {lastGame.awayTeam}
+              </div>
+              <div className="text-xs text-gray-400 mt-1">{lastGame.eventCount}个打点 · {fmtMatchDate(lastGame.ts)}</div>
+            </div>
+            <div className="text-2xl">🏀</div>
+          </div>
+        )}
 
         {/* Latest report */}
         <Link href={`/parent/reports/${mockReport.id}`}>
