@@ -1341,7 +1341,11 @@ export default function GcReviewPage() {
       )}
 
       <button
-        onClick={() => { setPhase("tagging"); setEvents([]); setProgress(0); setResultUrl(null); }}
+        onClick={() => {
+          setPhase("tagging"); setEvents([]); setProgress(0);
+          setResultUrl(null); setResultBlob(null); setCloudSaved(false);
+          gameIdRef.current = `g-${Date.now()}`;
+        }}
         className="text-sm text-gray-500 text-center py-1"
       >
         重新打点
