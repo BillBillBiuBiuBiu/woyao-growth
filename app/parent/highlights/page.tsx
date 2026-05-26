@@ -820,8 +820,8 @@ export default function HighlightsPage() {
       setResultName(videoFile.name.replace(/\.[^.]+$/,"")+"_highlight.mp4");
       setStage("done"); setProgress(100);
       setStatusMsg(useMultiSeg
-        ? `集锦生成完成！共 ${segs.length} 个片段，总时长 ${totalSegDur.toFixed(0)}s`
-        : "集锦生成完成！");
+        ? `共 ${segs.length} 个精彩片段 · 总时长 ${totalSegDur.toFixed(0)}s`
+        : "");
 
     } catch(e) {
       console.error(e);
@@ -950,6 +950,7 @@ export default function HighlightsPage() {
       {stage==="done"&&resultUrl&&(
         <div className="rounded-2xl bg-white border border-orange-100 shadow-sm p-4 flex flex-col gap-3">
           <div className="text-sm font-bold text-gray-800">🎉 集锦已生成！</div>
+          {statusMsg && <div className="text-xs text-orange-500 -mt-1">{statusMsg}</div>}
           <video src={resultUrl} controls playsInline className="w-full rounded-xl bg-black" style={{maxHeight:280}}/>
           <a href={resultUrl} download={resultName} className="w-full py-3 rounded-xl bg-orange-500 text-white text-sm font-bold text-center block">下载集锦视频</a>
           <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);}} className="text-sm text-gray-400 text-center">重新制作</button>
