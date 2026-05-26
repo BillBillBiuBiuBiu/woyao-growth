@@ -59,6 +59,7 @@ export default function ParentHome() {
       apiLoadClips(game.id).catch(() => [] as ClipRecord[]),
     ]);
     setGameDetail({ loading: false, stats: computeStats(events), clips });
+    if (clips.length > 0) setExpandedClipId(clips[0].id);
   }
 
   async function copyClipLink(url: string) {
@@ -281,52 +282,7 @@ export default function ParentHome() {
               <div className="text-center text-gray-400 text-sm py-10">加载中…</div>
             ) : (
               <>
-                {/* Player stats */}
-                {gameDetail.stats.length > 0 && (
-                  <div className="mb-4">
-                    <div className="text-xs font-bold text-gray-500 mb-2 px-1">球员数据</div>
-                    <div className="rounded-xl overflow-hidden border border-gray-100">
-                      <table className="w-full text-xs">
-                        <thead>
-                          <tr className="bg-gray-50">
-                            <th className="text-left px-3 py-2 text-gray-400 font-medium">球员</th>
-                            <th className="text-center px-2 py-2 text-gray-400 font-medium">分</th>
-                            <th className="text-center px-2 py-2 text-gray-400 font-medium">板</th>
-                            <th className="text-center px-2 py-2 text-gray-400 font-medium">助</th>
-                            <th className="text-center px-2 py-2 text-gray-400 font-medium">断</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {gameDetail.stats.map((p, i) => (
-                            <tr
-                              key={`${p.team}-${p.name}-${i}`}
-                              className="border-t border-gray-50"
-                              style={{ background: i % 2 === 0 ? "white" : "#FFFBF5" }}
-                            >
-                              <td className="px-3 py-2.5">
-                                <div className="flex items-center gap-1.5">
-                                  <div
-                                    className="w-1.5 h-1.5 rounded-full shrink-0"
-                                    style={{ background: p.team === "home" ? "#F97316" : "#3B82F6" }}
-                                  />
-                                  <span className="font-medium text-gray-800">
-                                    {p.num && p.num !== "-" ? `#${p.num} ` : ""}{p.name}
-                                  </span>
-                                </div>
-                              </td>
-                              <td className="px-2 py-2.5 text-center font-bold text-orange-500">{p.pts}</td>
-                              <td className="px-2 py-2.5 text-center text-gray-500">{p.reb}</td>
-                              <td className="px-2 py-2.5 text-center text-gray-500">{p.ast}</td>
-                              <td className="px-2 py-2.5 text-center text-gray-500">{p.stl}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {/* Clips */}
+                {/* Clips — shown first so parents see them immediately */}
                 {gameDetail.clips.length > 0 && (
                   <div className="mb-4">
                     <div className="text-xs font-bold text-gray-500 mb-2 px-1">集锦切片</div>
@@ -375,6 +331,51 @@ export default function ParentHome() {
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Player stats — shown below clips */}
+                {gameDetail.stats.length > 0 && (
+                  <div className="mb-4">
+                    <div className="text-xs font-bold text-gray-500 mb-2 px-1">球员数据</div>
+                    <div className="rounded-xl overflow-hidden border border-gray-100">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="bg-gray-50">
+                            <th className="text-left px-3 py-2 text-gray-400 font-medium">球员</th>
+                            <th className="text-center px-2 py-2 text-gray-400 font-medium">分</th>
+                            <th className="text-center px-2 py-2 text-gray-400 font-medium">板</th>
+                            <th className="text-center px-2 py-2 text-gray-400 font-medium">助</th>
+                            <th className="text-center px-2 py-2 text-gray-400 font-medium">断</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {gameDetail.stats.map((p, i) => (
+                            <tr
+                              key={`${p.team}-${p.name}-${i}`}
+                              className="border-t border-gray-50"
+                              style={{ background: i % 2 === 0 ? "white" : "#FFFBF5" }}
+                            >
+                              <td className="px-3 py-2.5">
+                                <div className="flex items-center gap-1.5">
+                                  <div
+                                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                                    style={{ background: p.team === "home" ? "#F97316" : "#3B82F6" }}
+                                  />
+                                  <span className="font-medium text-gray-800">
+                                    {p.num && p.num !== "-" ? `#${p.num} ` : ""}{p.name}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-2 py-2.5 text-center font-bold text-orange-500">{p.pts}</td>
+                              <td className="px-2 py-2.5 text-center text-gray-500">{p.reb}</td>
+                              <td className="px-2 py-2.5 text-center text-gray-500">{p.ast}</td>
+                              <td className="px-2 py-2.5 text-center text-gray-500">{p.stl}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 )}
