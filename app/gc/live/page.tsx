@@ -552,10 +552,13 @@ export default function GcLivePage() {
 
         {clips.length > 0 && (
           <div className="px-4 pt-5 pb-3">
-            <div className="text-sm font-bold mb-3">🎬 得分片段 ({clips.length})</div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-sm font-bold">🎬 得分片段 ({clips.length})</div>
+              <div className="text-[10px] text-gray-600">点击前往剪辑</div>
+            </div>
             <div className="flex flex-col gap-2">
               {clips.map(c => (
-                <div key={c.id} className="rounded-xl bg-[#1a1d27] border border-white/10 p-3 flex items-center gap-3">
+                <Link key={c.id} href="/gc/review" className="rounded-xl bg-[#1a1d27] border border-white/10 p-3 flex items-center gap-3 active:opacity-60 transition-opacity">
                   <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center shrink-0">
                     <span className="text-orange-400 text-xl">▶</span>
                   </div>
@@ -563,21 +566,11 @@ export default function GcLivePage() {
                     <div className="text-sm font-medium truncate">{c.title}</div>
                     <div className="text-xs text-gray-500 mt-0.5">{fmt(c.startTs)} — {fmt(c.endTs)}</div>
                   </div>
-                  <div className="text-xs text-gray-500 font-mono shrink-0">{fmt(c.videoTs)}</div>
-                </div>
+                  <div className="text-xs text-orange-400/60 font-mono shrink-0">›</div>
+                </Link>
               ))}
             </div>
-            <Link href="/gc/review" className="block mt-3">
-              <div className="rounded-xl border p-3 flex items-center gap-3 active:opacity-80"
-                style={{ borderColor: "rgba(249,115,22,0.35)", background: "rgba(249,115,22,0.08)" }}>
-                <span className="text-xl shrink-0">🎬</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold text-orange-400">上传视频 · 自动生成集锦</div>
-                  <div className="text-xs text-gray-500 mt-0.5">打点数据已保存，上传比赛视频后自动导入</div>
-                </div>
-                <span className="text-orange-400 text-lg shrink-0">›</span>
-              </div>
-            </Link>
+            <div className="text-[10px] text-gray-700 text-center mt-3">上传比赛视频后，打点数据自动导入 · 一键生成集锦</div>
           </div>
         )}
 
