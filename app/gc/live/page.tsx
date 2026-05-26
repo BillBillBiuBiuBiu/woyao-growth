@@ -85,6 +85,7 @@ export default function GcLivePage() {
   const [timeouts,      setTimeouts]      = useState<{ home: number; away: number }>({ home: 5, away: 5 });
   const [shareText,     setShareText]     = useState<string | null>(null);
   const [copyToast,     setCopyToast]     = useState(false);
+  const [endConfirm,    setEndConfirm]    = useState(false);
 
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
   const ctxTimerRef = useRef<ReturnType<typeof setTimeout>  | null>(null);
@@ -657,7 +658,7 @@ export default function GcLivePage() {
           </button>
         ))}
         <div className="flex-1" />
-        <button onClick={endGame} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 text-white">
+        <button onClick={() => setEndConfirm(true)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 text-white">
           结束比赛
         </button>
       </div>
@@ -983,6 +984,27 @@ export default function GcLivePage() {
               </>);
             })()}
 
+          </div>
+        </div>
+      )}
+
+      {endConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-6" style={{ background: "rgba(0,0,0,0.75)" }}>
+          <div className="w-full max-w-sm rounded-2xl px-6 py-6" style={{ background: "#1a1d27" }}>
+            <div className="text-center mb-5">
+              <div className="text-xl font-black text-white mb-2">⚠️ 确认结束比赛？</div>
+              <div className="text-xs text-gray-500">结束后无法继续打点</div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setEndConfirm(false)}
+                className="flex-1 py-3 rounded-xl border border-white/20 text-sm font-bold text-gray-300">
+                取消
+              </button>
+              <button onClick={() => { setEndConfirm(false); endGame(); }}
+                className="flex-1 py-3 rounded-xl bg-red-600 text-white text-sm font-bold">
+                确认结束
+              </button>
+            </div>
           </div>
         </div>
       )}
