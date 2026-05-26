@@ -81,7 +81,7 @@ export default function GcLivePage() {
   const [pendingTeam,   setPendingTeam]   = useState<TeamId>("home");
   const [ftShooter,     setFtShooter]     = useState<PlayerRef | null>(null);
   const [detailPlayer,  setDetailPlayer]  = useState<string | null>(null);
-  const [lastFlash,     setLastFlash]     = useState<string | null>(null);
+  const [lastFlash,     setLastFlash]     = useState<{ label: string; id: string } | null>(null);
   const [timeouts,      setTimeouts]      = useState<{ home: number; away: number }>({ home: 5, away: 5 });
   const [shareText,     setShareText]     = useState<string | null>(null);
   const [copyToast,     setCopyToast]     = useState(false);
@@ -167,12 +167,13 @@ export default function GcLivePage() {
       ? { id: TEAM_PLAYER_ID(teamId), name: "全队", num: "-" }
       : (player ?? { id: `${teamId}-tbd`, name: "未指定", num: "-" });
 
+    const evt = makeEvent(teamId, p.id, p.name, p.num, action);
     setPendingAction(null);
-    setEvents(prev => [makeEvent(teamId, p.id, p.name, p.num, action), ...prev]);
+    setEvents(prev => [evt, ...prev]);
 
     if (flashRef.current) clearTimeout(flashRef.current);
-    setLastFlash(action.pts > 0 ? `+${action.pts} ${action.label}` : action.label);
-    flashRef.current = setTimeout(() => setLastFlash(null), 1800);
+    setLastFlash({ label: action.pts > 0 ? `+${action.pts} ${action.label}` : action.label, id: evt.id });
+    flashRef.current = setTimeout(() => setLastFlash(null), 3000);
 
     clearCtx();
 
@@ -706,10 +707,20 @@ export default function GcLivePage() {
           </div>
         </div>
         {lastFlash && (
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 pointer-events-none">
-            <div className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 whitespace-nowrap">
-              {lastFlash}
+          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+            <div className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 whitespace-nowrap pointer-events-none">
+              {lastFlash.label}
             </div>
+            <button
+              onClick={() => {
+                setEvents(prev => prev.filter(e => e.id !== lastFlash.id));
+                if (flashRef.current) clearTimeout(flashRef.current);
+                setLastFlash(null);
+              }}
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-gray-400 active:bg-white/20 whitespace-nowrap"
+            >
+              撤销
+            </button>
           </div>
         )}
       </div>
