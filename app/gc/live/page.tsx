@@ -965,30 +965,36 @@ export default function GcLivePage() {
               </button>
             ) : (
               <div className="grid grid-cols-3 gap-2.5 mb-4">
-                {pickerTeam?.players.map(p => {
-                  const fouls = events.filter(e => e.playerId === p.id && e.cat === "foul").length;
-                  const inTrouble = fouls >= 3;
-                  const fouledOut = fouls >= 5;
-                  return (
-                    <button key={p.id}
-                      onClick={() => commitAction(p)}
-                      disabled={fouledOut}
-                      className="rounded-2xl py-5 flex flex-col items-center gap-1 active:scale-95 transition-transform relative"
-                      style={{
-                        background: fouledOut ? "rgba(107,114,128,0.08)" : "rgba(255,255,255,0.07)",
-                        opacity: fouledOut ? 0.45 : 1,
-                      }}>
-                      <span className={`text-2xl font-black ${fouledOut ? "text-gray-600" : "text-white"}`}>{p.num}</span>
-                      <span className="text-xs text-gray-500 mt-0.5">{p.name}</span>
-                      {fouls > 0 && (
-                        <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full text-[9px] font-black flex items-center justify-center"
-                          style={{ background: fouledOut ? "#4B5563" : inTrouble ? "#EF4444" : "#F97316", color: "#fff" }}>
-                          {fouls}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+                {(() => {
+                  const ptsMap = new Map<string, number>();
+                  for (const e of events) { if (e.pts > 0) ptsMap.set(e.playerId, (ptsMap.get(e.playerId) ?? 0) + e.pts); }
+                  return pickerTeam?.players.map(p => {
+                    const fouls = events.filter(e => e.playerId === p.id && e.cat === "foul").length;
+                    const inTrouble = fouls >= 3;
+                    const fouledOut = fouls >= 5;
+                    const pts = ptsMap.get(p.id) ?? 0;
+                    return (
+                      <button key={p.id}
+                        onClick={() => commitAction(p)}
+                        disabled={fouledOut}
+                        className="rounded-2xl py-4 flex flex-col items-center gap-0.5 active:scale-95 transition-transform relative"
+                        style={{
+                          background: fouledOut ? "rgba(107,114,128,0.08)" : "rgba(255,255,255,0.07)",
+                          opacity: fouledOut ? 0.45 : 1,
+                        }}>
+                        <span className={`text-2xl font-black ${fouledOut ? "text-gray-600" : "text-white"}`}>{p.num}</span>
+                        <span className="text-xs text-gray-500">{p.name}</span>
+                        {pts > 0 && <span className="text-[10px] font-bold text-orange-400">{pts}分</span>}
+                        {fouls > 0 && (
+                          <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full text-[9px] font-black flex items-center justify-center"
+                            style={{ background: fouledOut ? "#4B5563" : inTrouble ? "#EF4444" : "#F97316", color: "#fff" }}>
+                            {fouls}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  });
+                })()}
               </div>
             )}
 
