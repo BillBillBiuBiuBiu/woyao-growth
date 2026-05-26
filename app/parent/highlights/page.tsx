@@ -448,6 +448,7 @@ export default function HighlightsPage() {
   const [bgmEnabled,     setBgmEnabled]     = useState(false);
   const [bgmUserFile,    setBgmUserFile]    = useState<File|null>(null);
   const [videoDuration,  setVideoDuration]  = useState<number>(0);
+  const [childName,      setChildName]      = useState("");
   const ffmpegRef     = useRef<FFmpeg|null>(null);
   const ffmpegInitRef = useRef<Promise<void>|null>(null);
 
@@ -491,6 +492,7 @@ export default function HighlightsPage() {
   // Detect WeChat WKWebView once on mount — used to show long-press save hint
   useEffect(() => {
     setIsWeChat(/MicroMessenger/i.test(navigator.userAgent));
+    try { const n = localStorage.getItem("child_name"); if (n) setChildName(n); } catch {}
   }, []);
 
   // Revoke blob URLs on change/unmount to prevent memory leaks
@@ -867,7 +869,7 @@ export default function HighlightsPage() {
   return (
     <div className="pb-16 flex flex-col gap-5">
       <div className="rounded-3xl p-5 shadow-lg" style={{background:"linear-gradient(135deg,#f7971e 0%,#ffd200 100%)"}}>
-        <div className="text-2xl font-black mb-1" style={{color:"#7C3810"}}>🎬 生成精彩集锦</div>
+        <div className="text-2xl font-black mb-1" style={{color:"#7C3810"}}>🎬 生成{childName ? `${childName}的` : ""}精彩集锦</div>
         <p className="text-sm" style={{color:"#7C3810",opacity:0.85}}>
           上传比赛视频 + 球员照片，自动剪辑有球精彩片段（约15秒），全程本地处理不上传服务器。
         </p>
@@ -981,7 +983,7 @@ export default function HighlightsPage() {
 
       {stage==="done"&&resultUrl&&(
         <div className="rounded-2xl bg-white border border-orange-100 shadow-sm p-4 flex flex-col gap-3">
-          <div className="text-sm font-bold text-gray-800">🎉 集锦已生成！</div>
+          <div className="text-sm font-bold text-gray-800">🎉 {childName ? `${childName}的` : ""}集锦已生成！</div>
           {statusMsg && <div className="text-xs text-orange-500 -mt-1">{statusMsg}</div>}
           <video src={resultUrl} controls playsInline className="w-full rounded-xl bg-black" style={{maxHeight:280}}/>
           {resultBlob && !isWeChat && "share" in navigator && (
