@@ -73,6 +73,40 @@ export function saveTeamsConfig(cfg: TeamsConfig): void {
   } catch {}
 }
 
+export interface GameRecord {
+  id: string;
+  ts: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number;
+  awayScore: number;
+  quarterScores: { q: number; home: number; away: number }[];
+  eventCount: number;
+  duration: number;
+}
+
+const GH_KEY = "gc_game_history";
+const MAX_HISTORY = 20;
+
+export function saveGameRecord(record: GameRecord): void {
+  try {
+    const raw = localStorage.getItem(GH_KEY);
+    const history: GameRecord[] = raw ? (JSON.parse(raw) as GameRecord[]) : [];
+    history.unshift(record);
+    if (history.length > MAX_HISTORY) history.length = MAX_HISTORY;
+    localStorage.setItem(GH_KEY, JSON.stringify(history));
+  } catch {}
+}
+
+export function loadGameHistory(): GameRecord[] {
+  try {
+    const raw = localStorage.getItem(GH_KEY);
+    return raw ? (JSON.parse(raw) as GameRecord[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 export function teamsFromConfig(cfg: TeamsConfig): RuntimeTeam[] {
   return [
     {

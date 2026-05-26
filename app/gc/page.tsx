@@ -5,17 +5,36 @@ import {
   DEFAULT_TEAMS,
   loadTeamsConfig,
   saveTeamsConfig,
+  loadGameHistory,
   type TeamsConfig,
   type TeamId,
+  type GameRecord,
 } from "@/lib/gc-teams";
+
+function fmtGameDate(ts: string): string {
+  const d = new Date(ts);
+  const mo = d.getMonth() + 1;
+  const dy = d.getDate();
+  const hh = d.getHours().toString().padStart(2, "0");
+  const mm = d.getMinutes().toString().padStart(2, "0");
+  return `${mo}/${dy} ${hh}:${mm}`;
+}
+
+function fmtDur(secs: number): string {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${m}分${s > 0 ? s + "秒" : ""}`;
+}
 
 export default function GcSetupPage() {
   const [cfg, setCfg] = useState<TeamsConfig>(DEFAULT_TEAMS);
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [history, setHistory] = useState<GameRecord[]>([]);
 
   useEffect(() => {
     setCfg(loadTeamsConfig());
+    setHistory(loadGameHistory().slice(0, 5));
   }, []);
 
   function updateTeamName(side: TeamId, name: string) {
@@ -287,6 +306,51 @@ export default function GcSetupPage() {
           <span className="text-orange-400">视频打点</span>：上传比赛视频，边看边标记，自动切片
         </div>
       </div>
+
+      {/* Game history */}
+      {history.length > 0 && (
+        <div className="mt-8 w-full max-w-sm pb-8">
+          <div className="text-xs text-gray-600 uppercase tracking-wider mb-3 px-1">最近比赛</div>
+          <div className="flex flex-col gap-2">
+            {history.map((g) => {
+              const homeWon = g.homeScore > g.awayScore;
+              const awayWon = g.awayScore > g.homeScore;
+              return (
+                <div key={g.id} className="rounded-xl border border-white/8 px-4 py-3" style={{ background: "#1a1d27" }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] text-gray-600">{fmtGameDate(g.ts)}</span>
+                    <span className="text-[10px] text-gray-700">{g.eventCount} 事件 · {fmtDur(g.duration)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="text-xs font-bold text-orange-400 truncate">{g.homeTeam}</div>
+                    </div>
+                    <div className="flex items-center gap-2 px-3 shrink-0">
+                      <span className={`text-lg font-black ${homeWon ? "text-orange-400" : "text-gray-500"}`}>{g.homeScore}</span>
+                      <span className="text-gray-700 text-sm">—</span>
+                      <span className={`text-lg font-black ${awayWon ? "text-blue-400" : "text-gray-500"}`}>{g.awayScore}</span>
+                    </div>
+                    <div className="flex-1 text-right">
+                      <div className="text-xs font-bold text-blue-400 truncate">{g.awayTeam}</div>
+                    </div>
+                  </div>
+                  {g.quarterScores.length > 0 && (
+                    <div className="flex gap-1.5 mt-2 pt-2 border-t border-white/5">
+                      {g.quarterScores.map(({ q, home, away }) => (
+                        <div key={q} className="text-[10px] text-gray-700">
+                          Q{q} <span className={home > away ? "text-orange-400/70" : ""}>{home}</span>
+                          <span className="text-gray-800">-</span>
+                          <span className={away > home ? "text-blue-400/70" : ""}>{away}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

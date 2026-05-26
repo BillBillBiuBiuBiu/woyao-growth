@@ -5,6 +5,7 @@ import {
   DEFAULT_TEAMS,
   loadTeamsConfig,
   teamsFromConfig,
+  saveGameRecord,
   type TeamId,
   type RuntimeTeam,
   type TeamsConfig,
@@ -257,13 +258,31 @@ export default function GcLivePage() {
         home: events.filter(e => e.teamId === "home").reduce((s, e) => s + e.pts, 0),
         away: events.filter(e => e.teamId === "away").reduce((s, e) => s + e.pts, 0),
       };
+      const now = new Date().toISOString();
       localStorage.setItem("gc_last_session", JSON.stringify({
-        ts: new Date().toISOString(),
+        ts: now,
         teams: teams.reduce((acc, t) => ({ ...acc, [t.id]: { name: t.name, color: t.color } }), {} as Record<string, { name: string; color: string }>),
         score: sc,
         duration: recSecs,
         events,
       }));
+      const maxQ = events.length > 0 ? Math.max(...events.map(e => e.quarter)) : 0;
+      const quarterScores = Array.from({ length: maxQ }, (_, i) => {
+        const q = i + 1;
+        const qe = events.filter(e => e.quarter === q);
+        return { q, home: qe.filter(e => e.teamId === "home").reduce((s, e) => s + e.pts, 0), away: qe.filter(e => e.teamId === "away").reduce((s, e) => s + e.pts, 0) };
+      });
+      saveGameRecord({
+        id: `g-${Date.now()}`,
+        ts: now,
+        homeTeam: teams.find(t => t.id === "home")?.name ?? "主场",
+        awayTeam: teams.find(t => t.id === "away")?.name ?? "客场",
+        homeScore: sc.home,
+        awayScore: sc.away,
+        quarterScores,
+        eventCount: events.length,
+        duration: recSecs,
+      });
     } catch {}
 
     setPhase("postgame");
