@@ -118,6 +118,8 @@ export default function GcReviewPage() {
   const [fileWarn,      setFileWarn]      = useState<string | null>(null);
   const [clipView,      setClipView]      = useState<{ title: string; clips: GameEvent[]; idx: number } | null>(null);
   const [cloudSaved,    setCloudSaved]    = useState(false);
+  const [clipUrl,       setClipUrl]       = useState<string | null>(null);
+  const [linkToast,     setLinkToast]     = useState(false);
 
   const isWeChat = typeof navigator !== "undefined" && /MicroMessenger/i.test(navigator.userAgent);
 
@@ -488,7 +490,7 @@ export default function GcReviewPage() {
         }))
       );
       apiUploadClip(gameId, blob, `${events.length}个打点集锦`, clipName)
-        .then((url) => { if (url) setCloudSaved(true); })
+        .then((url) => { if (url) { setCloudSaved(true); setClipUrl(url); } })
         .catch(() => {});
 
     } catch (e) {
@@ -1169,6 +1171,23 @@ export default function GcReviewPage() {
             ✅ 已保存到云端 · 可在主页历史记录查看
           </div>
         )}
+        {clipUrl && (
+          <button
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(clipUrl);
+                setLinkToast(true);
+                setTimeout(() => setLinkToast(false), 2000);
+              } catch {
+                setTsText(clipUrl);
+              }
+            }}
+            className="mt-2 px-4 py-1.5 rounded-full text-xs font-bold border active:opacity-80"
+            style={{ borderColor: "rgba(34,197,94,0.4)", color: linkToast ? "#4ade80" : "#86efac", background: "rgba(34,197,94,0.08)" }}
+          >
+            {linkToast ? "✅ 链接已复制！" : "🔗 复制集锦链接 · 发给家长"}
+          </button>
+        )}
       </div>
 
       {resultUrl && (
@@ -1343,7 +1362,7 @@ export default function GcReviewPage() {
       <button
         onClick={() => {
           setPhase("tagging"); setEvents([]); setProgress(0);
-          setResultUrl(null); setResultBlob(null); setCloudSaved(false);
+          setResultUrl(null); setResultBlob(null); setCloudSaved(false); setClipUrl(null);
           gameIdRef.current = `g-${Date.now()}`;
         }}
         className="text-sm text-gray-500 text-center py-1"
