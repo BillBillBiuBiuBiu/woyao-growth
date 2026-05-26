@@ -784,15 +784,24 @@ export default function GcLivePage() {
         </div>
         {events.map(e => {
           const team = teams.find(t => t.id === e.teamId);
+          const actionColor = e.pts > 0 ? "#F97316"
+            : e.cat.endsWith("_miss") ? "#EF4444"
+            : e.cat === "foul" ? "#FBBF24"
+            : e.cat === "tov" ? "#EF4444"
+            : "#9CA3AF";
           return (
             <div key={e.id} className="flex items-center gap-2 py-1.5 border-b border-white/5 last:border-0">
               <div className="w-1 h-4 rounded-full shrink-0" style={{ background: team?.color ?? "#6B7280" }} />
               <span className="text-xs font-mono text-gray-500 shrink-0 w-10">{fmt(e.videoTs)}</span>
-              <span className="flex-1 text-xs text-gray-300 truncate">
-                {e.playerNum !== "-" ? `#${e.playerNum} ` : ""}{e.playerName}
-                <span className="text-gray-500 ml-1">{e.action}</span>
+              <span className="flex-1 text-xs truncate">
+                <span className="text-gray-400">{e.playerNum !== "-" ? `#${e.playerNum} ` : ""}{e.playerName} </span>
+                <span style={{ color: actionColor }}>{e.action}</span>
               </span>
               {e.pts > 0 && <span className="text-xs font-bold text-orange-400 shrink-0">+{e.pts}</span>}
+              <button
+                onClick={() => setEvents(prev => prev.filter(x => x.id !== e.id))}
+                className="text-gray-700 hover:text-red-400 active:text-red-400 text-xs shrink-0 w-5 text-center"
+              >✕</button>
             </div>
           );
         })}
