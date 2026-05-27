@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
 import { mockStudents, mockReports } from "@/lib/mock-data";
 import PlanBadge from "@/components/PlanBadge";
@@ -14,17 +15,42 @@ const avatarColors = [
 ];
 
 export default function CoachStudentsPage() {
+  const [query, setQuery] = useState("");
+  const filtered = query.trim()
+    ? mockStudents.filter((s) => s.name.includes(query.trim()))
+    : mockStudents;
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold">学员管理</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">共 {mockStudents.length} 名学员</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {query.trim() ? `找到 ${filtered.length} / ${mockStudents.length} 名学员` : `共 ${mockStudents.length} 名学员`}
+          </p>
         </div>
       </div>
 
+      {/* Search */}
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="搜索学员姓名…"
+          className="w-full rounded-xl border border-border bg-white pl-8 pr-3 py-2.5 text-sm outline-none focus:border-orange-400 transition-colors"
+        />
+        {query && (
+          <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm active:opacity-60">✕</button>
+        )}
+      </div>
+
       <div className="flex flex-col gap-3">
-        {mockStudents.map((student, idx) => {
+        {filtered.length === 0 && (
+          <div className="text-center text-gray-400 text-sm py-8">没有找到「{query}」</div>
+        )}
+        {filtered.map((student) => {
+          const idx = mockStudents.indexOf(student);
           const lv = levelLabel[student.level] || levelLabel.basic_class;
           const lastReport = mockReports.filter((r) => r.studentId === student.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
           const avatarColor = avatarColors[idx % avatarColors.length];
