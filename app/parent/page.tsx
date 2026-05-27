@@ -61,6 +61,7 @@ export default function ParentHome() {
   const [homeExpandedClipId, setHomeExpandedClipId] = useState<string | null>(null);
   const [statsCopied, setStatsCopied] = useState(false);
   const [childName, setChildName] = useState("");
+  const [coachName, setCoachName] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [myLastHighlight, setMyLastHighlight] = useState<HighlightRecord | null>(null);
@@ -70,6 +71,7 @@ export default function ParentHome() {
   useEffect(() => {
     apiLoadGames().then((games) => { if (games.length > 0) setRecentGames(games.slice(0, 10)); }).catch(() => {});
     try { const n = localStorage.getItem("child_name"); if (n) setChildName(n); } catch {}
+    try { const cn = localStorage.getItem("coach_name"); if (cn) setCoachName(cn); } catch {}
     try { const hl = JSON.parse(localStorage.getItem("my_highlights") || "[]"); if (hl.length > 0) setMyLastHighlight(hl[0]); } catch {}
   }, []);
 
@@ -172,8 +174,8 @@ export default function ParentHome() {
                 </>
               ) : (
                 <>
-                  <div className="text-sm text-gray-500">教练：{mockStudent.coach}</div>
-                  <div className="text-xs bg-orange-100 text-orange-700 rounded-full px-2.5 py-1 inline-block mt-1.5 font-medium">{mockStudent.currentStage}</div>
+                  <div className="text-sm text-gray-500">教练：{coachName || "我的教练"}</div>
+                  <div className="text-xs bg-orange-100 text-orange-700 rounded-full px-2.5 py-1 inline-block mt-1.5 font-medium">成长中</div>
                 </>
               )}
             </div>
