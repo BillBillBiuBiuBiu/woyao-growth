@@ -83,8 +83,12 @@ export default function ParentHome() {
 
   useEffect(() => {
     if (recentGames.length === 0) { setLatestClips(null); return; }
-    const clipsGame = recentGames.find(g => g.eventCount > 0) || recentGames[0];
-    apiLoadClips(clipsGame.id).then(setLatestClips).catch(() => setLatestClips([]));
+    Promise.all(
+      recentGames.slice(0, 5).map(g => apiLoadClips(g.id).catch(() => [] as ClipRecord[]))
+    ).then(arrays => {
+      const merged = arrays.flat().sort((a, b) => b.created_at.localeCompare(a.created_at));
+      setLatestClips(merged);
+    }).catch(() => setLatestClips([]));
     if (!childName || recentGames[0].eventCount === 0) { setHeroChildStat(null); return; }
     apiLoadEvents(recentGames[0].id).then((evts) => {
       const s = computeStats(evts).find(p => p.name === childName);
