@@ -536,10 +536,14 @@ export default function GcReviewPage() {
           nameCounts.set(e.playerName, (nameCounts.get(e.playerName) || 0) + 1);
         }
       }
-      const topName = [...nameCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
-      const clipLabel = topName ? `${topName}等${events.length}个精彩时刻` : `${events.length}个打点集锦`;
-      apiUploadClip(gameId, blob, clipLabel, clipName)
-        .then((url) => { if (url) { setCloudSaved(true); setClipUrl(url); setSavedClipLabel(clipLabel); } })
+      const playerNames = [...nameCounts.entries()].sort((a, b) => b[1] - a[1]).map(([n]) => n);
+      // label = comma-separated player names for parent-side filtering by child name
+      const playerLabel = playerNames.length > 0 ? playerNames.join(",") : "";
+      const displayLabel = playerNames.length > 0
+        ? `${playerNames[0]}等${events.length}个精彩时刻`
+        : `${events.length}个打点集锦`;
+      apiUploadClip(gameId, blob, playerLabel || displayLabel, clipName)
+        .then((url) => { if (url) { setCloudSaved(true); setClipUrl(url); setSavedClipLabel(displayLabel); } })
         .catch(() => {});
 
     } catch (e) {
