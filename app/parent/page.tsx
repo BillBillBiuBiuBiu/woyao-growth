@@ -249,7 +249,7 @@ export default function ParentHome() {
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="text-xs font-bold text-orange-100 bg-white/20 px-2 py-0.5 rounded-full">AI 自动剪辑</span>
               </div>
-              <div className="text-lg font-black text-white leading-tight">生成孩子的精彩集锦</div>
+              <div className="text-lg font-black text-white leading-tight">{childName ? `生成${childName}的精彩集锦` : "生成孩子的精彩集锦"}</div>
               <div className="text-sm text-orange-100 mt-1">上传比赛视频 · AI识别有球片段 · 一键生成</div>
               <div className="mt-3 inline-flex items-center gap-1 bg-white text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full">
                 立即体验 →
