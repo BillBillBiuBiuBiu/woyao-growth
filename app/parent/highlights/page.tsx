@@ -1046,9 +1046,6 @@ export default function HighlightsPage() {
               )}
             </div>
           ))}
-          {!loadingPlayerClips && !childName && (
-            <div className="text-xs text-orange-500 text-center">请先在首页设置孩子的名字</div>
-          )}
         </div>
       )}
 
