@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { mockStudent } from "@/lib/mock-data";
 import { PLAN_LABELS, PLAN_FEATURES } from "@/lib/plan-features";
 import type { PlanType } from "@/lib/types";
 
@@ -38,10 +37,11 @@ const featureRows: { key: string; label: string }[] = [
   { key: "personalizedPlan",    label: "个性化训练计划" },
 ];
 
-const currentPlan = mockStudent.plan as PlanType;
-
 export default function ParentPlansPage() {
   const [expandedPlan, setExpandedPlan] = useState<PlanType | null>(null);
+  const [currentPlan] = useState<PlanType | null>(() => {
+    try { return (localStorage.getItem("child_plan") as PlanType) || null; } catch { return null; }
+  });
 
   return (
     <div
