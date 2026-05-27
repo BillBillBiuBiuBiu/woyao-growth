@@ -900,13 +900,14 @@ export default function HighlightsPage() {
       setResultDur(Math.round(totalClipDur));
       const childNameForFile = (() => { try { return localStorage.getItem("child_name") || ""; } catch { return ""; } })();
       const mmdd = (() => { const d = new Date(); return `${(d.getMonth()+1).toString().padStart(2,"0")}${d.getDate().toString().padStart(2,"0")}`; })();
-      setResultName(childNameForFile ? `${childNameForFile}_${mmdd}集锦.mp4` : videoFile.name.replace(/\.[^.]+$/,"")+"_highlight.mp4");
+      const outputName = childNameForFile ? `${childNameForFile}_${mmdd}集锦.mp4` : videoFile.name.replace(/\.[^.]+$/,"")+"_highlight.mp4";
+      setResultName(outputName);
       setStage("done"); setProgress(100);
       setStatusMsg(useMultiSeg
         ? `共 ${segs.length} 个精彩片段 · 总时长 ${totalSegDur.toFixed(0)}s`
         : "");
       try {
-        const rec = { date: new Date().toISOString(), name: videoFile.name, dur: Math.round(totalClipDur) };
+        const rec = { date: new Date().toISOString(), name: outputName, dur: Math.round(totalClipDur) };
         const prev = JSON.parse(localStorage.getItem("my_highlights") || "[]");
         const next = [rec, ...prev].slice(0, 10);
         localStorage.setItem("my_highlights", JSON.stringify(next));
@@ -1207,7 +1208,9 @@ export default function HighlightsPage() {
           <button
             onClick={async () => {
               const dur = resultDur > 0 ? resultDur : HIGHLIGHT_S;
-              const caption = `🏀 ${childName ? childName + "的精彩集锦！" : "精彩集锦！"}${dur}秒精彩瞬间 🔥\n来自「我耀成长」`;
+              const today = new Date();
+              const dateStr = `${today.getMonth()+1}月${today.getDate()}日`;
+              const caption = `🏀 ${childName ? childName + "的精彩集锦！" : "精彩集锦！"}${dur}秒精彩瞬间 🔥\n📅 ${dateStr} · 来自「我耀成长」`;
               try {
                 await navigator.clipboard.writeText(caption);
                 setCaptionCopied(true);
