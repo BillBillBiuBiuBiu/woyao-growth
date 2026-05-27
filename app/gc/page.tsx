@@ -66,9 +66,12 @@ export default function GcSetupPage() {
   const [shareText,  setShareText]  = useState<string | null>(null);
   const [copyToast,  setCopyToast]  = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [opponentInput, setOpponentInput] = useState(DEFAULT_TEAMS.away.name);
 
   useEffect(() => {
-    setCfg(loadTeamsConfig());
+    const loaded = loadTeamsConfig();
+    setCfg(loaded);
+    setOpponentInput(loaded.away.name);
     // Show localStorage records instantly, then replace with backend data
     setHistory(loadGameHistory().slice(0, 5));
     apiLoadGames().then((games) => {
@@ -166,7 +169,8 @@ export default function GcSetupPage() {
   }
 
   async function copyLiveLink() {
-    const url = `${window.location.origin}/gc/live?home=${encodeURIComponent(cfg.home.name)}&away=${encodeURIComponent(cfg.away.name)}`;
+    const awayName = opponentInput.trim() || cfg.away.name;
+    const url = `${window.location.origin}/gc/live?home=${encodeURIComponent(cfg.home.name)}&away=${encodeURIComponent(awayName)}`;
     try {
       await navigator.clipboard.writeText(url);
       setLinkCopied(true);
@@ -383,13 +387,25 @@ export default function GcSetupPage() {
             🏀 现场实时记录 →
           </div>
         </Link>
-        <button
-          onClick={copyLiveLink}
-          className="w-full rounded-xl py-2.5 text-sm font-bold active:opacity-70 transition-opacity"
-          style={{ background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.35)", color: "#FB923C" }}
-        >
-          {linkCopied ? "✅ 链接已复制，发给志愿者家长即可" : "🔗 复制打点链接（发给志愿者）"}
-        </button>
+        <div className="w-full rounded-xl overflow-hidden" style={{ border: "1px solid rgba(249,115,22,0.35)" }}>
+          <div className="px-3 pt-2.5 pb-1" style={{ background: "rgba(249,115,22,0.08)" }}>
+            <div className="text-xs text-orange-400/70 mb-1">今场对手名称</div>
+            <input
+              type="text"
+              value={opponentInput}
+              onChange={e => setOpponentInput(e.target.value)}
+              placeholder="输入对手球队名"
+              className="w-full bg-transparent text-sm font-medium text-white placeholder-gray-600 outline-none pb-1"
+            />
+          </div>
+          <button
+            onClick={copyLiveLink}
+            className="w-full py-2.5 text-sm font-bold active:opacity-70 transition-opacity"
+            style={{ background: "rgba(249,115,22,0.15)", color: "#FB923C" }}
+          >
+            {linkCopied ? "✅ 链接已复制，发给志愿者家长即可" : "🔗 复制打点链接（发给志愿者）"}
+          </button>
+        </div>
         <Link href="/gc/review">
           <div
             className="text-white text-center font-bold text-base rounded-2xl py-3.5 active:scale-98 transition-transform border"
