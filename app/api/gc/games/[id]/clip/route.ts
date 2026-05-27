@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 export async function POST(
   req: NextRequest,
@@ -15,15 +15,15 @@ export async function POST(
   const ext = file.name.split(".").pop() ?? "mp4";
   const path = `${id}/${Date.now()}.${ext}`;
 
-  const { error: upErr } = await supabase.storage
+  const { error: upErr } = await getSupabaseAdmin().storage
     .from("clips")
     .upload(path, file, { contentType: file.type, upsert: true });
 
   if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
 
-  const { data: urlData } = supabase.storage.from("clips").getPublicUrl(path);
+  const { data: urlData } = getSupabaseAdmin().storage.from("clips").getPublicUrl(path);
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseAdmin()
     .from("game_clips")
     .insert({
       game_id: id,
@@ -44,7 +44,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const { data, error } = await supabase
+  const { data, error } = await getSupabaseAdmin()
     .from("game_clips")
     .select("*")
     .eq("game_id", id)

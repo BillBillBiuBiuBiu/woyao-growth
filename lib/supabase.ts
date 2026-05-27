@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 let _client: SupabaseClient | null = null;
+let _adminClient: SupabaseClient | null = null;
 
 export function getSupabase(): SupabaseClient {
   if (!_client) {
@@ -9,6 +10,19 @@ export function getSupabase(): SupabaseClient {
     _client = createClient(url, akey);
   }
   return _client;
+}
+
+// Server-only admin client — uses service role key to bypass RLS.
+// Never call this from browser code; only use in Next.js API routes.
+export function getSupabaseAdmin(): SupabaseClient {
+  if (!_adminClient) {
+    const url     = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+    const svcKey  = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+    // Fall back to anon key if service key not configured (dev/local)
+    const key = svcKey || (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "");
+    _adminClient = createClient(url, key, { auth: { persistSession: false } });
+  }
+  return _adminClient;
 }
 
 // Convenience alias — binds methods to the real client so `this` is correct
