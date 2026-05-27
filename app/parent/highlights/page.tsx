@@ -962,7 +962,22 @@ export default function HighlightsPage() {
                 </button>
               </div>
               {expandedClipId === clip.id && (
-                <video src={clip.public_url} controls playsInline className="w-full rounded-xl" />
+                <>
+                  <video src={clip.public_url} controls playsInline className="w-full rounded-xl" />
+                  <button
+                    onClick={() => {
+                      const title = childName ? `${childName}的精彩集锦` : "精彩集锦";
+                      if ("share" in navigator) {
+                        navigator.share({ url: clip.public_url, title }).catch(() => {});
+                      } else {
+                        window.open(clip.public_url, "_blank", "noopener");
+                      }
+                    }}
+                    className="w-full py-2 rounded-xl text-xs font-bold text-orange-600 bg-orange-50 border border-orange-100 active:opacity-70 transition-opacity"
+                  >
+                    📤 分享集锦给家人
+                  </button>
+                </>
               )}
             </div>
           ))}
