@@ -947,9 +947,14 @@ export default function HighlightsPage() {
               <div className="text-2xl mb-2">🏀</div>
               <div>暂无{childName ? `「${childName}」` : ""}的打点集锦</div>
               {gamesWithEvents > 0 ? (
-                <div className="text-xs mt-2 leading-relaxed text-orange-400">
-                  检测到 {gamesWithEvents} 场有打点记录的比赛<br />
-                  教练需在「视频打点集锦」中上传视频并生成集锦
+                <div className="flex flex-col items-center gap-2 mt-2">
+                  <div className="text-xs leading-relaxed text-orange-400">
+                    检测到 {gamesWithEvents} 场有打点记录的比赛<br />
+                    上传视频后可自动生成集锦
+                  </div>
+                  <Link href="/gc/review" className="text-xs font-bold text-orange-500 border border-orange-300 px-4 py-1.5 rounded-full active:opacity-70">
+                    → 前往生成集锦
+                  </Link>
                 </div>
               ) : (
                 <div className="text-xs mt-1">教练完成「视频打点集锦」后，集锦会出现在这里</div>
