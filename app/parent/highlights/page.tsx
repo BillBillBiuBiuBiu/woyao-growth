@@ -944,7 +944,7 @@ export default function HighlightsPage() {
             <div className="text-sm text-gray-400 text-center py-6">
               <div className="text-2xl mb-2">🏀</div>
               <div>暂无{childName ? `「${childName}」` : ""}的打点集锦</div>
-              <div className="text-xs mt-1">教练在比赛记录中打点后，集锦会出现在这里</div>
+              <div className="text-xs mt-1">教练上传比赛集锦后，会出现在这里</div>
             </div>
           )}
           {!loadingPlayerClips && playerClips && playerClips.length > 0 && playerClips.map((clip, i) => (

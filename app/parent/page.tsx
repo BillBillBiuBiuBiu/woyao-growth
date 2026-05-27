@@ -30,6 +30,12 @@ interface PlayerStat {
 
 interface HighlightRecord { date: string; name: string; dur: number; }
 
+function formatClipLabel(label: string): string {
+  if (!label) return "集锦片段";
+  const parts = label.split(",").map(s => s.trim()).filter(Boolean);
+  return parts.length > 1 ? parts.join(" · ") + "的集锦" : label;
+}
+
 function computeStats(events: StoredEvent[]): PlayerStat[] {
   const map = new Map<string, PlayerStat>();
   for (const e of events) {
@@ -370,7 +376,7 @@ export default function ParentHome() {
                       onClick={() => setHomeExpandedClipId(isExpanded ? null : clip.id)}
                     >
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-gray-800 truncate">{clip.label || "集锦片段"}</div>
+                        <div className="text-sm font-medium text-gray-800 truncate">{formatClipLabel(clip.label)}</div>
                         <div className="text-xs text-gray-400">{fmtRelDate(clip.created_at)}</div>
                       </div>
                       <span className="shrink-0 ml-3 text-orange-400 text-sm" style={{ display: "inline-block", transform: isExpanded ? "rotate(180deg)" : "none" }}>▾</span>
