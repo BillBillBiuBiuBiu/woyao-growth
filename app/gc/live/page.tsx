@@ -112,6 +112,18 @@ export default function GcLivePage() {
         if (Array.isArray(draft.events) && draft.events.length > 0) setLiveDraft(draft);
       }
     } catch {}
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const home = params.get("home");
+      const away = params.get("away");
+      if (home || away) {
+        setTeams(prev => prev.map(t => {
+          if (t.id === "home" && home) return { ...t, name: home };
+          if (t.id === "away" && away) return { ...t, name: away };
+          return t;
+        }));
+      }
+    } catch {}
   }, []);
 
   useEffect(() => {

@@ -65,6 +65,7 @@ export default function GcSetupPage() {
   } | null>(null);
   const [shareText,  setShareText]  = useState<string | null>(null);
   const [copyToast,  setCopyToast]  = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     setCfg(loadTeamsConfig());
@@ -161,6 +162,17 @@ export default function GcSetupPage() {
       setTimeout(() => setCopyToast(false), 2000);
     } catch {
       setShareText(text);
+    }
+  }
+
+  async function copyLiveLink() {
+    const url = `${window.location.origin}/gc/live?home=${encodeURIComponent(cfg.home.name)}&away=${encodeURIComponent(cfg.away.name)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2500);
+    } catch {
+      setShareText(url);
     }
   }
 
@@ -371,6 +383,13 @@ export default function GcSetupPage() {
             🏀 现场实时记录 →
           </div>
         </Link>
+        <button
+          onClick={copyLiveLink}
+          className="w-full rounded-xl py-2.5 text-sm font-bold active:opacity-70 transition-opacity"
+          style={{ background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.35)", color: "#FB923C" }}
+        >
+          {linkCopied ? "✅ 链接已复制，发给志愿者家长即可" : "🔗 复制打点链接（发给志愿者）"}
+        </button>
         <Link href="/gc/review">
           <div
             className="text-white text-center font-bold text-base rounded-2xl py-3.5 active:scale-98 transition-transform border"
