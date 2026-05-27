@@ -278,6 +278,22 @@ export default function ParentHome() {
           </Link>
         )}
 
+        {/* Volunteer annotation entry — same person who watches is often the volunteer scorer */}
+        <Link href="/gc/live">
+          <div className="rounded-2xl bg-white/90 border border-orange-200 shadow-sm px-4 py-3 flex items-center justify-between active:bg-orange-50 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(249,115,22,0.10)" }}>
+                <span className="text-xl">📋</span>
+              </div>
+              <div>
+                <div className="text-sm font-bold text-gray-800">比赛现场打点</div>
+                <div className="text-xs text-gray-400 mt-0.5">志愿者模式 · 帮孩子记录精彩瞬间</div>
+              </div>
+            </div>
+            <div className="text-orange-300 shrink-0 text-xl">›</div>
+          </div>
+        </Link>
+
         {/* Recent games list — each row clickable, opens detail sheet */}
         {recentGames.length > 0 && (
           <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm overflow-hidden">
