@@ -457,6 +457,7 @@ export default function HighlightsPage() {
   const [hlMode, setHlMode] = useState<"upload"|"from_clips">("upload");
   const [playerClips, setPlayerClips] = useState<Array<ClipRecord & { gameLabel: string }>|null>(null);
   const [loadingPlayerClips, setLoadingPlayerClips] = useState(false);
+  const [gamesWithEvents, setGamesWithEvents] = useState(0);
   const [expandedClipId, setExpandedClipId] = useState<string|null>(null);
   const analyzeStartRef = useRef<number>(0);
   const ffmpegRef     = useRef<FFmpeg|null>(null);
@@ -512,6 +513,7 @@ export default function HighlightsPage() {
     setLoadingPlayerClips(true);
     try {
       const games = await apiLoadGames();
+      setGamesWithEvents(games.filter(g => (g.eventCount ?? 0) > 0).length);
       const results = await Promise.all(
         games.slice(0, 15).map(async (game) => {
           const clips = await apiLoadClips(game.id);
@@ -944,7 +946,14 @@ export default function HighlightsPage() {
             <div className="text-sm text-gray-400 text-center py-6">
               <div className="text-2xl mb-2">🏀</div>
               <div>暂无{childName ? `「${childName}」` : ""}的打点集锦</div>
-              <div className="text-xs mt-1">教练上传比赛集锦后，会出现在这里</div>
+              {gamesWithEvents > 0 ? (
+                <div className="text-xs mt-2 leading-relaxed text-orange-400">
+                  检测到 {gamesWithEvents} 场有打点记录的比赛<br />
+                  教练需在「视频打点集锦」中上传视频并生成集锦
+                </div>
+              ) : (
+                <div className="text-xs mt-1">教练完成「视频打点集锦」后，集锦会出现在这里</div>
+              )}
             </div>
           )}
           {!loadingPlayerClips && playerClips && playerClips.length > 0 && playerClips.map((clip, i) => (

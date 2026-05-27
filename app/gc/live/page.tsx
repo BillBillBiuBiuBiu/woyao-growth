@@ -9,6 +9,7 @@ import {
   type TeamId,
   type RuntimeTeam,
   type TeamsConfig,
+  type GameRecord,
 } from "@/lib/gc-teams";
 import { apiSaveGame, apiSaveEvents, type StoredEvent } from "@/lib/gc-api";
 
@@ -88,6 +89,9 @@ export default function GcLivePage() {
   const [copyToast,     setCopyToast]     = useState(false);
   const [endConfirm,    setEndConfirm]    = useState(false);
   const [lastGameId,    setLastGameId]    = useState<string | null>(null);
+  const [saveError,     setSaveError]     = useState(false);
+  const [lastRecord,    setLastRecord]    = useState<(GameRecord & { source: "live" }) | null>(null);
+  const [awayNameInput, setAwayNameInput] = useState("");
   const [reassignEvent, setReassignEvent] = useState<GameEvent | null>(null);
   const [liveDraft,     setLiveDraft]     = useState<{ events: GameEvent[]; quarter: number } | null>(null);
 
@@ -284,7 +288,7 @@ export default function GcLivePage() {
     setPhase("live");
   }
 
-  function endGame() {
+  function endGame(awayNameOverride?: string) {
     try { localStorage.removeItem("gc_live_draft"); } catch {}
     if (timerRef.current)    { clearInterval(timerRef.current);  timerRef.current = null; }
     if (ctxTimerRef.current) { clearTimeout(ctxTimerRef.current); ctxTimerRef.current = null; }
@@ -296,9 +300,13 @@ export default function GcLivePage() {
         away: events.filter(e => e.teamId === "away").reduce((s, e) => s + e.pts, 0),
       };
       const now = new Date().toISOString();
+      const resolvedAwayName = awayNameOverride || (teams.find(t => t.id === "away")?.name ?? "客场");
+      if (awayNameOverride) {
+        setTeams(prev => prev.map(t => t.id === "away" ? { ...t, name: awayNameOverride } : t));
+      }
       localStorage.setItem("gc_last_session", JSON.stringify({
         ts: now,
-        teams: teams.reduce((acc, t) => ({ ...acc, [t.id]: { name: t.name, color: t.color } }), {} as Record<string, { name: string; color: string }>),
+        teams: teams.reduce((acc, t) => ({ ...acc, [t.id]: { name: t.id === "away" ? resolvedAwayName : t.name, color: t.color } }), {} as Record<string, { name: string; color: string }>),
         score: sc,
         duration: recSecs,
         events,
@@ -315,7 +323,7 @@ export default function GcLivePage() {
         id: gameId,
         ts: now,
         homeTeam: teams.find(t => t.id === "home")?.name ?? "主场",
-        awayTeam: teams.find(t => t.id === "away")?.name ?? "客场",
+        awayTeam: resolvedAwayName,
         homeScore: sc.home,
         awayScore: sc.away,
         quarterScores,
@@ -323,8 +331,10 @@ export default function GcLivePage() {
         duration: recSecs,
       };
       saveGameRecord(record);
-      // Fire-and-forget backend save
-      void apiSaveGame({ ...record, source: "live" });
+      const fullRecord: GameRecord & { source: "live" } = { ...record, source: "live" };
+      setLastRecord(fullRecord);
+      setSaveError(false);
+      apiSaveGame(fullRecord).catch(() => setSaveError(true));
       void apiSaveEvents(
         gameId,
         events.map((e, i): StoredEvent => ({
@@ -345,6 +355,16 @@ export default function GcLivePage() {
     } catch {}
 
     setPhase("postgame");
+  }
+
+  async function retrySave() {
+    if (!lastRecord) return;
+    setSaveError(false);
+    try {
+      await apiSaveGame(lastRecord);
+    } catch {
+      setSaveError(true);
+    }
   }
 
   // ── Derived ──────────────────────────────────────────────────────────────────
@@ -572,6 +592,19 @@ export default function GcLivePage() {
           })()}
         </div>
 
+        {saveError && (
+          <div className="mx-4 mt-4 px-4 py-3 rounded-2xl flex flex-col gap-2" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.35)" }}>
+            <div className="text-xs font-bold text-red-400">⚠️ 比赛数据未同步到服务器</div>
+            <div className="text-xs text-gray-400 leading-relaxed">网络异常，数据已保存在本机。点击重试将本场比赛上传。</div>
+            <button
+              onClick={retrySave}
+              className="self-start text-xs font-bold text-red-300 bg-red-500/15 px-3 py-1.5 rounded-full active:opacity-70"
+            >
+              重新上传
+            </button>
+          </div>
+        )}
+
         {clips.length > 0 && (
           <div className="px-4 pt-5 pb-3">
             <div className="flex items-center justify-between mb-3">
@@ -738,7 +771,7 @@ export default function GcLivePage() {
           </button>
         ))}
         <div className="flex-1" />
-        <button onClick={() => setEndConfirm(true)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 text-white">
+        <button onClick={() => { setAwayNameInput(teams.find(t => t.id === "away")?.name ?? ""); setEndConfirm(true); }} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 text-white">
           结束比赛
         </button>
       </div>
@@ -1198,16 +1231,31 @@ export default function GcLivePage() {
       {endConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-6" style={{ background: "rgba(0,0,0,0.75)" }}>
           <div className="w-full max-w-sm rounded-2xl px-6 py-6" style={{ background: "#1a1d27" }}>
-            <div className="text-center mb-5">
+            <div className="text-center mb-4">
               <div className="text-xl font-black text-white mb-2">⚠️ 确认结束比赛？</div>
               <div className="text-xs text-gray-500">结束后可在战报页补录遗漏事件</div>
+            </div>
+            <div className="mb-4">
+              <div className="text-xs text-gray-400 mb-1.5">对手球队名称</div>
+              <input
+                type="text"
+                value={awayNameInput}
+                onChange={e => setAwayNameInput(e.target.value)}
+                placeholder="输入对手球队名"
+                className="w-full px-3 py-2.5 rounded-xl text-sm font-medium text-white placeholder-gray-600 outline-none"
+                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)" }}
+              />
             </div>
             <div className="flex gap-3">
               <button onClick={() => setEndConfirm(false)}
                 className="flex-1 py-3 rounded-xl border border-white/20 text-sm font-bold text-gray-300">
                 取消
               </button>
-              <button onClick={() => { setEndConfirm(false); endGame(); }}
+              <button onClick={() => {
+                const finalName = awayNameInput.trim() || undefined;
+                setEndConfirm(false);
+                endGame(finalName);
+              }}
                 className="flex-1 py-3 rounded-xl bg-red-600 text-white text-sm font-bold">
                 确认结束
               </button>
