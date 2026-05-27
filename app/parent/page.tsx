@@ -597,7 +597,13 @@ export default function ParentHome() {
                           </tr>
                         </thead>
                         <tbody>
-                          {gameDetail.stats.map((p, i) => {
+                          {[...gameDetail.stats].sort((a, b) => {
+                            if (childName) {
+                              if (a.name === childName) return -1;
+                              if (b.name === childName) return 1;
+                            }
+                            return b.pts - a.pts || b.reb - a.reb;
+                          }).map((p, i) => {
                             const isMyChild = childName && p.name === childName;
                             return (
                             <tr
