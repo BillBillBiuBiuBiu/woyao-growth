@@ -700,17 +700,19 @@ export default function ParentHome() {
       )}
 
       {/* Clipboard fallback sheet for WeChat / restricted environments */}
-      {shareLink !== null && (
+      {shareLink !== null && (() => {
+        const isUrl = shareLink.startsWith("http");
+        return (
         <div className="fixed inset-0 z-[60] flex items-end" style={{ background: "rgba(0,0,0,0.72)" }}>
           <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
             <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
-            <div className="text-sm font-bold text-white mb-1">🔗 集锦链接</div>
-            <div className="text-xs text-gray-500 mb-3">长按下方链接 → 全选 → 复制，在浏览器打开观看</div>
+            <div className="text-sm font-bold text-white mb-1">{isUrl ? "🔗 集锦链接" : "📤 战报文字"}</div>
+            <div className="text-xs text-gray-500 mb-3">{isUrl ? "长按下方链接 → 全选 → 复制，在浏览器打开观看" : "长按下方文字 → 全选 → 复制，粘贴到微信群"}</div>
             <textarea
               readOnly
               value={shareLink}
               className="w-full rounded-xl text-xs text-gray-300 p-3 resize-none"
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", height: 60, fontFamily: "monospace" }}
+              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", height: isUrl ? 60 : 100, fontFamily: isUrl ? "monospace" : "inherit" }}
               onFocus={(e) => e.target.select()}
             />
             <button
@@ -721,7 +723,8 @@ export default function ParentHome() {
             </button>
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
