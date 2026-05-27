@@ -457,6 +457,7 @@ export default function HighlightsPage() {
   const [hlMode, setHlMode] = useState<"upload"|"from_clips">("upload");
   const [playerClips, setPlayerClips] = useState<Array<ClipRecord & { gameLabel: string }>|null>(null);
   const [loadingPlayerClips, setLoadingPlayerClips] = useState(false);
+  const [expandedClipId, setExpandedClipId] = useState<string|null>(null);
   const analyzeStartRef = useRef<number>(0);
   const ffmpegRef     = useRef<FFmpeg|null>(null);
   const ffmpegInitRef = useRef<Promise<void>|null>(null);
@@ -947,15 +948,22 @@ export default function HighlightsPage() {
             </div>
           )}
           {!loadingPlayerClips && playerClips && playerClips.length > 0 && playerClips.map((clip, i) => (
-            <div key={clip.id} className="rounded-xl border border-orange-100 bg-orange-50 p-3 flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-gray-800">集锦 {i + 1}</div>
-                <div className="text-xs text-gray-400 mt-0.5">{new Date(clip.created_at).toLocaleDateString("zh-CN")} · {clip.gameLabel}</div>
+            <div key={clip.id} className="rounded-xl border border-orange-100 bg-orange-50 p-3 flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-gray-800">集锦 {i + 1}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{new Date(clip.created_at).toLocaleDateString("zh-CN")} · {clip.gameLabel}</div>
+                </div>
+                <button
+                  onClick={() => setExpandedClipId(expandedClipId === clip.id ? null : clip.id)}
+                  className="text-xs font-bold text-orange-600 bg-orange-100 px-3 py-1.5 rounded-full active:opacity-70 shrink-0"
+                >
+                  {expandedClipId === clip.id ? "▾ 收起" : "▶ 播放"}
+                </button>
               </div>
-              <a href={clip.public_url} target="_blank" rel="noopener noreferrer"
-                className="text-xs font-bold text-orange-600 bg-orange-100 px-3 py-1.5 rounded-full active:opacity-70 shrink-0">
-                ▶ 播放
-              </a>
+              {expandedClipId === clip.id && (
+                <video src={clip.public_url} controls playsInline className="w-full rounded-xl" />
+              )}
             </div>
           ))}
           {!loadingPlayerClips && !childName && (
