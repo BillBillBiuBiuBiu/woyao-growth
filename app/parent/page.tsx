@@ -379,11 +379,19 @@ export default function ParentHome() {
               ))}
             </div>
           </div>
-        ) : latestClips && latestClips.length > 0 ? (
+        ) : latestClips && latestClips.length > 0 ? (() => {
+          const visibleClips = childName
+            ? latestClips.filter(c => c.label.split(",").map((s: string) => s.trim()).includes(childName))
+            : latestClips;
+          return (
           <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4">
-            <div className="text-sm font-bold text-gray-800 mb-3">🎞️ 最新集锦切片</div>
+            <div className="text-sm font-bold text-gray-800 mb-3">{childName ? `🎞️ ${childName}的集锦切片` : "🎞️ 最新集锦切片"}</div>
             <div className="flex flex-col gap-2">
-              {latestClips.slice(0, 3).map((clip) => {
+              {visibleClips.length === 0 ? (
+                <Link href="/parent/highlights" className="block">
+                  <div className="text-center py-3 text-sm text-gray-400">本场暂无{childName}的切片 · <span className="text-orange-500 font-medium">去生成 ›</span></div>
+                </Link>
+              ) : visibleClips.slice(0, 3).map((clip) => {
                 const isExpanded = homeExpandedClipId === clip.id;
                 return (
                   <div key={clip.id} className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
@@ -414,7 +422,8 @@ export default function ParentHome() {
               })}
             </div>
           </div>
-        ) : latestClips !== null ? (
+          );
+        })() : latestClips !== null ? (
           <Link href="/parent/highlights">
             <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-center justify-between active:scale-98 transition-transform">
               <div>
