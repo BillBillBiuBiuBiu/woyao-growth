@@ -389,7 +389,7 @@ export default function ParentHome() {
           </div>
         ) : latestClips && latestClips.length > 0 ? (() => {
           const visibleClips = childName
-            ? latestClips.filter(c => c.label.split(",").map((s: string) => s.trim()).includes(childName))
+            ? latestClips.filter(c => !c.label || c.label.split(",").map((s: string) => s.trim()).includes(childName))
             : latestClips;
           return (
           <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4">
