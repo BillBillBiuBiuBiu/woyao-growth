@@ -971,7 +971,11 @@ export default function HighlightsPage() {
             >↻</button>
           </div>
           {loadingPlayerClips && (
-            <div className="text-sm text-gray-400 text-center py-4">正在查找 {childName} 的集锦…</div>
+            <div className="flex flex-col gap-2">
+              {[0, 1, 2].map(i => (
+                <div key={i} className="rounded-xl bg-gray-100 animate-pulse" style={{ height: 56 }} />
+              ))}
+            </div>
           )}
           {!loadingPlayerClips && playerClips !== null && playerClips.length === 0 && (
             <div className="text-sm text-gray-400 text-center py-6">
