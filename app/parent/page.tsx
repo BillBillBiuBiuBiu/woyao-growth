@@ -147,7 +147,7 @@ export default function ParentHome() {
         )}
         <div className="flex items-center gap-1.5 bg-white/70 border border-orange-200 rounded-full px-3 py-1 mb-4">
           <span className="text-xs font-medium text-orange-700">
-            {recentGames.length > 0 ? "⭐ 实战记录中" : `${mockStudent.age}岁 · ${mockStudent.class}`}
+            {recentGames.length > 0 ? "⭐ 实战记录中" : "篮球学员"}
           </span>
           <span className="text-orange-400 text-xs">♡</span>
         </div>
