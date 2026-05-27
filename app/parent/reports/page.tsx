@@ -5,6 +5,13 @@ import { mockReports, mockStudent } from "@/lib/mock-data";
 import PlanBadge from "@/components/PlanBadge";
 import type { Report } from "@/lib/types";
 
+function useChildName() {
+  const [name] = useState(() => {
+    try { return localStorage.getItem("child_name") || ""; } catch { return ""; }
+  });
+  return name;
+}
+
 const statusLabel: Record<string, { label: string; color: string }> = {
   draft:     { label: "准备中",   color: "bg-slate-100 text-slate-400" },
   generated: { label: "准备中",   color: "bg-slate-100 text-slate-400" },
@@ -48,6 +55,7 @@ function ReportCard({ r }: { r: Report }) {
 
 export default function ParentReportsPage() {
   const reports = mockReports.filter((r) => r.studentId === mockStudent.id);
+  const childName = useChildName();
 
   return (
     <div
@@ -61,7 +69,7 @@ export default function ParentReportsPage() {
         >
           成长报告
         </h1>
-        <p className="text-sm text-orange-600">{mockStudent.name}的所有成长记录</p>
+        <p className="text-sm text-orange-600">{childName ? `${childName}的所有成长记录` : "孩子的所有成长记录"}</p>
       </div>
 
       <div className="flex flex-col gap-3 px-4">
