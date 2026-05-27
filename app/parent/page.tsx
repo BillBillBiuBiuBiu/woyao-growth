@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { mockStudent, mockReport, mockBadges, mockStudentCards } from "@/lib/mock-data";
+import { mockReport, mockBadges, mockStudentCards } from "@/lib/mock-data";
 import BasketballCard from "@/components/BasketballCard";
 import { apiLoadGames, apiLoadEvents, apiLoadClips, type StoredEvent, type ClipRecord } from "@/lib/gc-api";
 import type { GameRecord } from "@/lib/gc-teams";
@@ -47,7 +47,7 @@ function computeStats(events: StoredEvent[]): PlayerStat[] {
 
 export default function ParentHome() {
   const badge = mockBadges[0];
-  const card = mockStudentCards.find((c) => c.id === mockStudent.id)!;
+  const card = mockStudentCards.find((c) => c.id === "stu-001")!;
   const [recentGames, setRecentGames] = useState<GameRecord[]>([]);
   const [selectedGame, setSelectedGame] = useState<GameRecord | null>(null);
   const [gameDetail, setGameDetail] = useState<{
@@ -444,7 +444,7 @@ export default function ParentHome() {
         )}
 
         {/* Profile link */}
-        <Link href={`/parent/profile/${mockStudent.id}`}>
+        <Link href="/parent/profile/stu-001">
           <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-center justify-between active:scale-98 transition-transform">
             <div>
               <div className="font-bold text-sm text-gray-800">查看完整成长档案</div>

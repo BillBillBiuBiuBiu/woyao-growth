@@ -4,7 +4,6 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
-import { mockStudent } from "@/lib/mock-data";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -1059,7 +1058,7 @@ export default function HighlightsPage() {
             {captionCopied ? "✅ 配文已复制！粘贴到微信群" : "📋 复制配文 · 发给家人群"}
           </button>
           <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);}} className="text-sm text-gray-400 text-center">重新制作</button>
-          <Link href={`/parent/profile/${mockStudent.id}`} className="w-full py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-bold text-center block active:scale-95 transition-transform">
+          <Link href="/parent/profile/stu-001" className="w-full py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-bold text-center block active:scale-95 transition-transform">
             {childName ? `📊 查看${childName}的成长档案` : "📊 查看孩子的成长档案"}
           </Link>
           <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">
