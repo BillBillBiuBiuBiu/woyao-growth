@@ -452,6 +452,8 @@ export default function HighlightsPage() {
   const [myHighlights,   setMyHighlights]   = useState<Array<{date:string;name:string;dur:number}>>([]);
   const [captionCopied,  setCaptionCopied]  = useState(false);
   const [captionFallback, setCaptionFallback] = useState<string|null>(null);
+  const [analyzeElapsed, setAnalyzeElapsed] = useState(0);
+  const analyzeStartRef = useRef<number>(0);
   const ffmpegRef     = useRef<FFmpeg|null>(null);
   const ffmpegInitRef = useRef<Promise<void>|null>(null);
 
@@ -506,6 +508,12 @@ export default function HighlightsPage() {
   useEffect(() => {
     return () => { if (photoPreview) URL.revokeObjectURL(photoPreview); };
   }, [photoPreview]);
+  useEffect(() => {
+    if (stage !== "analyzing") { setAnalyzeElapsed(0); return; }
+    analyzeStartRef.current = Date.now();
+    const iv = setInterval(() => setAnalyzeElapsed(Math.round((Date.now() - analyzeStartRef.current) / 1000)), 1000);
+    return () => clearInterval(iv);
+  }, [stage]);
 
   const handleVideoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -978,6 +986,9 @@ export default function HighlightsPage() {
           <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
             <div className="h-full rounded-full bg-gradient-to-r from-orange-400 to-yellow-400 transition-all duration-500" style={{width:`${progress}%`}}/>
           </div>
+          {stage === "analyzing" && analyzeElapsed > 5 && (
+            <div className="text-xs text-orange-400 text-center">🔍 已用时 {analyzeElapsed}s，视频越长等待越久</div>
+          )}
           <div className="text-xs text-gray-400 text-center">全程本地处理，视频不会上传服务器</div>
         </div>
       )}
