@@ -270,7 +270,7 @@ export default function ParentHome() {
             <div className="rounded-2xl bg-white/90 border border-orange-100 shadow-sm px-4 py-3 flex items-center justify-between active:bg-orange-50 transition-colors">
               <div className="min-w-0 flex-1">
                 <div className="text-xs text-orange-500 font-medium mb-0.5">✨ 最近集锦</div>
-                <div className="text-sm font-semibold text-gray-800 truncate">{childName ? `${childName}的精彩集锦` : "精彩集锦"}</div>
+                <div className="text-sm font-semibold text-gray-800 truncate">{myLastHighlight.name.replace(/\.mp4$/i, "") || (childName ? `${childName}的精彩集锦` : "精彩集锦")}</div>
                 <div className="text-xs text-gray-400 mt-0.5">{fmtRelDate(myLastHighlight.date)} · {myLastHighlight.dur}秒</div>
               </div>
               <div className="text-orange-300 ml-3 shrink-0 text-xl">›</div>
@@ -332,7 +332,7 @@ export default function ParentHome() {
                 </div>
                 <div className="flex items-center gap-2 ml-2 shrink-0">
                   {game.eventCount > 0
-                    ? <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-medium">● 有打点</span>
+                    ? <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-medium">{game.eventCount}个打点</span>
                     : <span className="text-xs text-gray-400">暂无记录</span>
                   }
                   <span className="text-orange-300">›</span>
