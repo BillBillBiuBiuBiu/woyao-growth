@@ -3,7 +3,6 @@ import { mockReports, mockStudent, mockRadarData } from "@/lib/mock-data";
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import Image from "next/image";
 import { useParams } from "next/navigation";
 import PlanBadge from "@/components/PlanBadge";
 import type { Report } from "@/lib/types";
@@ -352,6 +351,9 @@ export default function ReportDetailPage() {
   const [coachName] = useState(() => {
     try { return localStorage.getItem("coach_name") || ""; } catch { return ""; }
   });
+  const [childName] = useState(() => {
+    try { return localStorage.getItem("child_name") || ""; } catch { return ""; }
+  });
   useEffect(() => {
     try { localStorage.setItem(`report_read_${id}`, "1"); } catch {}
   }, [id]);
@@ -365,14 +367,8 @@ export default function ReportDetailPage() {
         <span className="absolute top-4 right-6 text-yellow-300 text-xs select-none">✦</span>
 
         {/* Avatar */}
-        <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg mb-4 relative">
-          <Image
-            src={mockStudent.avatar}
-            alt={mockStudent.name}
-            fill
-            className="object-cover object-top"
-            sizes="96px"
-          />
+        <div className="w-24 h-24 rounded-full border-4 border-white shadow-lg mb-4 bg-gradient-to-br from-orange-300 to-amber-400 flex items-center justify-center shrink-0">
+          <span className="text-3xl font-black text-white">{childName ? childName[0] : "🏀"}</span>
         </div>
 
         {/* Title + plan badge */}
