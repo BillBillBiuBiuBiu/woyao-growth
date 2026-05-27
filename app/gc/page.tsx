@@ -170,7 +170,8 @@ export default function GcSetupPage() {
 
   async function copyLiveLink() {
     const awayName = opponentInput.trim() || cfg.away.name;
-    const url = `${window.location.origin}/gc/live?home=${encodeURIComponent(cfg.home.name)}&away=${encodeURIComponent(awayName)}`;
+    const roster = encodeURIComponent(JSON.stringify(cfg.home.players));
+    const url = `${window.location.origin}/gc/live?home=${encodeURIComponent(cfg.home.name)}&away=${encodeURIComponent(awayName)}&roster=${roster}`;
     try {
       await navigator.clipboard.writeText(url);
       setLinkCopied(true);

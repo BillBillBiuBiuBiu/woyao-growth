@@ -116,11 +116,23 @@ export default function GcLivePage() {
       const params = new URLSearchParams(window.location.search);
       const home = params.get("home");
       const away = params.get("away");
-      if (home || away) {
+      const rosterRaw = params.get("roster");
+      let parsedRoster: Array<{ num: string; name: string }> | null = null;
+      if (rosterRaw) {
+        try {
+          const r = JSON.parse(rosterRaw) as unknown;
+          if (Array.isArray(r) && r.length > 0) parsedRoster = r as Array<{ num: string; name: string }>;
+        } catch {}
+      }
+      if (home || away || parsedRoster) {
         setTeams(prev => prev.map(t => {
-          if (t.id === "home" && home) return { ...t, name: home };
-          if (t.id === "away" && away) return { ...t, name: away };
-          return t;
+          let updated = t;
+          if (t.id === "home" && home) updated = { ...updated, name: home };
+          if (t.id === "away" && away) updated = { ...updated, name: away };
+          if (t.id === "home" && parsedRoster) {
+            updated = { ...updated, players: parsedRoster.map((p, i) => ({ id: `p${i + 1}`, num: p.num, name: p.name })) };
+          }
+          return updated;
         }));
       }
     } catch {}
