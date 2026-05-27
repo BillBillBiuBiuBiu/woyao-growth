@@ -1020,6 +1020,11 @@ export default function HighlightsPage() {
               )}
             </div>
           )}
+          {!loadingPlayerClips && playerClips && playerClips.length > 0 && (
+            <div className="text-xs text-gray-400 -mt-1">
+              找到 {playerClips.length} 个切片 · 来自 {new Set(playerClips.map(c => c.gameLabel)).size} 场比赛
+            </div>
+          )}
           {!loadingPlayerClips && playerClips && playerClips.length > 0 && playerClips.map((clip, i) => (
             <div key={clip.id} className="rounded-xl border border-orange-100 bg-orange-50 p-3 flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
