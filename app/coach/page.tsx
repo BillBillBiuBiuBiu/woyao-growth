@@ -110,7 +110,10 @@ export default function CoachPage() {
         </div>
         {recentGames.length > 0 ? (
           <div className="rounded-2xl border border-border bg-white overflow-hidden">
-            {recentGames.map((game, i) => (
+            {recentGames.map((game, i) => {
+              const won  = game.homeScore > game.awayScore;
+              const lost = game.homeScore < game.awayScore;
+              return (
               <Link key={game.id} href={`/gc/review?gameId=${game.id}`}>
                 <div
                   className="flex items-center justify-between px-4 py-3 active:bg-orange-50 transition-colors"
@@ -118,9 +121,11 @@ export default function CoachPage() {
                 >
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-semibold text-gray-800">
-                      {game.homeTeam} <span className="text-orange-500">{game.homeScore}</span>
+                      {game.homeTeam}{" "}
+                      <span style={{ color: won ? "#16A34A" : lost ? "#9CA3AF" : "#F97316" }}>{game.homeScore}</span>
                       <span className="text-gray-300 mx-1">—</span>
-                      <span className="text-orange-500">{game.awayScore}</span> {game.awayTeam}
+                      <span style={{ color: lost ? "#16A34A" : won ? "#9CA3AF" : "#F97316" }}>{game.awayScore}</span>{" "}
+                      {game.awayTeam}
                     </div>
                     <div className="text-xs text-gray-400 mt-0.5">{fmtGameDate(game.ts)}</div>
                   </div>
@@ -133,7 +138,8 @@ export default function CoachPage() {
                   </div>
                 </div>
               </Link>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <Link href="/gc">
