@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { mockPendingReports, mockReports, mockStudents } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
-import { apiLoadGames } from "@/lib/gc-api";
+import { apiLoadGames, apiLoadClips } from "@/lib/gc-api";
 import type { GameRecord } from "@/lib/gc-teams";
 
 const statusMap: Record<string, { label: string; color: string }> = {
@@ -29,9 +29,16 @@ function fmtGameDate(ts: string): string {
 export default function CoachPage() {
   const pending = mockPendingReports.filter((r) => r.status === "awaiting_review");
   const [recentGames, setRecentGames] = useState<GameRecord[]>([]);
+  const [clipCounts, setClipCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    apiLoadGames().then((games) => setRecentGames(games.slice(0, 10))).catch(() => {});
+    apiLoadGames().then((games) => {
+      const slice = games.slice(0, 10);
+      setRecentGames(slice);
+      Promise.all(
+        slice.map((g) => apiLoadClips(g.id).then((clips) => [g.id, clips.length] as [string, number]).catch(() => [g.id, 0] as [string, number]))
+      ).then((entries) => setClipCounts(Object.fromEntries(entries))).catch(() => {});
+    }).catch(() => {});
   }, []);
 
   return (
@@ -134,6 +141,9 @@ export default function CoachPage() {
                       ? <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-medium">{game.eventCount}个打点</span>
                       : <span className="text-xs text-gray-400">无记录</span>
                     }
+                    {(clipCounts[game.id] ?? 0) > 0 && (
+                      <span className="text-xs bg-green-100 text-green-600 px-1.5 py-0.5 rounded-full font-medium">{clipCounts[game.id]}个切片</span>
+                    )}
                     <span className="text-orange-300 text-sm">›</span>
                   </div>
                 </div>
