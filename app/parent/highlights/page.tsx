@@ -465,6 +465,7 @@ export default function HighlightsPage() {
   const [loadingPlayerClips, setLoadingPlayerClips] = useState(false);
   const [gamesWithEvents, setGamesWithEvents] = useState(0);
   const [expandedClipId, setExpandedClipId] = useState<string|null>(null);
+  const [nameInputVal,   setNameInputVal]   = useState("");
   const analyzeStartRef = useRef<number>(0);
   const ffmpegRef     = useRef<FFmpeg|null>(null);
   const ffmpegInitRef = useRef<Promise<void>|null>(null);
@@ -513,9 +514,12 @@ export default function HighlightsPage() {
     try { const h = JSON.parse(localStorage.getItem("my_highlights") || "[]"); if (Array.isArray(h)) setMyHighlights(h.slice(0, 5)); } catch {}
   }, []);
 
-  // Load player-specific clips from Supabase when switching to from_clips mode
-  const loadPlayerClips = useCallback(async () => {
-    if (!childName) { setPlayerClips([]); return; }
+  // Load player-specific clips from Supabase when switching to from_clips mode.
+  // Accepts an optional nameOverride to avoid stale-closure issues when called
+  // immediately after setChildName() (before React re-render).
+  const loadPlayerClips = useCallback(async (nameOverride?: string) => {
+    const name = nameOverride ?? childName;
+    if (!name) { setPlayerClips([]); return; }
     setPlayerClips(null);
     setLoadingPlayerClips(true);
     try {
@@ -526,7 +530,7 @@ export default function HighlightsPage() {
           const clips = await apiLoadClips(game.id);
           const gameLabel = `${game.homeTeam} vs ${game.awayTeam}`;
           return clips
-            .filter(clip => clip.label.split(",").map(s => s.trim()).includes(childName))
+            .filter(clip => clip.label.split(",").map(s => s.trim()).includes(name))
             .map(clip => ({ ...clip, gameLabel }));
         })
       );
@@ -534,6 +538,14 @@ export default function HighlightsPage() {
     } catch { setPlayerClips([]); }
     setLoadingPlayerClips(false);
   }, [childName]);
+
+  const confirmChildName = useCallback(() => {
+    const trimmed = nameInputVal.trim();
+    if (!trimmed) return;
+    setChildName(trimmed);
+    try { localStorage.setItem("child_name", trimmed); } catch {}
+    loadPlayerClips(trimmed);
+  }, [nameInputVal, loadPlayerClips]);
 
   // Revoke blob URLs on change/unmount to prevent memory leaks
   useEffect(() => {
@@ -959,20 +971,44 @@ export default function HighlightsPage() {
           )}
           {!loadingPlayerClips && playerClips !== null && playerClips.length === 0 && (
             <div className="text-sm text-gray-400 text-center py-6">
-              <div className="text-2xl mb-2">🏀</div>
-              <div>暂无{childName ? `「${childName}」` : ""}的打点集锦</div>
-              {gamesWithEvents > 0 ? (
-                <div className="flex flex-col items-center gap-2 mt-2">
-                  <div className="text-xs leading-relaxed text-orange-400">
-                    检测到 {gamesWithEvents} 场有打点记录的比赛<br />
-                    上传视频后可自动生成集锦
+              {!childName ? (
+                <>
+                  <div className="text-2xl mb-2">👤</div>
+                  <div className="text-gray-600 font-medium mb-3">先告诉我孩子叫什么名字</div>
+                  <div className="flex gap-2 justify-center">
+                    <input
+                      value={nameInputVal}
+                      onChange={e => setNameInputVal(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") confirmChildName(); }}
+                      placeholder="输入孩子的名字"
+                      autoFocus
+                      className="text-sm rounded-xl border border-orange-300 px-3 py-2 outline-none focus:border-orange-500 bg-white text-gray-800 w-36"
+                    />
+                    <button
+                      onClick={confirmChildName}
+                      disabled={!nameInputVal.trim()}
+                      className="text-sm font-bold px-4 py-2 rounded-xl bg-orange-500 text-white disabled:opacity-40 active:opacity-70"
+                    >确认</button>
                   </div>
-                  <Link href="/gc/review" className="text-xs font-bold text-orange-500 border border-orange-300 px-4 py-1.5 rounded-full active:opacity-70">
-                    → 前往生成集锦
-                  </Link>
-                </div>
+                </>
               ) : (
-                <div className="text-xs mt-1">教练完成「视频打点集锦」后，集锦会出现在这里</div>
+                <>
+                  <div className="text-2xl mb-2">🏀</div>
+                  <div>暂无「{childName}」的打点集锦</div>
+                  {gamesWithEvents > 0 ? (
+                    <div className="flex flex-col items-center gap-2 mt-2">
+                      <div className="text-xs leading-relaxed text-orange-400">
+                        检测到 {gamesWithEvents} 场有打点记录的比赛<br />
+                        上传视频后可自动生成集锦
+                      </div>
+                      <Link href="/gc/review" className="text-xs font-bold text-orange-500 border border-orange-300 px-4 py-1.5 rounded-full active:opacity-70">
+                        → 前往生成集锦
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="text-xs mt-1">教练完成「视频打点集锦」后，集锦会出现在这里</div>
+                  )}
+                </>
               )}
             </div>
           )}
