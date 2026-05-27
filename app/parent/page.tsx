@@ -176,7 +176,7 @@ export default function ParentHome() {
                 <>
                   <div className="text-sm text-gray-500">🏀 真实成长记录</div>
                   <div className="text-xs bg-orange-100 text-orange-700 rounded-full px-2.5 py-1 inline-block mt-1.5 font-medium">
-                    已参加 {recentGames.length} 场 · 共 {recentGames.reduce((s, g) => s + g.eventCount, 0)} 个打点
+                    {recentGames.length}场 · <span className="text-green-700">{recentGames.filter(g => g.homeScore > g.awayScore).length}胜</span>{recentGames.filter(g => g.homeScore < g.awayScore).length > 0 ? <span className="text-gray-500 ml-0.5">{recentGames.filter(g => g.homeScore < g.awayScore).length}负</span> : null}
                   </div>
                 </>
               ) : (
@@ -228,7 +228,7 @@ export default function ParentHome() {
                 <span className="text-2xl">🏆</span>
                 <div>
                   <div className="text-xs font-bold text-gray-800">实战记录</div>
-                  <div className="text-xs text-amber-600">累计 {recentGames.length} 场 · {recentGames.reduce((s, g) => s + g.eventCount, 0)} 个打点</div>
+                  <div className="text-xs text-amber-600">{recentGames.length} 场 · {recentGames.filter(g => g.homeScore > g.awayScore).length}胜{recentGames.filter(g => g.homeScore < g.awayScore).length > 0 ? `${recentGames.filter(g => g.homeScore < g.awayScore).length}负` : ""}</div>
                 </div>
               </div>
             ) : (
