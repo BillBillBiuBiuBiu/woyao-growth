@@ -572,6 +572,24 @@ export default function GcReviewPage() {
           </div>
         </div>
 
+        {isWeChat && (
+          <div className="mx-4 rounded-2xl px-4 py-3 flex flex-col gap-2" style={{ background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.35)" }}>
+            <div className="text-xs font-bold text-orange-400">📱 微信内提示</div>
+            <div className="text-xs text-gray-400 leading-relaxed">
+              打点记录在微信内正常使用。<b className="text-gray-300">生成集锦需在浏览器中处理</b>，届时再上传视频即可（只上传一次）。
+            </div>
+            <button
+              onClick={() => {
+                try { navigator.clipboard.writeText(window.location.href); setTsToast(true); setTimeout(() => setTsToast(false), 2500); }
+                catch { setTsText(window.location.href); }
+              }}
+              className="self-start text-xs font-bold text-orange-300 bg-orange-500/15 px-3 py-1.5 rounded-full active:opacity-70"
+            >
+              {tsToast ? "✅ 已复制，粘贴到浏览器打开" : "🔗 复制链接，在浏览器中打开"}
+            </button>
+          </div>
+        )}
+
         <div className="px-4">
           <div className="rounded-2xl bg-[#1a1d27] border border-white/10 p-4">
             <div className="text-sm font-bold text-gray-300 mb-3">上传比赛视频</div>
