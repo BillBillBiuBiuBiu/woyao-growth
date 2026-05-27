@@ -459,6 +459,7 @@ export default function HighlightsPage() {
   const [myHighlights,   setMyHighlights]   = useState<Array<{date:string;name:string;dur:number}>>([]);
   const [captionCopied,  setCaptionCopied]  = useState(false);
   const [captionFallback, setCaptionFallback] = useState<string|null>(null);
+  const [clipShareUrl,   setClipShareUrl]   = useState<string|null>(null);
   const [analyzeElapsed, setAnalyzeElapsed] = useState(0);
   const [hlMode, setHlMode] = useState<"upload"|"from_clips">("upload");
   const [playerClips, setPlayerClips] = useState<Array<ClipRecord & { gameLabel: string }>|null>(null);
@@ -1030,17 +1031,17 @@ export default function HighlightsPage() {
                 <>
                   <video src={clip.public_url} controls playsInline className="w-full rounded-xl" />
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       const title = childName ? `${childName}的精彩集锦` : "精彩集锦";
                       if ("share" in navigator) {
-                        navigator.share({ url: clip.public_url, title }).catch(() => {});
-                      } else {
-                        window.open(clip.public_url, "_blank", "noopener");
+                        try { await (navigator as Navigator & { share: (d: ShareData) => Promise<void> }).share({ url: clip.public_url, title }); return; } catch {}
                       }
+                      try { await navigator.clipboard.writeText(clip.public_url); setClipShareUrl("copied:" + clip.public_url); return; } catch {}
+                      setClipShareUrl(clip.public_url);
                     }}
                     className="w-full py-2 rounded-xl text-xs font-bold text-orange-600 bg-orange-50 border border-orange-100 active:opacity-70 transition-opacity"
                   >
-                    📤 分享集锦给家人
+                    {clipShareUrl?.startsWith("copied:") && clipShareUrl.slice(7) === clip.public_url ? "✅ 链接已复制" : "📤 分享集锦给家人"}
                   </button>
                 </>
               )}
@@ -1295,6 +1296,27 @@ export default function HighlightsPage() {
         </div>
       )}
     </div>
+
+      {/* Fallback sheet for clip URL share (WeChat / restricted env) */}
+      {clipShareUrl !== null && !clipShareUrl.startsWith("copied:") && (
+        <div className="fixed inset-0 z-[60] flex items-end" style={{ background: "rgba(0,0,0,0.72)" }}>
+          <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
+            <div className="text-sm font-bold text-white mb-1">🔗 集锦链接</div>
+            <div className="text-xs text-gray-500 mb-3">长按下方链接 → 全选 → 复制，粘贴到微信群分享</div>
+            <textarea
+              readOnly
+              value={clipShareUrl}
+              className="w-full rounded-xl text-xs text-gray-300 p-3 resize-none"
+              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", height: 60, fontFamily: "monospace" }}
+              onFocus={e => e.target.select()}
+            />
+            <button onClick={() => setClipShareUrl(null)} className="w-full mt-3 py-3 rounded-xl border border-white/15 text-sm text-gray-400">
+              关闭
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Fallback sheet for caption copy (WeChat / restricted clipboard) */}
       {captionFallback !== null && (
