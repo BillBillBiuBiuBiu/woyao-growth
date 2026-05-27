@@ -30,6 +30,7 @@ function ScoreBoxes({ score, max }: { score: number; max: number }) {
 export default function StudentProfilePage() {
   const a = mockAssessment;
   const [hasTesterBadge, setHasTesterBadge] = useState(false);
+  const [childName] = useState(() => { try { return localStorage.getItem("child_name") || ""; } catch { return ""; } });
   const [timelineFilter, setTimelineFilter] = useState<"all"|"match"|"training">("all");
   useEffect(() => {
     try {
@@ -66,9 +67,8 @@ export default function StudentProfilePage() {
           style={{ background: "#FCD34D", clipPath: "polygon(0 0, 100% 0, 85% 100%, 0 100%)" }}
         >
           <div className="text-xs font-black leading-tight pr-3" style={{ color: "#7C3810" }}>
-            <div>{mockStudent.name}</div>
-            <div>{mockStudent.age}岁</div>
-            <div className="opacity-70 text-xs">{mockStudent.class}</div>
+            <div>{childName || mockStudent.name}</div>
+            <div className="opacity-70 text-xs">篮球学员</div>
           </div>
         </div>
 
@@ -114,7 +114,7 @@ export default function StudentProfilePage() {
 
         <div className="mt-3 text-center">
           <div className="inline-block border border-white/30 text-white/70 text-xs px-4 py-0.5 rounded-full tracking-widest">
-            {mockStudent.organization} · 专项技能测评报告 · {a.date}
+            PAB篮球馆 · 专项技能测评报告 · {a.date}
           </div>
         </div>
       </div>
@@ -260,7 +260,7 @@ export default function StudentProfilePage() {
           {mockGrowthHistory.filter((h) =>
             timelineFilter === "all" || (timelineFilter === "match" ? h.type === "match" : h.type !== "match")
           ).map((h) => {
-            const hasReport = mockReports.some((r) => r.id === h.id && r.studentId === mockStudent.id);
+            const hasReport = mockReports.some((r) => r.id === h.id && r.studentId === "stu-001");
             const inner = (
               <div className={`flex gap-3 p-3 rounded-2xl bg-white/90 border border-orange-100 shadow-sm ${hasReport ? "hover:bg-orange-50 transition-colors cursor-pointer" : ""}`}>
                 <div className="flex flex-col items-center pt-1">
