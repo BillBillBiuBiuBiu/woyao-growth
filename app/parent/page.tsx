@@ -324,9 +324,9 @@ export default function ParentHome() {
               >
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold text-gray-800 text-sm">
-                    {game.homeTeam} <span style={{ color: won ? "#16A34A" : lost ? "#EF4444" : "#F97316" }}>{game.homeScore}</span>
+                    {game.homeTeam} <span style={{ color: won ? "#16A34A" : lost ? "#9CA3AF" : "#F97316" }}>{game.homeScore}</span>
                     <span className="text-gray-300 mx-1">—</span>
-                    <span style={{ color: "#F97316" }}>{game.awayScore}</span> {game.awayTeam}
+                    <span style={{ color: lost ? "#16A34A" : won ? "#9CA3AF" : "#F97316" }}>{game.awayScore}</span> {game.awayTeam}
                   </div>
                   <div className="text-xs text-gray-400 mt-0.5">{fmtRelDate(game.ts)}</div>
                 </div>
@@ -495,9 +495,9 @@ export default function ParentHome() {
               <div className="text-xs text-orange-500 mb-1 font-medium">🏀 比赛详情</div>
               <div className="font-black text-lg text-gray-800">
                 {selectedGame.homeTeam}{" "}
-                <span style={{ color: "#F97316" }}>{selectedGame.homeScore}</span>
+                <span style={{ color: selectedGame.homeScore > selectedGame.awayScore ? "#16A34A" : selectedGame.homeScore < selectedGame.awayScore ? "#9CA3AF" : "#F97316" }}>{selectedGame.homeScore}</span>
                 <span className="text-gray-300 mx-2">—</span>
-                <span style={{ color: "#F97316" }}>{selectedGame.awayScore}</span>{" "}
+                <span style={{ color: selectedGame.awayScore > selectedGame.homeScore ? "#16A34A" : selectedGame.awayScore < selectedGame.homeScore ? "#9CA3AF" : "#F97316" }}>{selectedGame.awayScore}</span>{" "}
                 {selectedGame.awayTeam}
               </div>
               <div className="text-xs text-gray-400 mt-0.5">{fmtRelDate(selectedGame.ts)}</div>
