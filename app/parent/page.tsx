@@ -500,10 +500,17 @@ export default function ParentHome() {
           onClick={() => { setGameDetail(null); setSelectedGame(null); }}
         >
           <div
-            className="w-full max-h-[80vh] overflow-y-auto rounded-t-3xl px-4 pt-4 pb-10 bg-white"
+            className="relative w-full max-h-[80vh] overflow-y-auto rounded-t-3xl px-4 pt-4 pb-10 bg-white"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto" />
+              <button
+                onClick={() => { setGameDetail(null); setSelectedGame(null); }}
+                className="absolute right-4 top-5 text-gray-400 text-lg leading-none active:opacity-60 transition-opacity"
+                style={{ lineHeight: 1 }}
+              >✕</button>
+            </div>
 
             {/* Score header */}
             <div className="text-center mb-4">
