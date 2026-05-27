@@ -461,6 +461,7 @@ export default function HighlightsPage() {
   const [captionFallback, setCaptionFallback] = useState<string|null>(null);
   const [clipShareUrl,   setClipShareUrl]   = useState<string|null>(null);
   const [analyzeElapsed, setAnalyzeElapsed] = useState(0);
+  const [resultDur,      setResultDur]      = useState(0);
   const [hlMode, setHlMode] = useState<"upload"|"from_clips">("upload");
   const [playerClips, setPlayerClips] = useState<Array<ClipRecord & { gameLabel: string }>|null>(null);
   const [loadingPlayerClips, setLoadingPlayerClips] = useState(false);
@@ -896,6 +897,7 @@ export default function HighlightsPage() {
 
       setResultBlob(blob);
       setResultUrl(URL.createObjectURL(blob));
+      setResultDur(Math.round(totalClipDur));
       const childNameForFile = (() => { try { return localStorage.getItem("child_name") || ""; } catch { return ""; } })();
       const mmdd = (() => { const d = new Date(); return `${(d.getMonth()+1).toString().padStart(2,"0")}${d.getDate().toString().padStart(2,"0")}`; })();
       setResultName(childNameForFile ? `${childNameForFile}_${mmdd}集锦.mp4` : videoFile.name.replace(/\.[^.]+$/,"")+"_highlight.mp4");
@@ -1204,7 +1206,7 @@ export default function HighlightsPage() {
           )}
           <button
             onClick={async () => {
-              const dur = videoDuration > 0 ? Math.round(videoDuration) : 15;
+              const dur = resultDur > 0 ? resultDur : HIGHLIGHT_S;
               const caption = `🏀 ${childName ? childName + "的精彩集锦！" : "精彩集锦！"}${dur}秒精彩瞬间 🔥\n来自「我耀成长」`;
               try {
                 await navigator.clipboard.writeText(caption);
@@ -1219,7 +1221,7 @@ export default function HighlightsPage() {
           >
             {captionCopied ? "✅ 配文已复制！粘贴到微信群" : "📋 复制配文 · 发给家人群"}
           </button>
-          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);}} className="text-sm text-gray-400 text-center">重新制作</button>
+          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setResultDur(0);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);}} className="text-sm text-gray-400 text-center">重新制作</button>
           <Link href="/parent/profile/stu-001" className="w-full py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-bold text-center block active:scale-95 transition-transform">
             {childName ? `📊 查看${childName}的成长档案` : "📊 查看孩子的成长档案"}
           </Link>
