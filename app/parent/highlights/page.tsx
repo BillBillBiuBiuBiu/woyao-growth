@@ -516,6 +516,7 @@ export default function HighlightsPage() {
   // Load player-specific clips from Supabase when switching to from_clips mode
   const loadPlayerClips = useCallback(async () => {
     if (!childName) { setPlayerClips([]); return; }
+    setPlayerClips(null);
     setLoadingPlayerClips(true);
     try {
       const games = await apiLoadGames();
@@ -942,8 +943,16 @@ export default function HighlightsPage() {
       {/* From clips mode */}
       {stage === "idle" && hlMode === "from_clips" && (
         <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
-          <div className="text-sm font-bold text-gray-700">
-            {childName ? `${childName}的打点集锦` : "打点集锦"}
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-bold text-gray-700">
+              {childName ? `${childName}的打点集锦` : "打点集锦"}
+            </div>
+            <button
+              onClick={() => { setPlayerClips(null); loadPlayerClips(); }}
+              disabled={loadingPlayerClips}
+              className={`text-base px-1 transition-opacity ${loadingPlayerClips ? "text-gray-300 cursor-not-allowed" : "text-gray-400 active:opacity-60"}`}
+              title="刷新"
+            >↻</button>
           </div>
           {loadingPlayerClips && (
             <div className="text-sm text-gray-400 text-center py-4">正在查找 {childName} 的集锦…</div>
