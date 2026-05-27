@@ -1,5 +1,5 @@
 "use client";
-import { mockReports, mockStudent, mockRadarData } from "@/lib/mock-data";
+import { mockReports, mockRadarData } from "@/lib/mock-data";
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -417,7 +417,7 @@ export default function ReportDetailPage() {
 
       {/* Action buttons */}
       <div className="flex gap-3 pt-4 px-4">
-        <Link href={`/parent/profile/${mockStudent.id}`} className="flex-1">
+        <Link href="/parent/profile/stu-001" className="flex-1">
           <button
             className="w-full rounded-full py-4 text-sm font-bold text-white shadow-md active:scale-95 transition-transform"
             style={{ background: "linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)" }}

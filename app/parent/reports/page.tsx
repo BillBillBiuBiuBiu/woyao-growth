@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { mockReports, mockStudent } from "@/lib/mock-data";
+import { mockReports } from "@/lib/mock-data";
 import PlanBadge from "@/components/PlanBadge";
 import type { Report } from "@/lib/types";
 
@@ -54,7 +54,7 @@ function ReportCard({ r }: { r: Report }) {
 }
 
 export default function ParentReportsPage() {
-  const reports = mockReports.filter((r) => r.studentId === mockStudent.id);
+  const reports = mockReports.filter((r) => r.studentId === "stu-001");
   const childName = useChildName();
 
   return (
