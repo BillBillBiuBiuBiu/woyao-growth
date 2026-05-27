@@ -213,14 +213,24 @@ export default function ParentHome() {
               )}
             </div>
 
-            {/* Badge */}
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-2.5 flex items-center gap-2 shadow-sm">
-              <span className="text-2xl">{badge.icon}</span>
-              <div>
-                <div className="text-xs font-bold text-gray-800">{badge.name}</div>
-                <div className="text-xs text-amber-600">{badge.dimension}</div>
+            {/* Badge — real stats when available, mock demo otherwise */}
+            {recentGames.length > 0 ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-2.5 flex items-center gap-2 shadow-sm">
+                <span className="text-2xl">🏆</span>
+                <div>
+                  <div className="text-xs font-bold text-gray-800">实战记录</div>
+                  <div className="text-xs text-amber-600">累计 {recentGames.length} 场 · {recentGames.reduce((s, g) => s + g.eventCount, 0)} 个打点</div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-2.5 flex items-center gap-2 shadow-sm">
+                <span className="text-2xl">{badge.icon}</span>
+                <div>
+                  <div className="text-xs font-bold text-gray-800">{badge.name}</div>
+                  <div className="text-xs text-amber-600">{badge.dimension}</div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
