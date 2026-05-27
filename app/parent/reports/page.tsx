@@ -53,9 +53,27 @@ function ReportCard({ r }: { r: Report }) {
   );
 }
 
+type FilterTab = "all" | "sent" | "pending";
+
 export default function ParentReportsPage() {
   const reports = mockReports.filter((r) => r.studentId === "stu-001");
   const childName = useChildName();
+  const [tab, setTab] = useState<FilterTab>("all");
+
+  const sentCount = reports.filter((r) => r.status === "sent").length;
+  const pendingCount = reports.filter((r) => r.status === "draft" || r.status === "generated" || r.status === "reviewed").length;
+
+  const filtered = tab === "sent"
+    ? reports.filter((r) => r.status === "sent")
+    : tab === "pending"
+    ? reports.filter((r) => r.status === "draft" || r.status === "generated" || r.status === "reviewed")
+    : reports;
+
+  const tabs: { key: FilterTab; label: string; count: number }[] = [
+    { key: "all",     label: "全部",   count: reports.length },
+    { key: "sent",    label: "已发送", count: sentCount },
+    { key: "pending", label: "准备中", count: pendingCount },
+  ];
 
   return (
     <div
@@ -72,11 +90,33 @@ export default function ParentReportsPage() {
         <p className="text-sm text-orange-600">{childName ? `${childName}的所有成长记录` : "孩子的所有成长记录"}</p>
       </div>
 
+      {/* Filter tabs */}
+      <div className="flex gap-2 px-4 mb-4">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+              tab === t.key
+                ? "bg-orange-500 text-white shadow-sm"
+                : "bg-white/70 text-gray-500 border border-orange-100"
+            }`}
+          >
+            {t.label}
+            {t.count > 0 && (
+              <span className={`text-[10px] px-1 rounded-full ${tab === t.key ? "bg-white/30 text-white" : "bg-gray-100 text-gray-500"}`}>
+                {t.count}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-col gap-3 px-4">
-        {reports.length === 0 && (
+        {filtered.length === 0 && (
           <div className="text-center text-gray-400 text-sm py-10">暂无报告</div>
         )}
-        {reports.map((r) => (
+        {filtered.map((r) => (
           <ReportCard key={r.id} r={r} />
         ))}
       </div>
