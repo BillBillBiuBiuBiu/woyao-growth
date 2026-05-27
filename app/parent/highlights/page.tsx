@@ -455,7 +455,7 @@ export default function HighlightsPage() {
   const [captionFallback, setCaptionFallback] = useState<string|null>(null);
   const [analyzeElapsed, setAnalyzeElapsed] = useState(0);
   const [hlMode, setHlMode] = useState<"upload"|"from_clips">("upload");
-  const [playerClips, setPlayerClips] = useState<ClipRecord[]|null>(null);
+  const [playerClips, setPlayerClips] = useState<Array<ClipRecord & { gameLabel: string }>|null>(null);
   const [loadingPlayerClips, setLoadingPlayerClips] = useState(false);
   const analyzeStartRef = useRef<number>(0);
   const ffmpegRef     = useRef<FFmpeg|null>(null);
@@ -511,15 +511,16 @@ export default function HighlightsPage() {
     setLoadingPlayerClips(true);
     try {
       const games = await apiLoadGames();
-      const matched: ClipRecord[] = [];
-      for (const game of games.slice(0, 15)) {
-        const clips = await apiLoadClips(game.id);
-        for (const clip of clips) {
-          const names = clip.label.split(",").map(s => s.trim());
-          if (names.includes(childName)) matched.push(clip);
-        }
-      }
-      setPlayerClips(matched);
+      const results = await Promise.all(
+        games.slice(0, 15).map(async (game) => {
+          const clips = await apiLoadClips(game.id);
+          const gameLabel = `${game.homeTeam} vs ${game.awayTeam}`;
+          return clips
+            .filter(clip => clip.label.split(",").map(s => s.trim()).includes(childName))
+            .map(clip => ({ ...clip, gameLabel }));
+        })
+      );
+      setPlayerClips(results.flat());
     } catch { setPlayerClips([]); }
     setLoadingPlayerClips(false);
   }, [childName]);
@@ -949,7 +950,7 @@ export default function HighlightsPage() {
             <div key={clip.id} className="rounded-xl border border-orange-100 bg-orange-50 p-3 flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-gray-800">集锦 {i + 1}</div>
-                <div className="text-xs text-gray-400 mt-0.5">{new Date(clip.created_at).toLocaleDateString("zh-CN")}</div>
+                <div className="text-xs text-gray-400 mt-0.5">{new Date(clip.created_at).toLocaleDateString("zh-CN")} · {clip.gameLabel}</div>
               </div>
               <a href={clip.public_url} target="_blank" rel="noopener noreferrer"
                 className="text-xs font-bold text-orange-600 bg-orange-100 px-3 py-1.5 rounded-full active:opacity-70 shrink-0">
