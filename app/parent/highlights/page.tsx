@@ -50,6 +50,12 @@ const MOTION_THRESH  = 30;
 // Hoisted once — reused by both BFS loops in analyzeFrame every frame
 const DIRS4: ReadonlyArray<[number, number]> = [[-1,0],[1,0],[0,-1],[0,1]];
 
+function formatClipLabel(label: string): string {
+  if (!label) return "集锦片段";
+  const parts = label.split(",").map(s => s.trim()).filter(Boolean);
+  return parts.length > 1 ? parts.join(" · ") + "的集锦" : label;
+}
+
 // ── Color utilities ───────────────────────────────────────────────────────────
 
 function colorDist(r: number, g: number, b: number, ref: RGBColor) {
@@ -965,7 +971,7 @@ export default function HighlightsPage() {
             <div key={clip.id} className="rounded-xl border border-orange-100 bg-orange-50 p-3 flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold text-gray-800">集锦 {i + 1}</div>
+                  <div className="text-sm font-semibold text-gray-800">{formatClipLabel(clip.label)}</div>
                   <div className="text-xs text-gray-400 mt-0.5">{new Date(clip.created_at).toLocaleDateString("zh-CN")} · {clip.gameLabel}</div>
                 </div>
                 <button

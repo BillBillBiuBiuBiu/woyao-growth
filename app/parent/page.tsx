@@ -525,7 +525,7 @@ export default function ParentHome() {
                             >
                               <div className="min-w-0 flex-1">
                                 <div className="text-sm font-medium text-gray-800 truncate">
-                                  {clip.label || "集锦片段"}
+                                  {formatClipLabel(clip.label)}
                                 </div>
                                 <div className="text-xs text-gray-400">{fmtRelDate(clip.created_at)}</div>
                               </div>
