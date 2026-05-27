@@ -56,7 +56,7 @@ function MetricsCards({ metrics }: { metrics: NonNullable<Report["metrics"]> }) 
   );
 }
 
-function BasicReportLayout({ report }: { report: Report }) {
+function BasicReportLayout({ report, coachName }: { report: Report; coachName: string }) {
   return (
     <div className="flex flex-col gap-4 px-4">
       {/* Hero summary */}
@@ -116,7 +116,7 @@ function BasicReportLayout({ report }: { report: Report }) {
             </div>
             <div>
               <div className="text-xs text-gray-500">教练寄语 ♡</div>
-              <div className="text-sm font-bold text-gray-800">{mockStudent.coach}</div>
+              <div className="text-sm font-bold text-gray-800">{coachName || "教练"}</div>
             </div>
           </div>
           <p className="text-sm text-gray-700 leading-relaxed">{report.coachComment}</p>
@@ -126,7 +126,7 @@ function BasicReportLayout({ report }: { report: Report }) {
   );
 }
 
-function VipReportLayout({ report }: { report: Report }) {
+function VipReportLayout({ report, coachName = "" }: { report: Report; coachName?: string }) {
   const [activeClip, setActiveClip] = useState(0);
   const clips = report.clips ?? [];
   const clip = clips[activeClip];
@@ -277,11 +277,11 @@ function VipReportLayout({ report }: { report: Report }) {
             </div>
             <div>
               <div className="text-xs text-gray-500">教练寄语 ♡</div>
-              <div className="text-sm font-bold text-gray-800">{mockStudent.coach}</div>
+              <div className="text-sm font-bold text-gray-800">{coachName || "教练"}</div>
             </div>
           </div>
           <p className="text-sm text-gray-700 leading-relaxed">{report.coachComment}</p>
-          <div className="text-right text-xs text-gray-400 mt-2">— Coach {mockStudent.coach}</div>
+          <div className="text-right text-xs text-gray-400 mt-2">— Coach {coachName || "教练"}</div>
         </div>
       )}
     </div>
@@ -349,6 +349,9 @@ export default function ReportDetailPage() {
   const [liked, setLiked] = useState(() => {
     try { return localStorage.getItem(`report_liked_${id}`) === "1"; } catch { return false; }
   });
+  const [coachName] = useState(() => {
+    try { return localStorage.getItem("coach_name") || ""; } catch { return ""; }
+  });
   useEffect(() => {
     try { localStorage.setItem(`report_read_${id}`, "1"); } catch {}
   }, [id]);
@@ -394,8 +397,8 @@ export default function ReportDetailPage() {
       </div>
 
       {/* Report body by type */}
-      {report.reportType === "basic" && <BasicReportLayout report={report} />}
-      {report.reportType === "vip" && <VipReportLayout report={report} />}
+      {report.reportType === "basic" && <BasicReportLayout report={report} coachName={coachName} />}
+      {report.reportType === "vip" && <VipReportLayout report={report} coachName={coachName} />}
       {report.reportType === "supervip" && <SupervipReportLayout report={report} />}
 
       {/* Coach appreciation */}
