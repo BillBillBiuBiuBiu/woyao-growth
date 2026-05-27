@@ -119,6 +119,8 @@ export default function GcReviewPage() {
   const [fileWarn,      setFileWarn]      = useState<string | null>(null);
   const [clipView,      setClipView]      = useState<{ title: string; clips: GameEvent[]; idx: number } | null>(null);
   const [cloudSaved,    setCloudSaved]    = useState(false);
+  const [uploadError,   setUploadError]   = useState(false);
+  const [retryPayload,  setRetryPayload]  = useState<{ gameId: string; blob: Blob; label: string; display: string; name: string } | null>(null);
   const [clipUrl,       setClipUrl]       = useState<string | null>(null);
   const [savedClipLabel, setSavedClipLabel] = useState<string>("");
   const [linkToast,     setLinkToast]     = useState(false);
@@ -542,9 +544,15 @@ export default function GcReviewPage() {
       const displayLabel = playerNames.length > 0
         ? `${playerNames[0]}等${events.length}个精彩时刻`
         : `${events.length}个打点集锦`;
+      setUploadError(false);
+      const uploadPayload = { gameId, blob, label: playerLabel || displayLabel, display: displayLabel, name: clipName };
+      setRetryPayload(uploadPayload);
       apiUploadClip(gameId, blob, playerLabel || displayLabel, clipName)
-        .then((url) => { if (url) { setCloudSaved(true); setClipUrl(url); setSavedClipLabel(displayLabel); } })
-        .catch(() => {});
+        .then((url) => {
+          if (url) { setCloudSaved(true); setUploadError(false); setClipUrl(url); setSavedClipLabel(displayLabel); }
+          else { setUploadError(true); }
+        })
+        .catch(() => { setUploadError(true); });
 
     } catch (e) {
       if (ffmpegRef.current) {
@@ -1286,6 +1294,26 @@ export default function GcReviewPage() {
             ✅ 已保存到云端 · 可在主页历史记录查看
           </div>
         )}
+        {uploadError && !cloudSaved && (
+          <div className="mt-2 flex items-center justify-center gap-2">
+            <span className="text-xs font-medium" style={{ color: "#f87171" }}>⚠️ 切片未能上传到云端</span>
+            {retryPayload && (
+              <button
+                onClick={() => {
+                  setUploadError(false);
+                  apiUploadClip(retryPayload.gameId, retryPayload.blob, retryPayload.label, retryPayload.name)
+                    .then((url) => {
+                      if (url) { setCloudSaved(true); setUploadError(false); setClipUrl(url); setSavedClipLabel(retryPayload.display); }
+                      else { setUploadError(true); }
+                    })
+                    .catch(() => { setUploadError(true); });
+                }}
+                className="text-xs font-bold px-2.5 py-1 rounded-full active:opacity-70"
+                style={{ background: "rgba(249,115,22,0.2)", color: "#f97316" }}
+              >重试</button>
+            )}
+          </div>
+        )}
         {clipUrl && (
           <button
             onClick={async () => {
@@ -1512,7 +1540,7 @@ export default function GcReviewPage() {
       <button
         onClick={() => {
           setPhase("tagging"); setEvents([]); setProgress(0);
-          setResultUrl(null); setResultBlob(null); setCloudSaved(false); setClipUrl(null); setSavedClipLabel("");
+          setResultUrl(null); setResultBlob(null); setCloudSaved(false); setClipUrl(null); setSavedClipLabel(""); setUploadError(false); setRetryPayload(null);
           const autoGame = gameOptions[0] ?? null;
           setLinkedGame(autoGame);
           gameIdRef.current = autoGame?.id ?? `g-${Date.now()}`;
