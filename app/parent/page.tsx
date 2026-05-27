@@ -581,8 +581,23 @@ export default function ParentHome() {
                   </div>
                 )}
 
-                {/* Player stats — shown below clips */}
-                {gameDetail.stats.length > 0 && (
+                {/* Player stats — shown below clips, grouped by team */}
+                {gameDetail.stats.length > 0 && (() => {
+                  const sortGroup = (arr: PlayerStat[]) => [...arr].sort((a, b) => {
+                    if (childName) {
+                      if (a.name === childName) return -1;
+                      if (b.name === childName) return 1;
+                    }
+                    return b.pts - a.pts || b.reb - a.reb;
+                  });
+                  const homeStats = sortGroup(gameDetail.stats.filter(p => p.team === "home"));
+                  const awayStats = sortGroup(gameDetail.stats.filter(p => p.team === "away"));
+                  const childTeam = childName ? gameDetail.stats.find(p => p.name === childName)?.team : undefined;
+                  const groups: { label: string; color: string; stats: PlayerStat[] }[] =
+                    childTeam === "away"
+                      ? [{ label: selectedGame.awayTeam, color: "#3B82F6", stats: awayStats }, { label: selectedGame.homeTeam, color: "#F97316", stats: homeStats }]
+                      : [{ label: selectedGame.homeTeam, color: "#F97316", stats: homeStats }, { label: selectedGame.awayTeam, color: "#3B82F6", stats: awayStats }];
+                  return (
                   <div className="mb-4">
                     <div className="text-xs font-bold text-gray-500 mb-2 px-1">球员数据</div>
                     <div className="rounded-xl overflow-hidden border border-gray-100">
@@ -596,44 +611,40 @@ export default function ParentHome() {
                             <th className="text-center px-2 py-2 text-gray-400 font-medium">断</th>
                           </tr>
                         </thead>
-                        <tbody>
-                          {[...gameDetail.stats].sort((a, b) => {
-                            if (childName) {
-                              if (a.name === childName) return -1;
-                              if (b.name === childName) return 1;
-                            }
-                            return b.pts - a.pts || b.reb - a.reb;
-                          }).map((p, i) => {
-                            const isMyChild = childName && p.name === childName;
-                            return (
-                            <tr
-                              key={`${p.team}-${p.name}-${i}`}
-                              className={`border-t ${isMyChild ? "border-l-2 border-amber-400 bg-amber-50" : "border-gray-50"}`}
-                              style={isMyChild ? undefined : { background: i % 2 === 0 ? "white" : "#FFFBF5" }}
-                            >
-                              <td className="px-3 py-2.5">
-                                <div className="flex items-center gap-1.5">
-                                  <div
-                                    className="w-1.5 h-1.5 rounded-full shrink-0"
-                                    style={{ background: p.team === "home" ? "#F97316" : "#3B82F6" }}
-                                  />
+                        {groups.map(({ label, color, stats }) => stats.length > 0 && (
+                          <tbody key={label}>
+                            <tr>
+                              <td colSpan={5} className="px-3 py-1.5 text-xs font-bold" style={{ background: `${color}12`, color }}>
+                                {label}
+                              </td>
+                            </tr>
+                            {stats.map((p, i) => {
+                              const isMyChild = childName && p.name === childName;
+                              return (
+                              <tr
+                                key={`${p.team}-${p.name}-${i}`}
+                                className={`border-t ${isMyChild ? "border-l-2 border-amber-400 bg-amber-50" : "border-gray-50"}`}
+                                style={isMyChild ? undefined : { background: i % 2 === 0 ? "white" : "#FFFBF5" }}
+                              >
+                                <td className="px-3 py-2.5">
                                   <span className={`font-medium ${isMyChild ? "text-amber-700 font-bold" : "text-gray-800"}`}>
                                     {p.num && p.num !== "-" ? `#${p.num} ` : ""}{p.name}{isMyChild ? " ⭐" : ""}
                                   </span>
-                                </div>
-                              </td>
-                              <td className="px-2 py-2.5 text-center font-bold text-orange-500">{p.pts}</td>
-                              <td className="px-2 py-2.5 text-center text-gray-500">{p.reb}</td>
-                              <td className="px-2 py-2.5 text-center text-gray-500">{p.ast}</td>
-                              <td className="px-2 py-2.5 text-center text-gray-500">{p.stl}</td>
-                            </tr>
-                            );
-                          })}
-                        </tbody>
+                                </td>
+                                <td className="px-2 py-2.5 text-center font-bold text-orange-500">{p.pts}</td>
+                                <td className="px-2 py-2.5 text-center text-gray-500">{p.reb}</td>
+                                <td className="px-2 py-2.5 text-center text-gray-500">{p.ast}</td>
+                                <td className="px-2 py-2.5 text-center text-gray-500">{p.stl}</td>
+                              </tr>
+                              );
+                            })}
+                          </tbody>
+                        ))}
                       </table>
                     </div>
                   </div>
-                )}
+                  );
+                })()}
 
                 {gameDetail.stats.length === 0 && gameDetail.clips.length === 0 && (
                   <div className="text-center text-gray-400 text-sm py-4">暂无数据</div>
