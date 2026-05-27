@@ -501,6 +501,18 @@ export default function ParentHome() {
                 {selectedGame.awayTeam}
               </div>
               <div className="text-xs text-gray-400 mt-0.5">{fmtRelDate(selectedGame.ts)}</div>
+              {selectedGame.quarterScores.length > 0 && (
+                <div className="flex items-center justify-center gap-1.5 mt-2 flex-wrap">
+                  {selectedGame.quarterScores.map(({ q, home, away }) => (
+                    <span key={q} className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-mono">
+                      Q{q}{" "}
+                      <span style={{ color: home > away ? "#16A34A" : home < away ? "#9CA3AF" : "#F97316" }}>{home}</span>
+                      <span className="text-gray-300 mx-0.5">-</span>
+                      <span style={{ color: away > home ? "#16A34A" : away < home ? "#9CA3AF" : "#F97316" }}>{away}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {gameDetail.loading ? (
