@@ -155,7 +155,7 @@ export default function ParentHome() {
         {/* Card + info side by side */}
         <div className="flex gap-4 items-start w-full">
           <BasketballCard
-            name={card.name}
+            name={childName || card.name}
             namePinyin={card.namePinyin}
             number={card.number}
             position={card.position}
