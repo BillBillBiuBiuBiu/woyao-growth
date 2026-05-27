@@ -4,6 +4,8 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
+import { apiLoadGames, apiLoadClips } from "@/lib/gc-api";
+import type { ClipRecord } from "@/lib/gc-api";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -452,6 +454,9 @@ export default function HighlightsPage() {
   const [captionCopied,  setCaptionCopied]  = useState(false);
   const [captionFallback, setCaptionFallback] = useState<string|null>(null);
   const [analyzeElapsed, setAnalyzeElapsed] = useState(0);
+  const [hlMode, setHlMode] = useState<"upload"|"from_clips">("upload");
+  const [playerClips, setPlayerClips] = useState<ClipRecord[]|null>(null);
+  const [loadingPlayerClips, setLoadingPlayerClips] = useState(false);
   const analyzeStartRef = useRef<number>(0);
   const ffmpegRef     = useRef<FFmpeg|null>(null);
   const ffmpegInitRef = useRef<Promise<void>|null>(null);
@@ -499,6 +504,25 @@ export default function HighlightsPage() {
     try { const n = localStorage.getItem("child_name"); if (n) setChildName(n); } catch {}
     try { const h = JSON.parse(localStorage.getItem("my_highlights") || "[]"); if (Array.isArray(h)) setMyHighlights(h.slice(0, 5)); } catch {}
   }, []);
+
+  // Load player-specific clips from Supabase when switching to from_clips mode
+  const loadPlayerClips = useCallback(async () => {
+    if (!childName) { setPlayerClips([]); return; }
+    setLoadingPlayerClips(true);
+    try {
+      const games = await apiLoadGames();
+      const matched: ClipRecord[] = [];
+      for (const game of games.slice(0, 15)) {
+        const clips = await apiLoadClips(game.id);
+        for (const clip of clips) {
+          const names = clip.label.split(",").map(s => s.trim());
+          if (names.includes(childName)) matched.push(clip);
+        }
+      }
+      setPlayerClips(matched);
+    } catch { setPlayerClips([]); }
+    setLoadingPlayerClips(false);
+  }, [childName]);
 
   // Revoke blob URLs on change/unmount to prevent memory leaks
   useEffect(() => {
@@ -891,6 +915,56 @@ export default function HighlightsPage() {
         </p>
       </div>
 
+      {/* Mode tabs */}
+      {stage === "idle" && (
+        <div className="flex rounded-2xl bg-gray-100 p-1 gap-1">
+          <button
+            className={`flex-1 rounded-xl py-2 text-sm font-bold transition-colors ${hlMode === "upload" ? "bg-white text-orange-600 shadow-sm" : "text-gray-500"}`}
+            onClick={() => setHlMode("upload")}
+          >📹 上传视频</button>
+          <button
+            className={`flex-1 rounded-xl py-2 text-sm font-bold transition-colors ${hlMode === "from_clips" ? "bg-white text-orange-600 shadow-sm" : "text-gray-500"}`}
+            onClick={() => { setHlMode("from_clips"); if (playerClips === null) loadPlayerClips(); }}
+          >🏀 从打点记录</button>
+        </div>
+      )}
+
+      {/* From clips mode */}
+      {stage === "idle" && hlMode === "from_clips" && (
+        <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+          <div className="text-sm font-bold text-gray-700">
+            {childName ? `${childName}的打点集锦` : "打点集锦"}
+          </div>
+          {loadingPlayerClips && (
+            <div className="text-sm text-gray-400 text-center py-4">正在查找 {childName} 的集锦…</div>
+          )}
+          {!loadingPlayerClips && playerClips !== null && playerClips.length === 0 && (
+            <div className="text-sm text-gray-400 text-center py-6">
+              <div className="text-2xl mb-2">🏀</div>
+              <div>暂无{childName ? `「${childName}」` : ""}的打点集锦</div>
+              <div className="text-xs mt-1">教练在比赛记录中打点后，集锦会出现在这里</div>
+            </div>
+          )}
+          {!loadingPlayerClips && playerClips && playerClips.length > 0 && playerClips.map((clip, i) => (
+            <div key={clip.id} className="rounded-xl border border-orange-100 bg-orange-50 p-3 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-gray-800">集锦 {i + 1}</div>
+                <div className="text-xs text-gray-400 mt-0.5">{new Date(clip.created_at).toLocaleDateString("zh-CN")}</div>
+              </div>
+              <a href={clip.public_url} target="_blank" rel="noopener noreferrer"
+                className="text-xs font-bold text-orange-600 bg-orange-100 px-3 py-1.5 rounded-full active:opacity-70 shrink-0">
+                ▶ 播放
+              </a>
+            </div>
+          ))}
+          {!loadingPlayerClips && !childName && (
+            <div className="text-xs text-orange-500 text-center">请先在首页设置孩子的名字</div>
+          )}
+        </div>
+      )}
+
+      {/* Upload mode form */}
+      {(stage !== "idle" || hlMode === "upload") && (<>
       <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
         <div className="text-sm font-bold text-gray-700 mb-3">① 上传比赛视频</div>
         <label className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 cursor-pointer transition-colors ${videoFile?"border-orange-300 bg-orange-50":"border-gray-200 bg-gray-50"}`}>
@@ -999,6 +1073,7 @@ export default function HighlightsPage() {
           <button onClick={()=>{setStage("idle");setError(null);setProgress(0);}} className="mt-3 text-sm text-red-600 underline">重试</button>
         </div>
       )}
+      </>)} {/* end upload mode wrapper */}
 
       {stage==="done"&&resultUrl&&(
         <div className="rounded-2xl bg-white border border-orange-100 shadow-sm p-4 flex flex-col gap-3">
