@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { apiLoadGames, apiLoadEvents } from "@/lib/gc-api";
 
 const GrowthRadarDual = dynamic(() => import("@/components/GrowthCharts").then((m) => m.GrowthRadarDual), { ssr: false });
 const GrowthCurve = dynamic(() => import("@/components/GrowthCharts").then((m) => m.GrowthCurve), { ssr: false });
@@ -32,11 +33,37 @@ export default function StudentProfilePage() {
   const [hasTesterBadge, setHasTesterBadge] = useState(false);
   const [childName] = useState(() => { try { return localStorage.getItem("child_name") || ""; } catch { return ""; } });
   const [timelineFilter, setTimelineFilter] = useState<"all"|"match"|"training">("all");
+  const [realStats, setRealStats] = useState<{ pts: number; reb: number; ast: number; stl: number; games: number } | null>(null);
+
   useEffect(() => {
     try {
       setHasTesterBadge(localStorage.getItem("tester_badge") === "true");
     } catch {}
   }, []);
+
+  useEffect(() => {
+    if (!childName) return;
+    apiLoadGames().then(async (games) => {
+      const recent = games.slice(0, 5);
+      const allEvents = await Promise.all(recent.map(g => apiLoadEvents(g.id).catch(() => [])));
+      let gamesWithHits = 0;
+      const acc = { pts: 0, reb: 0, ast: 0, stl: 0, games: 0 };
+      for (const evts of allEvents) {
+        const mine = evts.filter(e => e.playerName === childName);
+        if (mine.length === 0) continue;
+        gamesWithHits++;
+        for (const e of mine) {
+          acc.pts += e.pts;
+          if (e.cat === "oreb" || e.cat === "dreb") acc.reb++;
+          if (e.cat === "ast") acc.ast++;
+          if (e.cat === "stl") acc.stl++;
+        }
+      }
+      if (gamesWithHits === 0) return;
+      acc.games = gamesWithHits;
+      setRealStats(acc);
+    }).catch(() => {});
+  }, [childName]);
 
   return (
     <div
@@ -118,6 +145,28 @@ export default function StudentProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* ── REAL GAME STATS ─────────────────────────── */}
+      {realStats && (
+        <div className="px-4 pt-3">
+          <div className="rounded-2xl bg-white/90 border border-orange-100 p-4">
+            <div className="text-xs font-bold text-orange-600 mb-3">📊 实战统计（最近{realStats.games}场）</div>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              {([
+                { label: "得分", value: realStats.pts, color: "text-orange-600" },
+                { label: "篮板", value: realStats.reb, color: "text-blue-600" },
+                { label: "助攻", value: realStats.ast, color: "text-green-600" },
+                { label: "抢断", value: realStats.stl, color: "text-purple-600" },
+              ] as const).map(s => (
+                <div key={s.label} className="bg-gray-50 rounded-xl py-2.5">
+                  <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── SKILL ITEMS TABLE ───────────────────────── */}
       <div className="px-4 py-3">
