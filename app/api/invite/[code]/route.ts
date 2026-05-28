@@ -47,10 +47,15 @@ export async function POST(
   if (invite.used_at) return NextResponse.json({ error: "used" }, { status: 410 });
   if (new Date(invite.expires_at) < new Date()) return NextResponse.json({ error: "expired" }, { status: 410 });
 
-  await admin.from("parent_student").insert({
+  const { error: linkError } = await admin.from("parent_student").insert({
     parent_id: user.id,
     student_id: invite.student_id,
   });
+
+  // Ignore duplicate key (already linked) but fail on other errors
+  if (linkError && !linkError.message.includes("duplicate key")) {
+    return NextResponse.json({ error: linkError.message }, { status: 500 });
+  }
 
   await admin
     .from("student_invites")

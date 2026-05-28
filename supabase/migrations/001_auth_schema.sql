@@ -54,6 +54,10 @@ create policy "coaches read student links" on parent_student for select using (
 create policy "coaches insert parent links" on parent_student for insert with check (
   public.auth_is_coach_of(student_id)
 );
+-- Parents can insert a link where they are the parent (used during invite redemption)
+create policy "parents insert own links" on parent_student for insert with check (
+  parent_id = auth.uid()
+);
 
 -- Invite codes for parents (coach generates, parent redeems)
 create table if not exists student_invites (
