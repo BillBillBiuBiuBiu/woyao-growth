@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { mockReports } from "@/lib/mock-data";
 import PlanBadge from "@/components/PlanBadge";
@@ -59,6 +59,14 @@ export default function ParentReportsPage() {
   const reports = mockReports.filter((r) => r.studentId === "stu-001");
   const childName = useChildName();
   const [tab, setTab] = useState<FilterTab>("all");
+  const [unreadSent, setUnreadSent] = useState(0);
+
+  useEffect(() => {
+    try {
+      const n = reports.filter(r => r.status === "sent" && localStorage.getItem(`report_read_${r.id}`) !== "1").length;
+      setUnreadSent(n);
+    } catch {}
+  }, []);
 
   const sentCount = reports.filter((r) => r.status === "sent").length;
   const pendingCount = reports.filter((r) => r.status === "draft" || r.status === "generated" || r.status === "reviewed").length;
@@ -69,9 +77,9 @@ export default function ParentReportsPage() {
     ? reports.filter((r) => r.status === "draft" || r.status === "generated" || r.status === "reviewed")
     : reports;
 
-  const tabs: { key: FilterTab; label: string; count: number }[] = [
+  const tabs: { key: FilterTab; label: string; count: number; dot?: boolean }[] = [
     { key: "all",     label: "全部",   count: reports.length },
-    { key: "sent",    label: "已发送", count: sentCount },
+    { key: "sent",    label: "已发送", count: sentCount, dot: unreadSent > 0 },
     { key: "pending", label: "准备中", count: pendingCount },
   ];
 
@@ -103,6 +111,7 @@ export default function ParentReportsPage() {
             }`}
           >
             {t.label}
+            {t.dot && tab !== t.key && <span className="w-1.5 h-1.5 rounded-full bg-red-500 ml-0.5" />}
             {t.count > 0 && (
               <span className={`text-[10px] px-1 rounded-full ${tab === t.key ? "bg-white/30 text-white" : "bg-gray-100 text-gray-500"}`}>
                 {t.count}
