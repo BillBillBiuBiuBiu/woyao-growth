@@ -63,7 +63,7 @@ export default function CoachPage() {
             { label: "学员总数", value: mockStudents.length, sub: null, color: "text-gray-700" },
             { label: "场次记录", value: recentGames.length, sub: recentGames.length > 0 ? `${recentGames.filter(g => g.eventCount > 0).length}场有打点` : null, color: "text-orange-600" },
             { label: "打点总数", value: totalEvents, sub: perGame ? `场均 ${perGame}` : null, color: "text-blue-600" },
-            { label: "切片总数", value: Object.values(clipCounts).reduce((s, n) => s + n, 0), sub: null, color: "text-green-600" },
+            { label: "切片总数", value: Object.values(clipCounts).reduce((s, n) => s + n, 0), sub: recentGames.length > 0 && Object.keys(clipCounts).length > 0 ? `${(Object.values(clipCounts).reduce((s,n)=>s+n,0)/recentGames.length).toFixed(1)}个/场` : null, color: "text-green-600" },
           ].map((s) => (
             <div key={s.label} className="rounded-xl border border-border bg-white p-3 text-center">
               <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
