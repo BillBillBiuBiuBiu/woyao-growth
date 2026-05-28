@@ -144,7 +144,10 @@ export default function StudentProfilePage() {
 
         <div className="mt-3 text-center">
           <div className="inline-block border border-white/30 text-white/70 text-xs px-4 py-0.5 rounded-full tracking-widest">
-            PAB篮球馆 · 专项技能测评报告 · {a.date}
+            PAB篮球馆 · 专项技能测评报告 · {(() => {
+              const days = Math.floor((Date.now() - new Date(a.date).getTime()) / 86400000);
+              return days === 0 ? "今天" : days <= 30 ? `${days}天前` : a.date;
+            })()}
           </div>
         </div>
       </div>
