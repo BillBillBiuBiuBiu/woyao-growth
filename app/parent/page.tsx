@@ -321,8 +321,8 @@ export default function ParentHome() {
                 <span className="text-xl">📋</span>
               </div>
               <div>
-                <div className="text-sm font-bold text-gray-800">比赛现场打点</div>
-                <div className="text-xs text-gray-400 mt-0.5">志愿者模式 · 帮孩子记录精彩瞬间</div>
+                <div className="text-sm font-bold text-gray-800">比赛现场记录</div>
+                <div className="text-xs text-gray-400 mt-0.5">现场参与 · 记录孩子的精彩时刻</div>
               </div>
             </div>
             <div className="text-orange-300 shrink-0 text-xl">›</div>
