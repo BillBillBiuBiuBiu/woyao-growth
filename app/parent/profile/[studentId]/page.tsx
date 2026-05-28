@@ -149,6 +149,22 @@ export default function StudentProfilePage() {
         </div>
       </div>
 
+      {/* ── SEASON RECORD BRIDGE ───────────────────────── */}
+      {recentGames.length > 0 && (() => {
+        const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
+        const l = recentGames.filter(g => g.homeScore < g.awayScore).length;
+        const d = recentGames.filter(g => g.homeScore === g.awayScore).length;
+        return (
+          <div className="flex items-center justify-center gap-2 py-2 px-4">
+            <span className="text-xs text-orange-500 font-bold">⭐ {recentGames.length}场实战</span>
+            <span className="text-gray-300 text-xs">·</span>
+            <span className="text-xs text-green-600 font-bold">{w}胜</span>
+            {l > 0 && <span className="text-xs text-gray-500 font-bold">{l}负</span>}
+            {d > 0 && <span className="text-xs text-gray-400">{d}平</span>}
+          </div>
+        );
+      })()}
+
       {/* ── REAL GAME STATS ─────────────────────────── */}
       {realStats && (
         <div className="px-4 pt-3">
