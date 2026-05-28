@@ -51,6 +51,13 @@ export default function LoginPage() {
       return;
     }
 
+    // If coming from an invite link, return to it first
+    const pendingInvite = localStorage.getItem("pending_invite");
+    if (pendingInvite) {
+      router.push(`/join/${pendingInvite}`);
+      return;
+    }
+
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")

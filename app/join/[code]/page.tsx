@@ -55,7 +55,7 @@ export default function JoinPage() {
 
     if (!invite) { setErrorMsg("邀请链接已失效"); setStatus("error"); return; }
 
-    await supabase.from("parent_student").upsert({
+    await supabase.from("parent_student").insert({
       parent_id: userId,
       student_id: invite.student_id,
     });
