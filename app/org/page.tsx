@@ -1,5 +1,5 @@
 "use client";
-import { mockOrgStats, mockStudentList } from "@/lib/mock-data";
+import { mockOrgStats, mockStudentList, mockLeads } from "@/lib/mock-data";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
@@ -48,7 +48,7 @@ export default function OrgDashboard() {
           <div>
             <div className="text-sm font-semibold text-amber-800">转化线索本月</div>
             <div className="text-xs text-amber-600 mt-0.5">
-              私教推荐 {mockOrgStats.conversionLeads}个 · 续费线索 {mockOrgStats.renewalLeads}个
+              私教推荐 {mockLeads.filter(l => l.type === "private_training").length}个 · 续费线索 {mockLeads.filter(l => l.type === "renewal").length}个
             </div>
           </div>
           <Link href="/org/leads">
