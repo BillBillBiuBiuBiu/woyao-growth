@@ -1045,7 +1045,7 @@ export default function HighlightsPage() {
           )}
           {!loadingPlayerClips && playerClips && playerClips.length > 0 && (
             <div className="text-xs text-gray-400 -mt-1">
-              找到 {playerClips.length} 个切片 · 来自 {new Set(playerClips.map(c => c.gameId ?? c.gameLabel)).size} 场比赛
+              {childName}的 {playerClips.length} 个精彩时刻 · 跨 {new Set(playerClips.map(c => c.gameId ?? c.gameLabel)).size} 场比赛
             </div>
           )}
           {!loadingPlayerClips && playerClips && playerClips.length > 0 && playerClips.map((clip, i) => (
