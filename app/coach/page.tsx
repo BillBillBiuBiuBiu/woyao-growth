@@ -185,8 +185,8 @@ export default function CoachPage() {
         <div className="grid grid-cols-3 gap-3">
           <Link href="/coach/videos">
             <div className="rounded-2xl border border-border bg-white p-4 text-center hover:shadow-md transition-shadow cursor-pointer">
-              <div className="text-2xl mb-1">📹</div>
-              <div className="text-xs font-medium text-gray-700">上传视频</div>
+              <div className="text-2xl mb-1">📊</div>
+              <div className="text-xs font-medium text-gray-700">视频分析</div>
             </div>
           </Link>
           <Link href="/coach/reports/generate">
