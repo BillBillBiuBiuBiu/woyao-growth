@@ -726,6 +726,16 @@ export default function ParentHome() {
               </>
             )}
 
+            {childName && (
+              <Link
+                href="/parent/profile/stu-001"
+                onClick={() => { setGameDetail(null); setSelectedGame(null); setExpandedClipId(null); setStatsCopied(false); }}
+                className="block w-full mt-2 py-2.5 rounded-xl text-sm font-bold text-center text-orange-500 active:opacity-70 transition-opacity"
+                style={{ background: "rgba(249,115,22,0.06)", border: "1px solid rgba(249,115,22,0.2)" }}
+              >
+                查看 {childName} 的成长档案 →
+              </Link>
+            )}
             <button
               onClick={() => { setGameDetail(null); setSelectedGame(null); setExpandedClipId(null); setStatsCopied(false); }}
               className="w-full mt-2 py-3 rounded-xl border border-gray-200 text-sm text-gray-400 active:bg-gray-50"
