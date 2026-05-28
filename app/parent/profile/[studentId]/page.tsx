@@ -172,7 +172,7 @@ export default function StudentProfilePage() {
       {realStats && (
         <div className="px-4 pt-3">
           <div className="rounded-2xl bg-white/90 border border-orange-100 p-4">
-            <div className="text-xs font-bold text-orange-600 mb-3">📊 实战统计（最近{realStats.games}场）</div>
+            <div className="text-xs font-bold text-orange-600 mb-3">📊 实战统计（{realStats.games}场有个人数据）</div>
             <div className="grid grid-cols-4 gap-2 text-center">
               {([
                 { label: "得分", value: realStats.pts, color: "text-orange-600" },
