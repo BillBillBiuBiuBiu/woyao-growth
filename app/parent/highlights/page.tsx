@@ -535,10 +535,99 @@ async function cutVideoNative(
   });
 }
 
+// ── Concatenate clips from multiple videos via shared canvas ──────────────────
+async function cutMultiVideoNative(
+  clips: Array<{ el: HTMLVideoElement; start: number; end: number; dur: number }>,
+  bgmBlob: Blob | null,
+  onProgress?: (p: number) => void,
+): Promise<Blob> {
+  const totalDur = clips.reduce((s, c) => s + c.dur, 0);
+  const first = clips[0].el;
+  const w = Math.min(720, first.videoWidth || 720);
+  const h = Math.round(w * (first.videoHeight || 1280) / Math.max(first.videoWidth || 720, 1));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d")!;
+
+  const captureFn = (canvas as any).captureStream ?? (canvas as any).mozCaptureStream;
+  if (typeof captureFn !== "function") throw new Error("当前浏览器不支持视频录制");
+  const canvasStream: MediaStream = captureFn.call(canvas, 30);
+
+  const mimeType = ["video/mp4;codecs=avc1,mp4a.40.2","video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"]
+    .find(t => { try { return MediaRecorder.isTypeSupported(t); } catch { return false; } }) ?? "video/webm";
+  const safeType = mimeType.split(";")[0] || "video/webm";
+
+  const audioTracks: MediaStreamTrack[] = [];
+  let audioCtx: AudioContext | null = null;
+  if (bgmBlob) {
+    try {
+      const AC = window.AudioContext || (window as any).webkitAudioContext;
+      if (AC) {
+        audioCtx = new AC() as AudioContext;
+        const dest = audioCtx.createMediaStreamDestination();
+        const buf = await audioCtx.decodeAudioData(await bgmBlob.arrayBuffer());
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf; src.loop = true;
+        const gain = audioCtx.createGain(); gain.gain.value = 0.8;
+        src.connect(gain); gain.connect(dest);
+        src.start(0); src.stop(audioCtx.currentTime + totalDur + 2);
+        audioTracks.push(...dest.stream.getAudioTracks());
+      }
+    } catch {}
+  }
+
+  const stream = new MediaStream([...canvasStream.getVideoTracks(), ...audioTracks]);
+  const recorder = new MediaRecorder(stream, { mimeType: safeType });
+  const chunks: Blob[] = [];
+  recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+  return new Promise<Blob>((resolve, reject) => {
+    recorder.onstop = () => { audioCtx?.close().catch(()=>{}); resolve(new Blob(chunks, { type: recorder.mimeType || safeType })); };
+    recorder.onerror = () => reject(new Error("视频录制失败，请重试"));
+    recorder.start(200);
+
+    let clipIdx = 0;
+    let elapsed = 0;
+    let stopped = false;
+    let activeEl: HTMLVideoElement | null = null;
+    let drawActive = true;
+
+    const drawLoop = () => { if (!stopped) { if (activeEl) ctx.drawImage(activeEl, 0, 0, w, h); requestAnimationFrame(drawLoop); } };
+    requestAnimationFrame(drawLoop);
+
+    const runNextClip = async () => {
+      if (clipIdx >= clips.length || stopped) {
+        drawActive = false; stopped = true;
+        try { recorder.stop(); } catch {}
+        return;
+      }
+      const clip = clips[clipIdx++];
+      activeEl = clip.el;
+      await seekVideoTo(clip.el, clip.start).catch(() => {});
+      clip.el.play().catch(() => {});
+      const clipStart = Date.now();
+      const tick = setInterval(() => {
+        const e = (Date.now() - clipStart) / 1000;
+        onProgress?.((elapsed + e) / totalDur);
+        if (e >= clip.dur + 0.5 || clip.el.currentTime >= clip.end) {
+          clearInterval(tick);
+          clip.el.pause();
+          elapsed += clip.dur;
+          runNextClip();
+        }
+      }, 200);
+      setTimeout(() => { clearInterval(tick); clip.el.pause(); elapsed += clip.dur; runNextClip(); }, (clip.dur + 2) * 1000);
+    };
+
+    runNextClip().catch(reject);
+  });
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function HighlightsPage() {
-  const [videoFile,    setVideoFile]    = useState<File|null>(null);
+  const [videoFiles,   setVideoFiles]   = useState<File[]>([]);
   const [photoFile,    setPhotoFile]    = useState<File|null>(null);
   const [photoPreview, setPhotoPreview] = useState<string|null>(null);
   const [stage,        setStage]        = useState<Stage>("idle");
@@ -568,6 +657,8 @@ export default function HighlightsPage() {
   const [gamesWithEvents, setGamesWithEvents] = useState(0);
   const [expandedClipId, setExpandedClipId] = useState<string|null>(null);
   const [nameInputVal,   setNameInputVal]   = useState("");
+  const [cloudUrl,       setCloudUrl]       = useState<string|null>(null);
+  const [cloudUploading, setCloudUploading] = useState(false);
   const analyzeStartRef = useRef<number>(0);
 
   // Detect WeChat WKWebView once on mount — used to show long-press save hint
@@ -635,10 +726,15 @@ export default function HighlightsPage() {
   }, [stage]);
 
   const handleVideoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    setVideoFile(f);
+    const files = Array.from(e.target.files || []).slice(0, 5);
+    if (!files.length) return;
+    setVideoFiles(prev => {
+      const combined = [...prev, ...files].slice(0, 5);
+      return combined;
+    });
     setVideoDuration(0);
+    // probe duration of first new file
+    const f = files[0];
     const url = URL.createObjectURL(f);
     const vid = document.createElement("video");
     vid.preload = "metadata";
@@ -655,26 +751,31 @@ export default function HighlightsPage() {
   }, []);
 
   const run = useCallback(async () => {
-    if (!videoFile || !photoFile) return;
+    if (!videoFiles.length || !photoFile) return;
     setError(null); setResultUrl(null); setResultBlob(null);
     setFeedbackRating(0); setFeedbackTypes([]); setFeedbackDone(false);
 
-    const videoObjectUrl = URL.createObjectURL(videoFile);
-    const videoEl = document.createElement("video");
-    videoEl.src = videoObjectUrl;
-    videoEl.muted = true;
-    videoEl.playsInline = true;
-    videoEl.preload = "auto";
+    const videoObjectUrls = videoFiles.map(f => URL.createObjectURL(f));
+    const videoEls = videoObjectUrls.map(url => {
+      const el = document.createElement("video");
+      el.src = url; el.muted = true; el.playsInline = true; el.preload = "auto";
+      return el;
+    });
+    const videoEl = videoEls[0]; // primary element for compat
+    const videoFile = videoFiles[0]; // for filename
 
     try {
-      // ── 1. Load video metadata (native, any file size) ────────────────────
+      // ── 1. Load all video metadata ────────────────────────────────────────
       setStage("loading"); setProgress(3);
-      setStatusMsg("读取视频信息…");
-      const duration: number = await new Promise((res, rej) => {
-        const t = setTimeout(() => rej(new Error("视频加载超时，请检查文件格式")), 30_000);
-        videoEl.onloadedmetadata = () => { clearTimeout(t); res(videoEl.duration); };
-        videoEl.onerror = () => { clearTimeout(t); rej(new Error("无法加载视频，请检查文件格式（支持 MP4、MOV）")); };
-      });
+      setStatusMsg(`读取 ${videoEls.length} 个视频信息…`);
+      const durations: number[] = await Promise.all(videoEls.map((el, i) =>
+        new Promise<number>((res, rej) => {
+          const t = setTimeout(() => rej(new Error(`视频${i+1}加载超时`)), 30_000);
+          el.onloadedmetadata = () => { clearTimeout(t); res(el.duration); };
+          el.onerror = () => { clearTimeout(t); rej(new Error(`无法加载视频${i+1}`)); };
+        })
+      ));
+      const duration = durations[0];
       if (!isFinite(duration) || duration <= 0) throw new Error("无法读取视频时长，请检查文件格式");
       setProgress(12);
 
@@ -693,62 +794,68 @@ export default function HighlightsPage() {
       const sig = extractPlayerSignature(img);
       setProgress(18);
 
-      // ── 3. Frame analysis via native seek — no WASM, no file size limit ──
+      // ── 3. Frame analysis for all videos ─────────────────────────────────
       setStage("analyzing");
       const analysisCv = document.createElement("canvas");
       analysisCv.width = SAMPLE_W;
-      const sampleH = videoEl.videoWidth > 0
-        ? Math.round(SAMPLE_W * videoEl.videoHeight / videoEl.videoWidth)
-        : Math.round(SAMPLE_W * 9 / 16);
-      analysisCv.height = sampleH;
-      const ctx = analysisCv.getContext("2d", { willReadFrequently: true })!;
 
-      const scores: FrameScore[] = [];
-      let prevFrame: ImageData | null = null;
-      const track: TrackState = { x: -1, y: -1, vx: 0, vy: 0, framesSinceSeen: 999, lastExitX: -1 };
-      const MAX_ANALYSIS_FRAMES = 90;
-      const totalFrames = Math.min(Math.ceil(duration * SAMPLE_FPS), MAX_ANALYSIS_FRAMES);
-      const frameInterval = duration / Math.max(totalFrames, 1);
-      const analysisDeadline = Date.now() + 180_000;
+      interface ClipSpec { el: HTMLVideoElement; start: number; end: number; dur: number }
+      const clipSpecs: ClipSpec[] = [];
+      const perClipTargetDur = Math.max(3, Math.round(HIGHLIGHT_S / videoEls.length));
 
-      for (let i = 0; i < totalFrames; i++) {
-        if (Date.now() > analysisDeadline) { setStatusMsg(`分析超时，已处理 ${i}/${totalFrames} 帧，继续生成…`); break; }
-        const t = i * frameInterval;
-        setStatusMsg(`分析帧 ${i + 1} / ${totalFrames}（${Math.round(t)}s）`);
-        try {
-          await seekVideoTo(videoEl, t);
-          ctx.drawImage(videoEl, 0, 0, SAMPLE_W, sampleH);
-          const currFrame = ctx.getImageData(0, 0, SAMPLE_W, sampleH);
-          const fs = analyzeFrame(currFrame, prevFrame, sig, SAMPLE_W, sampleH, track);
-          fs.t = t;
-          scores.push(fs);
-          if (fs.hasPlayer) {
-            if (track.x >= 0) {
-              track.vx = track.vx * 0.5 + (fs.playerX - track.x) * 0.5;
-              track.vy = track.vy * 0.5 + (fs.playerY - track.y) * 0.5;
-            }
-            const nearEdge = fs.playerX < SAMPLE_W * 0.08 || fs.playerX > SAMPLE_W * 0.92
-                          || fs.playerY < sampleH * 0.08  || fs.playerY > sampleH * 0.92;
-            if (nearEdge) track.lastExitX = fs.playerX;
-            track.x = fs.playerX; track.y = fs.playerY; track.framesSinceSeen = 0;
-          } else { track.framesSinceSeen++; }
-          prevFrame = currFrame;
-        } catch { continue; }
-        setProgress(18 + Math.round(((i + 1) / totalFrames) * 52));
+      for (let vi = 0; vi < videoEls.length; vi++) {
+        const el = videoEls[vi];
+        const vDur = durations[vi];
+        const sH = el.videoWidth > 0
+          ? Math.round(SAMPLE_W * el.videoHeight / el.videoWidth)
+          : Math.round(SAMPLE_W * 9 / 16);
+        analysisCv.height = sH;
+        const ctx = analysisCv.getContext("2d", { willReadFrequently: true })!;
+
+        const scores: FrameScore[] = [];
+        let prevFrame: ImageData | null = null;
+        const track: TrackState = { x: -1, y: -1, vx: 0, vy: 0, framesSinceSeen: 999, lastExitX: -1 };
+        const framesPerVideo = Math.min(Math.ceil(vDur * SAMPLE_FPS), Math.ceil(90 / videoEls.length));
+        const fInterval = vDur / Math.max(framesPerVideo, 1);
+        const deadline = Date.now() + 120_000;
+
+        for (let i = 0; i < framesPerVideo; i++) {
+          if (Date.now() > deadline) break;
+          const t = i * fInterval;
+          setStatusMsg(`分析视频${vi+1}/${videoEls.length} 第${i+1}/${framesPerVideo}帧`);
+          try {
+            await seekVideoTo(el, t);
+            ctx.drawImage(el, 0, 0, SAMPLE_W, sH);
+            const currFrame = ctx.getImageData(0, 0, SAMPLE_W, sH);
+            const fs = analyzeFrame(currFrame, prevFrame, sig, SAMPLE_W, sH, track);
+            fs.t = t; scores.push(fs);
+            if (fs.hasPlayer) {
+              if (track.x >= 0) { track.vx = track.vx*0.5+(fs.playerX-track.x)*0.5; track.vy = track.vy*0.5+(fs.playerY-track.y)*0.5; }
+              const nearEdge = fs.playerX < SAMPLE_W*0.08||fs.playerX > SAMPLE_W*0.92||fs.playerY < sH*0.08||fs.playerY > sH*0.92;
+              if (nearEdge) track.lastExitX = fs.playerX;
+              track.x = fs.playerX; track.y = fs.playerY; track.framesSinceSeen = 0;
+            } else { track.framesSinceSeen++; }
+            prevFrame = currFrame;
+          } catch { continue; }
+          const globalProgress = (vi * framesPerVideo + i + 1) / (videoEls.length * framesPerVideo);
+          setProgress(18 + Math.round(globalProgress * 52));
+        }
+
+        for (let i = 1; i < scores.length - 1; i++) {
+          if (scores[i].hasPlayer && !scores[i-1].hasPlayer && !scores[i+1].hasPlayer) {
+            scores[i] = { ...scores[i], hasPlayer: false, score: scores[i].score * 0.05 };
+          }
+        }
+
+        const [s, e] = findBestWindow(scores, vDur, bgmEnabled ? 120 : 0);
+        const clampedEnd = Math.min(e, s + perClipTargetDur);
+        clipSpecs.push({ el, start: s, end: clampedEnd, dur: clampedEnd - s });
       }
 
       setProgress(70); setStatusMsg("计算精彩片段…");
-
-      // Temporal noise suppression
-      for (let i = 1; i < scores.length - 1; i++) {
-        if (scores[i].hasPlayer && !scores[i - 1].hasPlayer && !scores[i + 1].hasPlayer) {
-          scores[i] = { ...scores[i], hasPlayer: false, score: scores[i].score * 0.05 };
-        }
-      }
-
-      // ── 4. Find highlight window ──────────────────────────────────────────
-      const [clipStart, clipEnd] = findBestWindow(scores, duration, bgmEnabled ? 120 : 0);
-      const clipDuration = clipEnd - clipStart;
+      const clipDuration = clipSpecs.reduce((sum, c) => sum + c.dur, 0);
+      const clipStart = clipSpecs[0].start;
+      const clipEnd = clipSpecs[0].end;
 
       // ── 5. Load BGM ───────────────────────────────────────────────────────
       setStage("cutting");
@@ -772,12 +879,13 @@ export default function HighlightsPage() {
         }
       }
 
-      // ── 6. Cut clip natively via MediaRecorder ────────────────────────────
-      setStatusMsg(`精彩片段 ${clipStart.toFixed(1)}s–${clipEnd.toFixed(1)}s，实时剪辑中（约 ${Math.round(clipDuration)} 秒）…`);
-      const outputBlob = await cutVideoNative(
-        videoEl, clipStart, clipEnd, bgmBlob,
-        (p) => setProgress(70 + Math.round(p * 28)),
-      );
+      // ── 6. Cut clips natively via MediaRecorder ───────────────────────────
+      setStatusMsg(`剪辑 ${clipSpecs.length} 段精彩，合计约 ${Math.round(clipDuration)} 秒…`);
+      const outputBlob = clipSpecs.length === 1
+        ? await cutVideoNative(clipSpecs[0].el, clipSpecs[0].start, clipSpecs[0].end, bgmBlob,
+            (p) => setProgress(70 + Math.round(p * 28)))
+        : await cutMultiVideoNative(clipSpecs, bgmBlob,
+            (p) => setProgress(70 + Math.round(p * 28)));
 
       setProgress(100);
       setResultBlob(outputBlob);
@@ -801,13 +909,13 @@ export default function HighlightsPage() {
       setError((e instanceof Error ? e.message : String(e)) || "未知错误，请重试");
       setStage("error");
     } finally {
-      videoEl.pause(); videoEl.src = "";
-      URL.revokeObjectURL(videoObjectUrl);
+      videoEls.forEach(el => { el.pause(); el.src = ""; });
+      videoObjectUrls.forEach(url => URL.revokeObjectURL(url));
     }
-  }, [videoFile, photoFile, bgmEnabled, bgmUserFile]);
+  }, [videoFiles, photoFile, bgmEnabled, bgmUserFile]);
 
   const isProcessing = ["loading","extracting_color","analyzing","cutting"].includes(stage);
-  const canRun = !!(videoFile && photoFile && !isProcessing);
+  const canRun = !!(videoFiles.length > 0 && photoFile && !isProcessing);
 
   return (
     <>
@@ -946,22 +1054,32 @@ export default function HighlightsPage() {
       {(stage !== "idle" || hlMode === "upload") && (<>
       <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
         <div className="text-sm font-bold text-gray-700 mb-3">① 上传比赛视频</div>
-        <label className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 cursor-pointer transition-colors ${videoFile?"border-orange-300 bg-orange-50":"border-gray-200 bg-gray-50"}`}>
-          <input type="file" accept="video/*" className="hidden" onChange={handleVideoChange} disabled={isProcessing}/>
-          {videoFile?(
+        <label className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 cursor-pointer transition-colors ${videoFiles.length>0?"border-orange-300 bg-orange-50":"border-gray-200 bg-gray-50"}`}>
+          <input type="file" accept="video/*" multiple className="hidden" onChange={handleVideoChange} disabled={isProcessing}/>
+          {videoFiles.length>0?(
             <><span className="text-2xl">✅</span>
-            <span className="text-sm font-medium text-orange-700 text-center break-all">{videoFile.name}</span>
-            <span className="text-xs text-gray-400">{(videoFile.size/1024/1024).toFixed(1)} MB · 点击更换</span></>
+            <span className="text-sm font-medium text-orange-700 text-center">{videoFiles.length}段视频 · 点击添加更多</span>
+            <span className="text-xs text-gray-400">最多5段，各取最精彩片段合并</span></>
           ):(
             <><span className="text-3xl text-gray-300">🎥</span>
-            <span className="text-sm text-gray-500">点击选择视频文件</span>
-            <span className="text-xs text-gray-400">支持 MP4、MOV 等格式</span></>
+            <span className="text-sm text-gray-500">点击选择视频（可多选）</span>
+            <span className="text-xs text-gray-400">支持 MP4、MOV · 最多5段合并</span></>
           )}
         </label>
-        {videoFile && videoFile.size > 500 * 1024 * 1024 && (
-          <div className="mt-2 flex items-start gap-1 text-xs text-amber-600">
-            <span className="shrink-0">⏱</span>
-            <span>视频较大（{(videoFile.size/1024/1024).toFixed(0)}MB），帧分析预计 2–4 分钟，请在 WiFi 下耐心等待</span>
+        {videoFiles.length > 0 && (
+          <div className="mt-2 flex flex-col gap-1">
+            {videoFiles.map((f, i) => (
+              <div key={i} className="flex items-center justify-between text-xs bg-orange-50 rounded-lg px-3 py-1.5">
+                <span className="text-orange-700 font-medium truncate flex-1 mr-2">{f.name}</span>
+                <span className="text-gray-400 shrink-0 mr-2">{(f.size/1024/1024).toFixed(1)}MB</span>
+                <button
+                  type="button"
+                  onClick={() => setVideoFiles(prev => prev.filter((_, j) => j !== i))}
+                  disabled={isProcessing}
+                  className="text-gray-400 font-bold active:opacity-60"
+                >✕</button>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -1026,7 +1144,7 @@ export default function HighlightsPage() {
 
       <button onClick={run} disabled={!canRun}
         className={`w-full py-4 rounded-2xl text-base font-bold shadow transition-all ${canRun?"bg-orange-500 text-white active:scale-95":"bg-gray-100 text-gray-400 cursor-not-allowed"}`}>
-        {isProcessing ? "处理中…" : (videoFile && photoFile) ? "✨ 开始生成集锦" : (videoFile && !photoFile) ? "还差球员照片 ②" : (!videoFile && photoFile) ? "还差比赛视频 ①" : "✨ 开始生成集锦"}
+        {isProcessing ? "处理中…" : (videoFiles.length>0 && photoFile) ? `✨ 开始生成集锦${videoFiles.length>1?`（${videoFiles.length}段合并）`:""}` : (videoFiles.length>0 && !photoFile) ? "还差球员照片 ②" : (videoFiles.length===0 && photoFile) ? "还差比赛视频 ①" : "✨ 开始生成集锦"}
       </button>
 
       {isProcessing&&(
@@ -1086,12 +1204,54 @@ export default function HighlightsPage() {
           )}
           {isWeChat && (
             <div className="rounded-xl p-3 flex flex-col gap-2" style={{background:"linear-gradient(135deg,#fff3e0,#ffe0b2)",border:"1px solid rgba(249,115,22,0.25)"}}>
-              <div className="text-xs font-black text-orange-800">📱 如何保存并分享这个视频</div>
-              <div className="flex flex-col gap-1.5 text-xs text-orange-700">
-                <div className="flex items-start gap-1.5"><span className="font-black shrink-0 text-orange-500">①</span><span>长按上方视频播放区域</span></div>
-                <div className="flex items-start gap-1.5"><span className="font-black shrink-0 text-orange-500">②</span><span>点击「保存视频」存到相册</span></div>
-                <div className="flex items-start gap-1.5"><span className="font-black shrink-0 text-orange-500">③</span><span>打开相册 → 选视频 → 发给家人群</span></div>
-              </div>
+              <div className="text-xs font-black text-orange-800">📱 微信内保存视频</div>
+              {cloudUrl ? (
+                <>
+                  <div className="text-xs text-green-700 font-medium">✅ 已上传到云端，可直接分享链接</div>
+                  <button
+                    onClick={async () => {
+                      try { await (navigator as any).share?.({ url: cloudUrl, title: "精彩集锦" }); return; } catch {}
+                      try { await navigator.clipboard.writeText(cloudUrl); setClipShareUrl("copied:" + cloudUrl); } catch { setClipShareUrl(cloudUrl); }
+                    }}
+                    className="w-full py-2.5 rounded-xl text-xs font-bold text-white text-center"
+                    style={{ background: "linear-gradient(135deg,#f7971e,#ffd200)" }}
+                  >
+                    📤 分享云端链接给家人
+                  </button>
+                  <div className="text-xs text-gray-500 text-center">对方点链接即可观看并保存</div>
+                </>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-1.5 text-xs text-orange-700">
+                    <div className="flex items-start gap-1.5"><span className="font-black shrink-0 text-orange-500">方法①</span><span>长按上方视频 → 点「保存视频」→ 存到相册</span></div>
+                    <div className="flex items-start gap-1.5"><span className="font-black shrink-0 text-orange-500">方法②</span><span>上传到云端，生成可分享链接（推荐）</span></div>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (!resultBlob) return;
+                      setCloudUploading(true);
+                      try {
+                        const fd = new FormData();
+                        fd.append("video", resultBlob, resultName);
+                        fd.append("name", resultName);
+                        const resp = await fetch("/api/highlights/upload", { method: "POST", body: fd });
+                        const json = await resp.json();
+                        if (json.url) setCloudUrl(json.url);
+                        else throw new Error(json.error || "upload failed");
+                      } catch (e) {
+                        alert("上传失败，请检查网络后重试");
+                      } finally {
+                        setCloudUploading(false);
+                      }
+                    }}
+                    disabled={cloudUploading}
+                    className={`w-full py-2.5 rounded-xl text-xs font-bold text-center transition-opacity ${cloudUploading ? "opacity-50 cursor-not-allowed" : "active:opacity-70"}`}
+                    style={{ background: "linear-gradient(135deg,#f7971e,#ffd200)", color: "#7C3810" }}
+                  >
+                    {cloudUploading ? "☁️ 上传中…" : "☁️ 上传云端 · 生成分享链接"}
+                  </button>
+                </>
+              )}
             </div>
           )}
           <button
@@ -1113,7 +1273,7 @@ export default function HighlightsPage() {
           >
             {captionCopied ? "✅ 配文已复制！粘贴到微信群" : "📋 复制配文 · 发给家人群"}
           </button>
-          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setResultDur(0);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);}} className="text-sm text-gray-400 text-center">重新制作</button>
+          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setResultDur(0);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);setCloudUrl(null);setCloudUploading(false);}} className="text-sm text-gray-400 text-center">重新制作</button>
           <Link href="/parent/profile/stu-001" className="w-full py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-bold text-center block active:scale-95 transition-transform">
             {childName ? `📊 查看${childName}的成长档案` : "📊 查看孩子的成长档案"}
           </Link>
@@ -1140,7 +1300,7 @@ export default function HighlightsPage() {
               )}
               {feedbackRating>0&&(
                 <button onClick={()=>{
-                  const entry={time:new Date().toISOString(),rating:feedbackRating,types:feedbackTypes,video:videoFile?.name||""};
+                  const entry={time:new Date().toISOString(),rating:feedbackRating,types:feedbackTypes,video:videoFiles[0]?.name||""};
                   try{const prev=JSON.parse(localStorage.getItem("highlight_feedback")||"[]");localStorage.setItem("highlight_feedback",JSON.stringify([...prev,entry]));localStorage.setItem("tester_badge","true");}catch{}
                   setFeedbackDone(true);
                 }} className="self-start px-3 py-1.5 rounded-lg bg-orange-100 text-orange-700 text-xs font-bold">

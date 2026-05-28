@@ -142,11 +142,21 @@ export default function StudentProfilePage() {
           </div>
         </div>
 
-        <div className="mt-3 text-center">
+        <div className="mt-3 text-center flex flex-col items-center gap-1.5">
           <div className="inline-block border border-white/30 text-white/70 text-xs px-4 py-0.5 rounded-full tracking-widest">
-            PAB篮球馆 · 专项技能测评报告 · {(() => {
-              const days = Math.floor((Date.now() - new Date(a.date).getTime()) / 86400000);
-              return days === 0 ? "今天" : days <= 30 ? `${days}天前` : a.date;
+            {(() => {
+              const d = new Date(a.date);
+              const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+              const dateStr = `${d.getMonth()+1}月${d.getDate()}日`;
+              const rel = days === 0 ? "今天" : days <= 30 ? `${days}天前` : "";
+              return `PAB篮球馆 · 测评于 ${dateStr}${rel ? ` · ${rel}` : ""}`;
+            })()}
+          </div>
+          <div className="text-amber-300 text-xs opacity-80">
+            {(() => {
+              const next = new Date(a.date);
+              next.setMonth(next.getMonth() + 1);
+              return `📅 建议下次测评：${next.getMonth()+1}月${next.getDate()}日`;
             })()}
           </div>
         </div>
@@ -195,11 +205,23 @@ export default function StudentProfilePage() {
 
       {/* ── SKILL ITEMS TABLE ───────────────────────── */}
       <div className="px-4 py-3">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-1">
           <div className="text-white text-xs font-bold px-2.5 py-0.5 rounded" style={{ background: "#F97316" }}>
             {a.level} 项目单
           </div>
           <div className="text-xs text-orange-700 font-medium">测评项目得分（0–4分）</div>
+        </div>
+        <div className="flex gap-1.5 mb-2 flex-wrap">
+          {[
+            { range: "0", label: "待起步", color: "bg-gray-100 text-gray-500" },
+            { range: "1", label: "初步掌握", color: "bg-orange-50 text-orange-400" },
+            { range: "2–3", label: "扎实进阶", color: "bg-orange-100 text-orange-600" },
+            { range: "4", label: "优秀达标", color: "bg-orange-500 text-white" },
+          ].map(s => (
+            <span key={s.range} className={`text-xs px-2 py-0.5 rounded-full font-medium ${s.color}`}>
+              {s.range}分 {s.label}
+            </span>
+          ))}
         </div>
         <div className="rounded-2xl overflow-hidden border border-orange-100 bg-white/90">
           {a.skillItems.map((item, i) => (
@@ -264,6 +286,23 @@ export default function StudentProfilePage() {
               </div>
               {/* Body */}
               <div className="bg-white px-3 py-2.5">
+                {/* Progress toward target */}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${Math.min(100, Math.round(d.score / d.achieveScore * 100))}%`,
+                        background: d.score >= d.achieveScore ? "#22c55e" : d.score >= d.achieveScore * 0.8 ? "#f97316" : "#fbbf24",
+                      }}
+                    />
+                  </div>
+                  <span className="text-xs font-bold shrink-0" style={{
+                    color: d.score >= d.achieveScore ? "#16a34a" : d.score >= d.achieveScore * 0.8 ? "#ea580c" : "#d97706"
+                  }}>
+                    {d.score >= d.achieveScore ? "已达标 ✓" : `${Math.round(d.score / d.achieveScore * 100)}%`}
+                  </span>
+                </div>
                 <p className="text-xs text-gray-700 leading-relaxed">{d.desc}</p>
                 <div className="mt-1.5 flex items-start gap-1.5">
                   <span className="text-xs font-bold text-orange-500 shrink-0 mt-0.5">下阶段目标：</span>
