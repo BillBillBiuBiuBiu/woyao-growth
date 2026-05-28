@@ -411,7 +411,7 @@ export default function ReportDetailPage() {
               : "bg-white border border-orange-200 text-orange-600 hover:bg-orange-50"
           }`}
         >
-          {liked ? "已回应 ❤️ 谢谢教练！" : "❤️ 谢谢教练，看到啦！"}
+          {liked ? `已回应 ❤️ 谢谢${coachName || "教练"}！` : `❤️ 谢谢${coachName || "教练"}，看到啦！`}
         </button>
       </div>
 
