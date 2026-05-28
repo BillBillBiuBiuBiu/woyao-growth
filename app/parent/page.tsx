@@ -448,7 +448,7 @@ export default function ParentHome() {
                     >
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-medium text-gray-800 truncate">{formatClipLabel(clip.label)}</div>
-                        <div className="text-xs text-gray-400">{fmtRelDate(clip.created_at)}</div>
+                        <div className="text-xs text-gray-400">{fmtRelDate(clip.created_at)}{(() => { const g = recentGames.find(x => x.id === clip.game_id); return g ? ` · ${g.homeScore}-${g.awayScore} ${g.awayTeam}` : ""; })()}</div>
                       </div>
                       <span className="shrink-0 ml-3 text-orange-400 text-sm" style={{ display: "inline-block", transform: isExpanded ? "rotate(180deg)" : "none" }}>▾</span>
                     </button>
