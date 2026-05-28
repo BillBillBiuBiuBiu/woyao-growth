@@ -370,7 +370,7 @@ export default function StudentProfilePage() {
                       {h.badge && (
                         <span className="text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">🏆 {h.badge}</span>
                       )}
-                      {h.clipCount > 0 && <span className="text-xs text-gray-400">{h.clipCount}个打点</span>}
+                      {h.clipCount > 0 && <span className="text-xs text-gray-400">{h.type === "match" ? "📹 有集锦素材" : `${h.clipCount}个片段`}</span>}
                     </div>
                   </div>
                   {h.hasReport && <div className="text-orange-300 text-xl self-center">›</div>}
