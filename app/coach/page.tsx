@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { mockPendingReports, mockReports, mockStudents } from "@/lib/mock-data";
+import { mockPendingReports, mockReports } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
 import { apiLoadGames, apiLoadClips } from "@/lib/gc-api";
 import type { GameRecord } from "@/lib/gc-teams";
@@ -12,26 +12,21 @@ const statusMap: Record<string, { label: string; color: string }> = {
   draft: { label: "草稿", color: "bg-slate-100 text-slate-600" },
 };
 
-const planCount = {
-  basic: mockStudents.filter((s) => s.plan === "basic").length,
-  vip: mockStudents.filter((s) => s.plan === "vip").length,
-  supervip: mockStudents.filter((s) => s.plan === "supervip").length,
-};
-
-const pendingCount = mockReports.filter((r) => r.status === "draft" || r.status === "generated").length;
-const sentCount = mockReports.filter((r) => r.status === "sent").length;
-
 function fmtGameDate(ts: string): string {
   const d = new Date(ts);
   return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
 }
 
+interface DbStudent { id: string; plan: "basic" | "vip" | "supervip" }
+
 export default function CoachPage() {
-  const pending = mockPendingReports.filter((r) => r.status === "awaiting_review");
   const [recentGames, setRecentGames] = useState<GameRecord[]>([]);
   const [clipCounts, setClipCounts] = useState<Record<string, number>>({});
+  const [dbStudents, setDbStudents] = useState<DbStudent[]>([]);
+  const pending = mockPendingReports.filter((r) => r.status === "awaiting_review");
 
   useEffect(() => {
+    fetch("/api/coach/students").then((r) => r.ok ? r.json() : []).then(setDbStudents).catch(() => {});
     apiLoadGames().then((games) => {
       const slice = games.slice(0, 10);
       setRecentGames(slice);
@@ -57,7 +52,7 @@ export default function CoachPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
         {[
-          { label: "学员总数", value: mockStudents.length, color: "text-gray-700" },
+          { label: "学员总数", value: dbStudents.length, color: "text-gray-700" },
           { label: "场次记录", value: recentGames.length, color: "text-orange-600" },
           { label: "打点总数", value: recentGames.reduce((s, g) => s + g.eventCount, 0), color: "text-blue-600" },
           { label: "切片总数", value: Object.values(clipCounts).reduce((s, n) => s + n, 0), color: "text-green-600" },
@@ -74,15 +69,15 @@ export default function CoachPage() {
         <h2 className="text-sm font-semibold mb-3">学员套餐分布</h2>
         <div className="flex gap-3">
           <div className="flex-1 bg-slate-50 rounded-xl p-3 text-center">
-            <div className="text-lg font-bold text-slate-600">{planCount.basic}</div>
+            <div className="text-lg font-bold text-slate-600">{dbStudents.filter(s=>s.plan==="basic").length}</div>
             <div className="text-xs text-muted-foreground">基础版</div>
           </div>
           <div className="flex-1 bg-blue-50 rounded-xl p-3 text-center">
-            <div className="text-lg font-bold text-blue-600">{planCount.vip}</div>
+            <div className="text-lg font-bold text-blue-600">{dbStudents.filter(s=>s.plan==="vip").length}</div>
             <div className="text-xs text-muted-foreground">专业版</div>
           </div>
           <div className="flex-1 bg-amber-50 rounded-xl p-3 text-center">
-            <div className="text-lg font-bold text-amber-600">{planCount.supervip}</div>
+            <div className="text-lg font-bold text-amber-600">{dbStudents.filter(s=>s.plan==="supervip").length}</div>
             <div className="text-xs text-muted-foreground">高阶版</div>
           </div>
         </div>
