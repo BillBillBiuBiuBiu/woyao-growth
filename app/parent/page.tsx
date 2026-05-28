@@ -435,7 +435,7 @@ export default function ParentHome() {
             <div className="flex flex-col gap-2">
               {visibleClips.length === 0 ? (
                 <Link href="/parent/highlights" className="block">
-                  <div className="text-center py-3 text-sm text-gray-400">本场暂无{childName}的切片 · <span className="text-orange-500 font-medium">去生成 ›</span></div>
+                  <div className="text-center py-3 text-sm text-gray-400">最近比赛暂无{childName}的切片 · <span className="text-orange-500 font-medium">去生成 ›</span></div>
                 </Link>
               ) : visibleClips.slice(0, 3).map((clip) => {
                 const isExpanded = homeExpandedClipId === clip.id;
