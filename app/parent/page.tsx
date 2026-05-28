@@ -766,7 +766,8 @@ export default function ParentHome() {
                         const nd = new Date();
                         const daysDiff = Math.floor((new Date(nd.getFullYear(),nd.getMonth(),nd.getDate()).getTime() - new Date(gd.getFullYear(),gd.getMonth(),gd.getDate()).getTime()) / 86400000);
                         const praise = daysDiff === 0 ? "今天打得棒！" : daysDiff === 1 ? "昨天打得棒！" : "那场打得棒！";
-                        msg = `🏀 ${childName}${praise}\n${fmtMatchDate(selectedGame.ts)} · ${selectedGame.homeTeam} ${selectedGame.homeScore}—${selectedGame.awayScore} ${selectedGame.awayTeam}\n个人数据：${childStat.pts}分 ${childStat.reb}板 ${childStat.ast}助 ${childStat.stl}断\n来自「我耀成长」`;
+                        const clipHint = gameDetail.clips.length > 0 ? `\n📹 ${gameDetail.clips.length}个精彩集锦 · 打开「我耀」首页查看` : "";
+                        msg = `🏀 ${childName}${praise}\n${fmtMatchDate(selectedGame.ts)} · ${selectedGame.homeTeam} ${selectedGame.homeScore}—${selectedGame.awayScore} ${selectedGame.awayTeam}\n个人数据：${childStat.pts}分 ${childStat.reb}板 ${childStat.ast}助 ${childStat.stl}断${clipHint}\n来自「我耀成长」`;
                       } else {
                         const top = gameDetail.stats.slice(0, 5);
                         const lines = top.map(p => `  #${p.num || "-"} ${p.name}：${p.pts}分 ${p.reb}板 ${p.ast}助 ${p.stl}断`).join("\n");
