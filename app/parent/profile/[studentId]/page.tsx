@@ -41,7 +41,7 @@ export default function StudentProfilePage() {
     try {
       setHasTesterBadge(localStorage.getItem("tester_badge") === "true");
     } catch {}
-    apiLoadGames().then(g => setRecentGames(g.slice(0, 8))).catch(() => {});
+    apiLoadGames().then(g => setRecentGames(g.slice(0, 10))).catch(() => {});
   }, []);
 
   useEffect(() => {
