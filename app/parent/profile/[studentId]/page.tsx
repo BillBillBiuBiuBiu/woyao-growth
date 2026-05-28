@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { apiLoadGames, apiLoadEvents } from "@/lib/gc-api";
+import type { GameRecord } from "@/lib/gc-teams";
 
 const GrowthRadarDual = dynamic(() => import("@/components/GrowthCharts").then((m) => m.GrowthRadarDual), { ssr: false });
 const GrowthCurve = dynamic(() => import("@/components/GrowthCharts").then((m) => m.GrowthCurve), { ssr: false });
@@ -34,11 +35,13 @@ export default function StudentProfilePage() {
   const [childName] = useState(() => { try { return localStorage.getItem("child_name") || ""; } catch { return ""; } });
   const [timelineFilter, setTimelineFilter] = useState<"all"|"match"|"training">("all");
   const [realStats, setRealStats] = useState<{ pts: number; reb: number; ast: number; stl: number; games: number } | null>(null);
+  const [recentGames, setRecentGames] = useState<GameRecord[]>([]);
 
   useEffect(() => {
     try {
       setHasTesterBadge(localStorage.getItem("tester_badge") === "true");
     } catch {}
+    apiLoadGames().then(g => setRecentGames(g.slice(0, 8))).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -309,39 +312,75 @@ export default function StudentProfilePage() {
           </div>
         </div>
         <div className="flex flex-col gap-2">
-          {mockGrowthHistory.filter((h) =>
-            timelineFilter === "all" || (timelineFilter === "match" ? h.type === "match" : h.type !== "match")
-          ).map((h) => {
-            const hasReport = mockReports.some((r) => r.id === h.id && r.studentId === "stu-001");
-            const inner = (
-              <div className={`flex gap-3 p-3 rounded-2xl bg-white/90 border border-orange-100 shadow-sm ${hasReport ? "hover:bg-orange-50 transition-colors cursor-pointer" : ""}`}>
-                <div className="flex flex-col items-center pt-1">
-                  <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${h.type === "match" ? "bg-orange-400" : "bg-amber-400"}`} />
-                  <div className="flex-1 w-px bg-orange-100 mt-1" />
-                </div>
-                <div className="flex-1 min-w-0 pb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400">{h.date}</span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${h.type === "match" ? "bg-orange-100 text-orange-600" : "bg-amber-100 text-amber-700"}`}>
-                      {h.type === "match" ? "比赛" : "训练"}
-                    </span>
+          {(() => {
+            const realMatchItems = recentGames.map(g => {
+              const d = new Date(g.ts);
+              const won = g.homeScore > g.awayScore;
+              const lost = g.homeScore < g.awayScore;
+              return {
+                id: `real-${g.id}`,
+                date: `${d.getMonth() + 1}/${d.getDate()}`,
+                type: "match" as const,
+                title: `${g.homeTeam} ${g.homeScore} — ${g.awayScore} ${g.awayTeam}`,
+                summary: won ? "⚡ 胜利！" : lost ? "继续加油，下场更强" : "平局，势均力敌",
+                clipCount: g.eventCount,
+                badge: won ? "胜利" : undefined as string | undefined,
+                hasReport: false,
+                reportHref: undefined as string | undefined,
+              };
+            });
+            const mockTrainingItems = mockGrowthHistory
+              .filter(h => h.type !== "match")
+              .map(h => ({
+                id: h.id, date: h.date, type: h.type as "match" | "training",
+                title: h.title, summary: h.summary, clipCount: h.clipCount,
+                badge: h.badge as string | undefined,
+                hasReport: mockReports.some(r => r.id === h.id && r.studentId === "stu-001"),
+                reportHref: `/parent/reports/${h.id}`,
+              }));
+            const fallbackMockMatches = recentGames.length === 0
+              ? mockGrowthHistory.filter(h => h.type === "match").map(h => ({
+                  id: h.id, date: h.date, type: "match" as const,
+                  title: h.title, summary: h.summary, clipCount: h.clipCount,
+                  badge: h.badge as string | undefined, hasReport: false,
+                  reportHref: undefined as string | undefined,
+                }))
+              : [];
+            const allItems = [
+              ...(timelineFilter !== "training" ? [...realMatchItems, ...fallbackMockMatches] : []),
+              ...(timelineFilter !== "match" ? mockTrainingItems : []),
+            ];
+            return allItems.map(h => {
+              const inner = (
+                <div className={`flex gap-3 p-3 rounded-2xl bg-white/90 border border-orange-100 shadow-sm ${h.hasReport ? "hover:bg-orange-50 transition-colors cursor-pointer" : ""}`}>
+                  <div className="flex flex-col items-center pt-1">
+                    <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${h.type === "match" ? "bg-orange-400" : "bg-amber-400"}`} />
+                    <div className="flex-1 w-px bg-orange-100 mt-1" />
                   </div>
-                  <div className="text-sm font-bold text-gray-800 mt-0.5 truncate">{h.title}</div>
-                  <div className="text-xs text-gray-500 mt-0.5 leading-snug">{h.summary}</div>
-                  <div className="flex items-center gap-3 mt-1.5">
-                    {h.badge && (
-                      <span className="text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">🏆 {h.badge}</span>
-                    )}
-                    <span className="text-xs text-gray-400">{h.clipCount}个片段</span>
+                  <div className="flex-1 min-w-0 pb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400">{h.date}</span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${h.type === "match" ? "bg-orange-100 text-orange-600" : "bg-amber-100 text-amber-700"}`}>
+                        {h.type === "match" ? "比赛" : "训练"}
+                      </span>
+                    </div>
+                    <div className="text-sm font-bold text-gray-800 mt-0.5 truncate">{h.title}</div>
+                    <div className="text-xs text-gray-500 mt-0.5 leading-snug">{h.summary}</div>
+                    <div className="flex items-center gap-3 mt-1.5">
+                      {h.badge && (
+                        <span className="text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">🏆 {h.badge}</span>
+                      )}
+                      {h.clipCount > 0 && <span className="text-xs text-gray-400">{h.clipCount}个打点</span>}
+                    </div>
                   </div>
+                  {h.hasReport && <div className="text-orange-300 text-xl self-center">›</div>}
                 </div>
-                {hasReport && <div className="text-orange-300 text-xl self-center">›</div>}
-              </div>
-            );
-            return hasReport
-              ? <Link key={h.id} href={`/parent/reports/${h.id}`}>{inner}</Link>
-              : <div key={h.id}>{inner}</div>;
-          })}
+              );
+              return h.hasReport && h.reportHref
+                ? <Link key={h.id} href={h.reportHref}>{inner}</Link>
+                : <div key={h.id}>{inner}</div>;
+            });
+          })()}
         </div>
       </div>
 
