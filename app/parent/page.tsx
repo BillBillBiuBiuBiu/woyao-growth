@@ -439,12 +439,21 @@ export default function ParentHome() {
         })() : latestClips !== null ? (
           <Link href="/parent/highlights">
             <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-center justify-between active:scale-98 transition-transform">
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="text-xs text-orange-500 mb-1 font-medium">🎞️ 集锦切片</div>
-                <div className="font-bold text-gray-800">暂无集锦</div>
-                <div className="text-xs text-gray-400 mt-1">上传比赛视频，AI帮你剪精彩片段</div>
+                {myLastHighlight ? (
+                  <>
+                    <div className="font-bold text-gray-800 truncate">{myLastHighlight.name.replace(/\.mp4$/i, "")}</div>
+                    <div className="text-xs text-gray-400 mt-1">{myLastHighlight.dur}秒 · 已生成 → 去查看</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="font-bold text-gray-800">暂无集锦</div>
+                    <div className="text-xs text-gray-400 mt-1">上传比赛视频，AI帮你剪精彩片段</div>
+                  </>
+                )}
               </div>
-              <div className="text-sm font-bold text-orange-500 ml-2">🎬 生成 ›</div>
+              <div className="text-sm font-bold text-orange-500 ml-2 shrink-0">🎬 {myLastHighlight ? "查看 ›" : "生成 ›"}</div>
             </div>
           </Link>
         ) : null}
