@@ -387,6 +387,15 @@ export default function ParentHome() {
               ))}
             </div>
           </div>
+        ) : latestClips === null ? (
+          <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4">
+            <div className="text-sm font-bold text-gray-800 mb-3">🎞️ 集锦切片</div>
+            <div className="flex flex-col gap-2">
+              {[0, 1].map(i => (
+                <div key={i} className="h-12 rounded-xl bg-orange-50 animate-pulse" />
+              ))}
+            </div>
+          </div>
         ) : latestClips && latestClips.length > 0 ? (() => {
           const visibleClips = childName
             ? latestClips.filter(c => !c.label || c.label.split(",").map((s: string) => s.trim()).includes(childName))
