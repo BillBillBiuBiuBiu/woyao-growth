@@ -952,7 +952,7 @@ export default function HighlightsPage() {
           <button
             className={`flex-1 rounded-xl py-2 text-sm font-bold transition-colors ${hlMode === "from_clips" ? "bg-white text-orange-600 shadow-sm" : "text-gray-500"}`}
             onClick={() => { setHlMode("from_clips"); if (playerClips === null) loadPlayerClips(); }}
-          >🏀 从打点记录</button>
+          >🏀 已标注集锦</button>
         </div>
       )}
 
@@ -961,7 +961,7 @@ export default function HighlightsPage() {
         <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div className="text-sm font-bold text-gray-700">
-              {childName ? `${childName}的打点集锦` : "打点集锦"}
+              {childName ? `${childName}的比赛集锦` : "比赛集锦"}
             </div>
             <button
               onClick={() => { setPlayerClips(null); loadPlayerClips(); }}
@@ -1002,11 +1002,11 @@ export default function HighlightsPage() {
               ) : (
                 <>
                   <div className="text-2xl mb-2">🏀</div>
-                  <div>暂无「{childName}」的打点集锦</div>
+                  <div>暂无「{childName}」的比赛集锦</div>
                   {gamesWithEvents > 0 ? (
                     <div className="flex flex-col items-center gap-2 mt-2">
                       <div className="text-xs leading-relaxed text-orange-400">
-                        检测到 {gamesWithEvents} 场有打点记录的比赛<br />
+                        检测到 {gamesWithEvents} 场比赛有精彩记录<br />
                         上传比赛视频，AI 自动生成精彩集锦
                       </div>
                       <button
@@ -1017,7 +1017,7 @@ export default function HighlightsPage() {
                       </button>
                     </div>
                   ) : (
-                    <div className="text-xs mt-1">教练完成「视频打点集锦」后，集锦会出现在这里</div>
+                    <div className="text-xs mt-1">教练生成集锦后，内容会出现在这里</div>
                   )}
                 </>
               )}
