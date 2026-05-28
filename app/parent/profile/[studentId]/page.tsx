@@ -439,8 +439,8 @@ export default function StudentProfilePage() {
             style={{ background: "linear-gradient(135deg, #F97316 0%, #FBBF24 100%)" }}
           >
             <div>
-              <div className="text-white font-black text-base leading-tight">🎬 生成本场集锦</div>
-              <div className="text-orange-100 text-xs mt-0.5">上传视频 · AI剪辑精彩片段</div>
+              <div className="text-white font-black text-base leading-tight">🎬 生成{childName ? `${childName}的` : ""}精彩集锦</div>
+              <div className="text-orange-100 text-xs mt-0.5">上传比赛视频 · AI自动剪辑精彩片段</div>
             </div>
             <div className="text-white text-2xl font-black">›</div>
           </div>
