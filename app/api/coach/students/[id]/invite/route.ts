@@ -11,7 +11,8 @@ export async function POST(
 ) {
   const { id: studentId } = await params;
   const supabase = await createSupabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   // Verify student belongs to this coach
