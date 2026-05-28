@@ -179,6 +179,7 @@ export default function ParentHome() {
               {recentGames.length > 0 ? (
                 <>
                   <div className="text-sm text-gray-500">🏀 真实成长记录</div>
+                  {coachName && <div className="text-xs text-gray-400">教练：{coachName}</div>}
                   {(() => {
                     const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
                     const l = recentGames.filter(g => g.homeScore < g.awayScore).length;
