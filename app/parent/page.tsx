@@ -72,6 +72,7 @@ export default function ParentHome() {
   const [nameInput, setNameInput] = useState("");
   const [myLastHighlight, setMyLastHighlight] = useState<HighlightRecord | null>(null);
   const [heroChildStat, setHeroChildStat] = useState<{ pts: number; reb: number; ast: number; stl: number } | null>(null);
+  const [heroGame, setHeroGame] = useState<GameRecord | null>(null);
   const [latestClips, setLatestClips] = useState<ClipRecord[] | null>(null);
 
   useEffect(() => {
@@ -89,19 +90,19 @@ export default function ParentHome() {
       const merged = arrays.flat().sort((a, b) => b.created_at.localeCompare(a.created_at));
       setLatestClips(merged);
     }).catch(() => setLatestClips([]));
-    if (!childName) { setHeroChildStat(null); return; }
+    if (!childName) { setHeroChildStat(null); setHeroGame(null); return; }
     // Try up to 3 recent games to find one with the child's data
     const candidates = recentGames.slice(0, 3).filter(g => g.eventCount > 0);
-    if (candidates.length === 0) { setHeroChildStat(null); return; }
+    if (candidates.length === 0) { setHeroChildStat(null); setHeroGame(null); return; }
     (async () => {
       for (const game of candidates) {
         try {
           const evts = await apiLoadEvents(game.id);
           const s = computeStats(evts).find(p => p.name === childName);
-          if (s) { setHeroChildStat({ pts: s.pts, reb: s.reb, ast: s.ast, stl: s.stl }); return; }
+          if (s) { setHeroChildStat({ pts: s.pts, reb: s.reb, ast: s.ast, stl: s.stl }); setHeroGame(game); return; }
         } catch {}
       }
-      setHeroChildStat(null);
+      setHeroChildStat(null); setHeroGame(null);
     })();
   }, [childName, recentGames]);
 
@@ -214,15 +215,17 @@ export default function ParentHome() {
                 heroChildStat ? (
                   <button
                     className="w-full text-left active:opacity-75 transition-opacity"
-                    onClick={() => openGameDetail(recentGames[0])}
+                    onClick={() => heroGame && openGameDetail(heroGame)}
                   >
                     <div className="text-xs font-medium text-yellow-100 mb-1">⭐ {childName}的最新表现 ›</div>
                     <div className="text-base font-bold leading-snug" style={{ color: "#7C3810" }}>
                       {heroChildStat.pts}分{heroChildStat.reb > 0 ? ` · ${heroChildStat.reb}板` : ""}{heroChildStat.ast > 0 ? ` · ${heroChildStat.ast}助` : ""}{heroChildStat.stl > 0 ? ` · ${heroChildStat.stl}断` : ""}
                     </div>
-                    <div className="text-xs text-yellow-200 mt-0.5">
-                      {recentGames[0].homeTeam} {recentGames[0].homeScore}—{recentGames[0].awayScore} {recentGames[0].awayTeam} · {fmtRelDate(recentGames[0].ts)}
-                    </div>
+                    {heroGame && (
+                      <div className="text-xs text-yellow-200 mt-0.5">
+                        {heroGame.homeTeam} {heroGame.homeScore}—{heroGame.awayScore} {heroGame.awayTeam} · {fmtRelDate(heroGame.ts)}
+                      </div>
+                    )}
                   </button>
                 ) : (
                   <>
