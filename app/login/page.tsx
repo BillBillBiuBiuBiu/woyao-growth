@@ -92,6 +92,17 @@ export default function LoginPage() {
         <p className="text-center text-xs text-muted-foreground mt-8">
           Demo学员：蒋皓博 · PAB U10提高班 · 教练王教练
         </p>
+        <button
+          onClick={() => {
+            try {
+              ["child_name","child_plan","coach_name","my_highlights","highlight_feedback","tester_badge"].forEach(k => localStorage.removeItem(k));
+            } catch {}
+            window.location.reload();
+          }}
+          className="block mx-auto mt-4 text-xs text-muted-foreground opacity-30 hover:opacity-60 transition-opacity"
+        >
+          重置演示
+        </button>
       </div>
     </div>
   );
