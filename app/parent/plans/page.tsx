@@ -37,11 +37,14 @@ const featureRows: { key: string; label: string }[] = [
   { key: "personalizedPlan",    label: "个性化训练计划" },
 ];
 
+const PLAN_ORDER: Record<string, number> = { basic: 0, vip: 1, supervip: 2 };
+
 export default function ParentPlansPage() {
   const [expandedPlan, setExpandedPlan] = useState<PlanType | null>(null);
   const [currentPlan] = useState<PlanType | null>(() => {
     try { return (localStorage.getItem("child_plan") as PlanType) || null; } catch { return null; }
   });
+  const currentOrder = currentPlan != null ? (PLAN_ORDER[currentPlan] ?? -1) : -1;
 
   return (
     <div
@@ -57,6 +60,7 @@ export default function ParentPlansPage() {
       <div className="flex flex-col gap-4 px-4">
         {plans.map((plan) => {
           const isCurrent = plan.type === currentPlan;
+          const isBelow = (PLAN_ORDER[plan.type] ?? 0) < currentOrder;
           return (
             <div
               key={plan.type}
@@ -99,7 +103,17 @@ export default function ParentPlansPage() {
               </div>
 
               {/* CTA */}
-              {!isCurrent && (
+              {isCurrent && (
+                <div className="mt-4 w-full rounded-full py-2.5 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-200 text-center">
+                  当前已开通
+                </div>
+              )}
+              {isBelow && !isCurrent && (
+                <div className="mt-4 w-full rounded-full py-2.5 text-xs text-gray-400 bg-gray-50 border border-gray-200 text-center">
+                  已超越此版本
+                </div>
+              )}
+              {!isCurrent && !isBelow && (
                 <>
                   <button
                     onClick={() => setExpandedPlan(expandedPlan === plan.type ? null : plan.type)}
@@ -117,11 +131,6 @@ export default function ParentPlansPage() {
                     </div>
                   )}
                 </>
-              )}
-              {isCurrent && (
-                <div className="mt-4 w-full rounded-full py-2.5 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-200 text-center">
-                  当前已开通
-                </div>
               )}
             </div>
           );
