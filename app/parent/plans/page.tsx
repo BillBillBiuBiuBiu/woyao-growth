@@ -55,6 +55,11 @@ export default function ParentPlansPage() {
         <h1 className="text-2xl font-black mb-1" style={{ color: "#7C3810" }}>版本权益</h1>
         <p className="text-sm text-orange-600">选择最适合孩子的成长记录方案</p>
       </div>
+      {currentPlan === null && (
+        <div className="mx-4 mb-2 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-xs text-orange-700 leading-relaxed">
+          你的孩子正在体验阶段 · 如需开通正式套餐，请联系班级教练办理
+        </div>
+      )}
 
       {/* Plan cards */}
       <div className="flex flex-col gap-4 px-4">
