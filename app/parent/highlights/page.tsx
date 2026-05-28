@@ -512,15 +512,18 @@ export default function HighlightsPage() {
   // Detect WeChat WKWebView once on mount — used to show long-press save hint
   useEffect(() => {
     setIsWeChat(/MicroMessenger/i.test(navigator.userAgent));
-    let name = "";
-    try { const n = localStorage.getItem("child_name"); if (n) { setChildName(n); name = n; } } catch {}
+    try { const n = localStorage.getItem("child_name"); if (n) setChildName(n); } catch {}
     try { const h = JSON.parse(localStorage.getItem("my_highlights") || "[]"); if (Array.isArray(h)) setMyHighlights(h.slice(0, 5)); } catch {}
-    // Auto-switch to clips tab when navigated from home clips section
+  }, []);
+
+  // Auto-switch to clips tab when ?tab=clips is in URL (navigated from home)
+  useEffect(() => {
     if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tab") === "clips") {
       setHlMode("from_clips");
-      if (name) loadPlayerClips(name);
+      loadPlayerClips();
     }
-  }, [loadPlayerClips]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load player-specific clips from Supabase when switching to from_clips mode.
   // Accepts an optional nameOverride to avoid stale-closure issues when called
