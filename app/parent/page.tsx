@@ -214,7 +214,7 @@ export default function ParentHome() {
                       {recentGames[0].homeTeam} {recentGames[0].homeScore} — {recentGames[0].awayScore} {recentGames[0].awayTeam}
                     </div>
                     <div className="text-xs text-yellow-200 mt-0.5">
-                      {fmtRelDate(recentGames[0].ts)}{recentGames[0].eventCount > 0 ? ` · ${recentGames[0].eventCount}个打点` : ""}
+                      {fmtRelDate(recentGames[0].ts)}
                     </div>
                   </>
                 )
@@ -340,7 +340,7 @@ export default function ParentHome() {
                     {won ? "胜" : lost ? "负" : "平"}
                   </span>
                   {game.eventCount > 0
-                    ? <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-medium">{game.eventCount}个打点</span>
+                    ? <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-medium">📹 有集锦素材</span>
                     : null
                   }
                   <span className="text-orange-300">›</span>
