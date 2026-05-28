@@ -56,6 +56,16 @@ function formatClipLabel(label: string): string {
   return parts.length > 1 ? parts.join(" · ") + "的集锦" : label;
 }
 
+function fmtClipDate(ts: string): string {
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime() - new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()) / 86400000);
+  if (diff === 0) return "今天";
+  if (diff === 1) return "昨天";
+  if (diff <= 7) return `${diff}天前`;
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
 // ── Color utilities ───────────────────────────────────────────────────────────
 
 function colorDist(r: number, g: number, b: number, ref: RGBColor) {
@@ -1043,7 +1053,7 @@ export default function HighlightsPage() {
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-gray-800">{formatClipLabel(clip.label)}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">{new Date(clip.created_at).toLocaleDateString("zh-CN")} · {clip.gameLabel}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{fmtClipDate(clip.created_at)} · {clip.gameLabel}</div>
                 </div>
                 <button
                   onClick={() => setExpandedClipId(expandedClipId === clip.id ? null : clip.id)}
