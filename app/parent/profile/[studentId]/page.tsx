@@ -305,6 +305,36 @@ export default function StudentProfilePage() {
               </div>
             </div>
           )}
+          {recentGames.length >= 5 && (
+            <div className="flex items-center gap-2 p-3 rounded-2xl bg-white/90 border border-green-100 shadow-sm">
+              <span className="text-2xl">⚔️</span>
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-gray-800 truncate">赛场老将</div>
+                <div className="text-xs text-green-600">参与 {recentGames.length} 场实战</div>
+              </div>
+            </div>
+          )}
+          {recentGames.length >= 3 && (() => {
+            const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
+            return w / recentGames.length >= 0.7 ? (
+              <div className="flex items-center gap-2 p-3 rounded-2xl bg-white/90 border border-yellow-100 shadow-sm">
+                <span className="text-2xl">🏆</span>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-gray-800 truncate">常胜将军</div>
+                  <div className="text-xs text-yellow-600">胜率 {Math.round(w / recentGames.length * 100)}%</div>
+                </div>
+              </div>
+            ) : null;
+          })()}
+          {realStats && realStats.games >= 2 && realStats.pts / realStats.games >= 8 && (
+            <div className="flex items-center gap-2 p-3 rounded-2xl bg-white/90 border border-orange-100 shadow-sm">
+              <span className="text-2xl">🔥</span>
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-gray-800 truncate">得分手</div>
+                <div className="text-xs text-orange-500">场均 {(realStats.pts / realStats.games).toFixed(1)} 分</div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
