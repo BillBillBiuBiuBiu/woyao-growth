@@ -369,9 +369,9 @@ export default function StudentProfilePage() {
                 date: `${d.getMonth() + 1}/${d.getDate()}`,
                 type: "match" as const,
                 title: `${g.homeTeam} ${g.homeScore} — ${g.awayScore} ${g.awayTeam}`,
-                summary: won ? "⚡ 胜利！" : lost ? "继续加油，下场更强" : "平局，势均力敌",
+                summary: won ? (g.homeScore - g.awayScore >= 8 ? "⚡ 大胜！" : "⚡ 胜利！") : lost ? "继续加油，下场更强" : "平局，势均力敌",
                 clipCount: g.eventCount,
-                badge: won ? "胜利" : undefined as string | undefined,
+                badge: won ? (g.homeScore - g.awayScore >= 8 ? "大胜" : "胜利") : undefined as string | undefined,
                 hasReport: false,
                 reportHref: undefined as string | undefined,
               };
