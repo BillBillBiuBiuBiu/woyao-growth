@@ -530,7 +530,7 @@ export default function HighlightsPage() {
       const results = await Promise.all(
         games.slice(0, 15).map(async (game) => {
           const clips = await apiLoadClips(game.id);
-          const gameLabel = `${game.homeTeam} vs ${game.awayTeam}`;
+          const gameLabel = `${game.homeScore}-${game.awayScore} ${game.awayTeam}`;
           return clips
             .filter(clip => clip.label.split(",").map(s => s.trim()).includes(name))
             .map(clip => ({ ...clip, gameLabel, gameId: game.id }));
