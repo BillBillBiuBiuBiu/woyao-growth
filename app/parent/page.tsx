@@ -197,7 +197,7 @@ export default function ParentHome() {
                     const rate = Math.round(w / recentGames.length * 100);
                     return (
                       <div className="text-xs bg-orange-100 text-orange-700 rounded-full px-2.5 py-1 inline-block mt-1.5 font-medium">
-                        {recentGames.length}场 · <span className="text-green-700">{w}胜</span>{l > 0 ? <span className="text-gray-500 ml-0.5">{l}负</span> : null} · <span className="text-orange-600">胜率{rate}%</span>
+                        {recentGames.length}场 <span className="text-green-700">{w}胜</span>{l > 0 ? <span className="text-gray-500 ml-0.5">{l}负</span> : null} <span className="text-orange-600">{rate}%</span>
                       </div>
                     );
                   })()}
