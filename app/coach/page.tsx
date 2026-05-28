@@ -61,7 +61,7 @@ export default function CoachPage() {
           const perGame = recentGames.length > 0 ? (totalEvents / recentGames.length).toFixed(1) : null;
           return [
             { label: "学员总数", value: mockStudents.length, sub: null, color: "text-gray-700" },
-            { label: "场次记录", value: recentGames.length, sub: null, color: "text-orange-600" },
+            { label: "场次记录", value: recentGames.length, sub: recentGames.length > 0 ? `${recentGames.filter(g => g.eventCount > 0).length}场有打点` : null, color: "text-orange-600" },
             { label: "打点总数", value: totalEvents, sub: perGame ? `场均 ${perGame}` : null, color: "text-blue-600" },
             { label: "切片总数", value: Object.values(clipCounts).reduce((s, n) => s + n, 0), sub: null, color: "text-green-600" },
           ].map((s) => (
