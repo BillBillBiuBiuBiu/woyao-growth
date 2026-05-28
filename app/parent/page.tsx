@@ -610,7 +610,7 @@ export default function ParentHome() {
                 {/* Clips — shown first so parents see them immediately */}
                 {gameDetail.clips.length > 0 && (
                   <div className="mb-4">
-                    <div className="text-xs font-bold text-gray-500 mb-2 px-1">集锦切片</div>
+                    <div className="text-xs font-bold text-gray-500 mb-2 px-1">🎬 集锦切片（{gameDetail.clips.length}个精彩时刻）</div>
                     <div className="flex flex-col gap-2">
                       {gameDetail.clips.map((clip) => {
                         const expanded = expandedClipId === clip.id;
