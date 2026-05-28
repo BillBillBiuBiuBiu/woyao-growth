@@ -70,15 +70,29 @@ export default function ParentHome() {
   const [coachName, setCoachName] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
+  const [dbStudentName, setDbStudentName] = useState<string | null>(null);
   const [myLastHighlight, setMyLastHighlight] = useState<HighlightRecord | null>(null);
   const [heroChildStat, setHeroChildStat] = useState<{ pts: number; reb: number; ast: number; stl: number } | null>(null);
   const [latestClips, setLatestClips] = useState<ClipRecord[] | null>(null);
 
   useEffect(() => {
     apiLoadGames().then((games) => { if (games.length > 0) setRecentGames(games.slice(0, 10)); }).catch(() => {});
-    try { const n = localStorage.getItem("child_name"); if (n) setChildName(n); } catch {}
     try { const cn = localStorage.getItem("coach_name"); if (cn) setCoachName(cn); } catch {}
     try { const hl = JSON.parse(localStorage.getItem("my_highlights") || "[]"); if (hl.length > 0) setMyLastHighlight(hl[0]); } catch {}
+    // Load linked student from DB; fall back to localStorage if not linked yet
+    fetch("/api/parent/students")
+      .then((r) => r.ok ? r.json() : [])
+      .then((students: { name: string }[]) => {
+        if (students.length > 0) {
+          setDbStudentName(students[0].name);
+          setChildName(students[0].name);
+        } else {
+          try { const n = localStorage.getItem("child_name"); if (n) setChildName(n); } catch {}
+        }
+      })
+      .catch(() => {
+        try { const n = localStorage.getItem("child_name"); if (n) setChildName(n); } catch {}
+      });
   }, []);
 
   useEffect(() => {
@@ -148,12 +162,12 @@ export default function ParentHome() {
         ) : (
           <button
             className="flex items-center gap-1.5 mb-1 group"
-            onClick={() => { setNameInput(childName); setEditingName(true); }}
+            onClick={() => { if (!dbStudentName) { setNameInput(childName); setEditingName(true); } }}
           >
             <h1 className="text-2xl font-black text-center leading-tight" style={{ color: "#7C3810" }}>
               {childName ? `${childName}的篮球成长日记` : <span className="text-lg text-orange-400">点击设置孩子名字 ✏️</span>}
             </h1>
-            {childName && <span className="text-base text-orange-400/60 group-active:text-orange-400 transition-colors">✏️</span>}
+            {childName && !dbStudentName && <span className="text-base text-orange-400/60 group-active:text-orange-400 transition-colors">✏️</span>}
           </button>
         )}
         <div className="flex items-center gap-1.5 bg-white/70 border border-orange-200 rounded-full px-3 py-1 mb-4">
