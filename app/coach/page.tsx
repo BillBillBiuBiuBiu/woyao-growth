@@ -56,17 +56,22 @@ export default function CoachPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
-        {[
-          { label: "学员总数", value: mockStudents.length, color: "text-gray-700" },
-          { label: "场次记录", value: recentGames.length, color: "text-orange-600" },
-          { label: "打点总数", value: recentGames.reduce((s, g) => s + g.eventCount, 0), color: "text-blue-600" },
-          { label: "切片总数", value: Object.values(clipCounts).reduce((s, n) => s + n, 0), color: "text-green-600" },
-        ].map((s) => (
-          <div key={s.label} className="rounded-xl border border-border bg-white p-3 text-center">
-            <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
-            <div className="text-xs text-muted-foreground mt-0.5">{s.label}</div>
-          </div>
-        ))}
+        {(() => {
+          const totalEvents = recentGames.reduce((s, g) => s + g.eventCount, 0);
+          const perGame = recentGames.length > 0 ? (totalEvents / recentGames.length).toFixed(1) : null;
+          return [
+            { label: "学员总数", value: mockStudents.length, sub: null, color: "text-gray-700" },
+            { label: "场次记录", value: recentGames.length, sub: null, color: "text-orange-600" },
+            { label: "打点总数", value: totalEvents, sub: perGame ? `场均 ${perGame}` : null, color: "text-blue-600" },
+            { label: "切片总数", value: Object.values(clipCounts).reduce((s, n) => s + n, 0), sub: null, color: "text-green-600" },
+          ].map((s) => (
+            <div key={s.label} className="rounded-xl border border-border bg-white p-3 text-center">
+              <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{s.label}</div>
+              {s.sub && <div className="text-xs text-gray-400 mt-0.5">{s.sub}</div>}
+            </div>
+          ));
+        })()}
       </div>
 
       {/* Plan breakdown */}
