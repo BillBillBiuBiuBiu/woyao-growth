@@ -431,8 +431,8 @@ export default function ReportDetailPage() {
             className="w-full rounded-full py-4 text-sm font-bold text-white shadow-md active:scale-95 transition-transform"
             style={{ background: "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)" }}
           >
-            <div>🎬 生成本场集锦</div>
-            <div className="text-xs font-normal opacity-80 mt-0.5">AI剪辑本场精彩片段</div>
+            <div>🎬 生成{childName ? `${childName}的` : ""}精彩集锦</div>
+            <div className="text-xs font-normal opacity-80 mt-0.5">AI自动剪辑精彩片段</div>
           </button>
         </Link>
       </div>
