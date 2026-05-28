@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getJob } from "@/lib/encode-jobs";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(

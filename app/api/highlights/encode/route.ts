@@ -10,87 +10,100 @@ import { existsSync } from "fs";
 
 const execAsync = promisify(exec);
 
+// Force Node.js runtime — Edge runtime has no child_process / fs
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
-  // Validate service role key is configured
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return NextResponse.json({ error: "Server not configured" }, { status: 500 });
+    return NextResponse.json({ error: "SUPABASE_SERVICE_ROLE_KEY not set on server" }, { status: 500 });
+  }
+
+  // IMPORTANT: read body BEFORE returning the response.
+  // After NextResponse is sent, req.body may be closed.
+  let formData: FormData;
+  try {
+    formData = await req.formData();
+  } catch (e) {
+    return NextResponse.json({ error: `Failed to parse upload: ${(e as Error).message}` }, { status: 400 });
+  }
+
+  // Basic validation
+  const hasVideo = formData.has("video_0") || formData.has("video");
+  if (!hasVideo) {
+    return NextResponse.json({ error: "No video file found in request" }, { status: 400 });
   }
 
   const jobId = randomUUID();
   createJob(jobId);
 
-  // Fire-and-forget: process in background, client polls via SSE
-  processVideo(req, jobId).catch(err => {
+  // Fire-and-forget: formData is already in memory, safe to use after response
+  processVideo(formData, jobId).catch(err => {
     updateJob(jobId, { status: "error", error: err.message || "处理失败", stage: "出错" });
   });
 
   return NextResponse.json({ jobId });
 }
 
-async function processVideo(req: NextRequest, jobId: string): Promise<void> {
+async function processVideo(formData: FormData, jobId: string): Promise<void> {
   const paths: string[] = [];
 
   try {
-    // ── 1. Parse FormData ────────────────────────────────────────────────────
-    updateJob(jobId, { status: "uploading", progress: 5, stage: "接收视频文件…" });
-    const formData = await req.formData();
+    updateJob(jobId, { status: "uploading", progress: 5, stage: "解析文件…" });
 
     const name = ((formData.get("name") as string) || "highlight.mp4")
       .replace(/[^a-z0-9._\-]/gi, "_");
     const bgm = formData.get("bgm") === "true";
 
-    // Collect video files + their clip windows (support multi-segment)
+    // Collect video files + clip windows
     interface Segment { file: File; start: number; end: number }
     const segments: Segment[] = [];
+
+    // Support both video_0/video_1... and legacy single "video" field
     let idx = 0;
     while (true) {
-      const f = formData.get(`video_${idx}`) as File | null;
+      const f = (formData.get(`video_${idx}`) ?? (idx === 0 ? formData.get("video") : null)) as File | null;
       if (!f) break;
       const s = parseFloat((formData.get(`start_${idx}`) as string) || "0");
       const e = parseFloat((formData.get(`end_${idx}`) as string) || String(s + 15));
-      segments.push({ file: f, start: s, end: e });
+      segments.push({ file: f, start: Math.max(0, s), end: Math.max(s + 1, e) });
       idx++;
     }
-    if (segments.length === 0) throw new Error("No video file received");
+    if (segments.length === 0) throw new Error("No video segments found");
 
     const totalBytes = segments.reduce((s, seg) => s + seg.file.size, 0);
-    if (totalBytes > 500 * 1024 * 1024) throw new Error("视频文件超过500MB，请先压缩");
+    if (totalBytes > 500 * 1024 * 1024) throw new Error("视频超过500MB，请先压缩后重试");
 
-    // ── 2. Write input files to /tmp ─────────────────────────────────────────
-    updateJob(jobId, { progress: 20, stage: "写入临时文件…" });
+    // Write each input file to /tmp
+    updateJob(jobId, { progress: 15, stage: `写入 ${segments.length} 个视频文件…` });
     const segPaths: Array<{ input: string; clip: string; start: number; dur: number }> = [];
 
     for (let i = 0; i < segments.length; i++) {
       const seg = segments[i];
       const inputPath = join("/tmp", `hl_in_${jobId}_${i}.mp4`);
       paths.push(inputPath);
-      await writeFile(inputPath, Buffer.from(await seg.file.arrayBuffer()));
-      segPaths.push({ input: inputPath, clip: join("/tmp", `hl_seg_${jobId}_${i}.mp4`), start: seg.start, dur: seg.end - seg.start });
-      paths.push(segPaths[i].clip);
+      const buf = Buffer.from(await seg.file.arrayBuffer());
+      await writeFile(inputPath, buf);
+      const clipPath = join("/tmp", `hl_seg_${jobId}_${i}.mp4`);
+      paths.push(clipPath);
+      segPaths.push({ input: inputPath, clip: clipPath, start: seg.start, dur: seg.end - seg.start });
     }
 
-    // ── 3. FFmpeg: cut each segment ──────────────────────────────────────────
+    // Cut each segment with FFmpeg
     updateJob(jobId, { status: "encoding", progress: 30, stage: "FFmpeg 剪辑中…" });
     for (let i = 0; i < segPaths.length; i++) {
       const { input, clip, start, dur } = segPaths[i];
-      const cmd = [
-        "ffmpeg -y",
-        `-ss ${start.toFixed(3)} -i "${input}"`,
-        `-t ${dur.toFixed(3)}`,
-        `-c:v libx264 -preset fast -crf 23`,
-        `-vf "scale=720:-2"`,
-        `-c:a aac -b:a 128k`,
-        `-movflags +faststart`,
-        `"${clip}"`,
-      ].join(" ");
-      await execAsync(cmd, { timeout: 90_000 });
+      await execAsync(
+        `ffmpeg -y -ss ${start.toFixed(3)} -i "${input}" -t ${dur.toFixed(3)} ` +
+        `-c:v libx264 -preset fast -crf 23 -vf "scale=720:-2" ` +
+        `-c:a aac -b:a 128k -movflags +faststart "${clip}"`,
+        { timeout: 90_000 }
+      );
       updateJob(jobId, { progress: 30 + Math.round(((i + 1) / segPaths.length) * 35) });
     }
 
-    // ── 4. Concat if multiple segments; optionally add BGM ───────────────────
+    // Concat and optionally add BGM
     const outputPath = join("/tmp", `hl_out_${jobId}.mp4`);
     paths.push(outputPath);
     const bgmPath = join(process.cwd(), "public", "bgm", "sport1.mp3");
@@ -99,51 +112,40 @@ async function processVideo(req: NextRequest, jobId: string): Promise<void> {
     updateJob(jobId, { progress: 65, stage: hasBgm ? "混入BGM…" : "合并片段…" });
 
     if (segPaths.length === 1 && !hasBgm) {
-      // Single segment, no BGM — just rename
-      const { exec: execCb } = await import("child_process");
-      await new Promise<void>((res, rej) => execCb(`cp "${segPaths[0].clip}" "${outputPath}"`, e => e ? rej(e) : res()));
+      await execAsync(`cp "${segPaths[0].clip}" "${outputPath}"`);
     } else if (segPaths.length === 1 && hasBgm) {
-      const cmd = [
-        "ffmpeg -y",
-        `-i "${segPaths[0].clip}" -i "${bgmPath}"`,
-        `-filter_complex "[0:a][1:a]amix=inputs=2:weights=0.3|0.7[fa]"`,
-        `-map 0:v -map "[fa]"`,
-        `-c:v copy -c:a aac -b:a 128k -shortest`,
-        `-movflags +faststart`,
-        `"${outputPath}"`,
-      ].join(" ");
-      await execAsync(cmd, { timeout: 60_000 });
-    } else {
-      // Concat list file
-      const listPath = join("/tmp", `hl_list_${jobId}.txt`);
-      paths.push(listPath);
-      const listContent = segPaths.map(s => `file '${s.clip}'`).join("\n");
-      await writeFile(listPath, listContent);
-
-      const concatClip = join("/tmp", `hl_concat_${jobId}.mp4`);
-      paths.push(concatClip);
       await execAsync(
-        `ffmpeg -y -f concat -safe 0 -i "${listPath}" -c copy "${concatClip}"`,
+        `ffmpeg -y -i "${segPaths[0].clip}" -i "${bgmPath}" ` +
+        `-filter_complex "[0:a][1:a]amix=inputs=2:weights=0.3|0.7[fa]" ` +
+        `-map 0:v -map "[fa]" -c:v copy -c:a aac -b:a 128k -shortest ` +
+        `-movflags +faststart "${outputPath}"`,
         { timeout: 60_000 }
       );
-
+    } else {
+      // Multiple segments: concat first
+      const listPath = join("/tmp", `hl_list_${jobId}.txt`);
+      paths.push(listPath);
+      await writeFile(listPath, segPaths.map(s => `file '${s.clip}'`).join("\n"));
+      const concatPath = join("/tmp", `hl_concat_${jobId}.mp4`);
+      paths.push(concatPath);
+      await execAsync(
+        `ffmpeg -y -f concat -safe 0 -i "${listPath}" -c copy "${concatPath}"`,
+        { timeout: 60_000 }
+      );
       if (hasBgm) {
-        const cmd = [
-          "ffmpeg -y",
-          `-i "${concatClip}" -i "${bgmPath}"`,
-          `-filter_complex "[0:a][1:a]amix=inputs=2:weights=0.3|0.7[fa]"`,
-          `-map 0:v -map "[fa]"`,
-          `-c:v copy -c:a aac -b:a 128k -shortest`,
-          `-movflags +faststart`,
-          `"${outputPath}"`,
-        ].join(" ");
-        await execAsync(cmd, { timeout: 60_000 });
+        await execAsync(
+          `ffmpeg -y -i "${concatPath}" -i "${bgmPath}" ` +
+          `-filter_complex "[0:a][1:a]amix=inputs=2:weights=0.3|0.7[fa]" ` +
+          `-map 0:v -map "[fa]" -c:v copy -c:a aac -b:a 128k -shortest ` +
+          `-movflags +faststart "${outputPath}"`,
+          { timeout: 60_000 }
+        );
       } else {
-        await execAsync(`cp "${concatClip}" "${outputPath}"`);
+        await execAsync(`cp "${concatPath}" "${outputPath}"`);
       }
     }
 
-    // ── 5. Upload to Supabase Storage ────────────────────────────────────────
+    // Upload to Supabase
     updateJob(jobId, { status: "storing", progress: 85, stage: "上传到云端…" });
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
