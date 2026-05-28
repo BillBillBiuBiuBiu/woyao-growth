@@ -237,15 +237,21 @@ export default function ParentHome() {
             </div>
 
             {/* Badge — real stats when available, mock demo otherwise */}
-            {recentGames.length > 0 ? (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-2.5 flex items-center gap-2 shadow-sm">
-                <span className="text-2xl">🏆</span>
-                <div>
-                  <div className="text-xs font-bold text-gray-800">实战记录</div>
-                  <div className="text-xs text-amber-600">{recentGames.length} 场 · {recentGames.filter(g => g.homeScore > g.awayScore).length}胜{recentGames.filter(g => g.homeScore < g.awayScore).length > 0 ? `${recentGames.filter(g => g.homeScore < g.awayScore).length}负` : ""}</div>
+            {recentGames.length > 0 ? (() => {
+              const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
+              const l = recentGames.filter(g => g.homeScore < g.awayScore).length;
+              const rate = Math.round(w / recentGames.length * 100);
+              const mood = rate >= 80 ? "🔥 高光赛季！" : rate >= 60 ? "💪 状态不错" : "⚡ 继续加油";
+              return (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-2.5 flex items-center gap-2 shadow-sm">
+                  <span className="text-2xl">🏆</span>
+                  <div>
+                    <div className="text-xs font-bold text-gray-800">{mood}</div>
+                    <div className="text-xs text-amber-600">{recentGames.length}场 · {w}胜{l > 0 ? `${l}负` : ""} · {rate}%</div>
+                  </div>
                 </div>
-              </div>
-            ) : (
+              );
+            })() : (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-2.5 flex items-center gap-2 shadow-sm">
                 <span className="text-2xl">{badge.icon}</span>
                 <div>
