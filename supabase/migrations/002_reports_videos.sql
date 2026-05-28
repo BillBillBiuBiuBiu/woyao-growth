@@ -34,7 +34,7 @@ create table if not exists reports (
   id            uuid primary key default gen_random_uuid(),
   coach_id      uuid not null references profiles(id) on delete cascade,
   student_id    uuid not null references students(id) on delete cascade,
-  game_id       uuid references games(id) on delete set null,
+  game_id       text,  -- text to match games.id type (no FK constraint)
   title         text not null default '',
   scene         text not null default 'training' check (scene in ('training', 'match', 'period_summary')),
   plan          text not null default 'basic' check (plan in ('basic', 'vip', 'supervip')),
