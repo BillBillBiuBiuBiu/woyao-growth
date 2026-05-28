@@ -98,20 +98,17 @@ export function GrowthCurve() {
     return { ...d, week: `${wd.getMonth() + 1}/${wd.getDate()}` };
   });
   return (
-    <div className="rounded-2xl border border-border bg-white p-4">
-      <h2 className="font-semibold text-sm mb-4">📈 近2个月成长趋势</h2>
-      <ResponsiveContainer width="100%" height={200}>
-        <LineChart data={dynamicCurve} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis dataKey="week" tick={{ fontSize: 10 }} />
-          <YAxis tick={{ fontSize: 10 }} domain={[30, 90]} />
-          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Line type="monotone" dataKey="技术成长" stroke="#F97316" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="心理成长" stroke="#EF4444" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="团队协作" stroke="#10B981" strokeWidth={2} dot={false} />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+    <ResponsiveContainer width="100%" height={200}>
+      <LineChart data={dynamicCurve} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+        <XAxis dataKey="week" tick={{ fontSize: 10 }} />
+        <YAxis tick={{ fontSize: 10 }} domain={[30, 90]} />
+        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+        <Legend wrapperStyle={{ fontSize: 11 }} />
+        <Line type="monotone" dataKey="技术成长" stroke="#F97316" strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="心理成长" stroke="#EF4444" strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="团队协作" stroke="#10B981" strokeWidth={2} dot={false} />
+      </LineChart>
+    </ResponsiveContainer>
   );
 }
