@@ -91,11 +91,17 @@ export function GrowthRadarCompact() {
 }
 
 export function GrowthCurve() {
+  const now = new Date();
+  const dynamicCurve = mockGrowthCurve.map((d, i) => {
+    const wd = new Date(now);
+    wd.setDate(wd.getDate() - (mockGrowthCurve.length - 1 - i) * 14);
+    return { ...d, week: `${wd.getMonth() + 1}/${wd.getDate()}` };
+  });
   return (
     <div className="rounded-2xl border border-border bg-white p-4">
       <h2 className="font-semibold text-sm mb-4">📈 近2个月成长趋势</h2>
       <ResponsiveContainer width="100%" height={200}>
-        <LineChart data={mockGrowthCurve} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
+        <LineChart data={dynamicCurve} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis dataKey="week" tick={{ fontSize: 10 }} />
           <YAxis tick={{ fontSize: 10 }} domain={[30, 90]} />
