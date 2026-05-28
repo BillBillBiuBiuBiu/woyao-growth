@@ -354,9 +354,18 @@ export default function ParentHome() {
                 );
               })()}
             </div>
-            {recentGames.map((game, i) => {
+            {(() => {
+              // Build clip count per game from latestClips (covers the last 5 games)
+              const clipCountMap: Record<string, number> = {};
+              if (latestClips) {
+                for (const c of latestClips) {
+                  if (c.game_id) clipCountMap[c.game_id] = (clipCountMap[c.game_id] || 0) + 1;
+                }
+              }
+              return recentGames.map((game, i) => {
               const won  = game.homeScore > game.awayScore;
               const lost = game.homeScore < game.awayScore;
+              const clipCount = clipCountMap[game.id];
               return (
               <button
                 key={game.id}
@@ -377,14 +386,17 @@ export default function ParentHome() {
                     {won ? "胜" : lost ? "负" : "平"}
                   </span>
                   {game.eventCount > 0
-                    ? <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-medium">📹 有集锦素材</span>
+                    ? <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-medium">
+                        {clipCount ? `📹 ${clipCount}个集锦` : "📹 有集锦素材"}
+                      </span>
                     : null
                   }
                   <span className="text-orange-300">›</span>
                 </div>
               </button>
               );
-            })}
+            });
+            })()}
           </div>
         )}
 
