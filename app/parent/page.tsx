@@ -91,19 +91,20 @@ export default function ParentHome() {
       setLatestClips(merged);
     }).catch(() => setLatestClips([]));
     if (!childName) { setHeroChildStat(null); setHeroGame(null); return; }
-    // Try up to 3 recent games to find one with the child's data
+    // Parallel-fetch up to 3 recent games to find the most recent one with child's data
     const candidates = recentGames.slice(0, 3).filter(g => g.eventCount > 0);
     if (candidates.length === 0) { setHeroChildStat(null); setHeroGame(null); return; }
-    (async () => {
-      for (const game of candidates) {
-        try {
-          const evts = await apiLoadEvents(game.id);
-          const s = computeStats(evts).find(p => p.name === childName);
-          if (s) { setHeroChildStat({ pts: s.pts, reb: s.reb, ast: s.ast, stl: s.stl }); setHeroGame(game); return; }
-        } catch {}
-      }
-      setHeroChildStat(null); setHeroGame(null);
-    })();
+    Promise.all(
+      candidates.map(async game => {
+        const evts = await apiLoadEvents(game.id).catch(() => []);
+        const s = computeStats(evts).find(p => p.name === childName);
+        return s ? { game, stat: { pts: s.pts, reb: s.reb, ast: s.ast, stl: s.stl } } : null;
+      })
+    ).then(results => {
+      const found = results.find(r => r !== null);
+      if (found) { setHeroChildStat(found.stat); setHeroGame(found.game); }
+      else { setHeroChildStat(null); setHeroGame(null); }
+    }).catch(() => { setHeroChildStat(null); setHeroGame(null); });
   }, [childName, recentGames]);
 
   function saveName() {
