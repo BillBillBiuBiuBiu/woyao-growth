@@ -512,8 +512,8 @@ export default function ParentHome() {
         <Link href="/parent/profile/stu-001">
           <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-center justify-between active:scale-98 transition-transform">
             <div>
-              <div className="font-bold text-sm text-gray-800">查看完整成长档案</div>
-              <div className="text-xs text-gray-400 mt-0.5">成长时间线 · 六维雷达图 · 所有报告</div>
+              <div className="font-bold text-sm text-gray-800">{childName ? `${childName}的成长档案` : "查看完整成长档案"}</div>
+              <div className="text-xs text-gray-400 mt-0.5">技术分析 · 成长曲线 · 历史比赛</div>
             </div>
             <div className="text-2xl text-orange-300">›</div>
           </div>
