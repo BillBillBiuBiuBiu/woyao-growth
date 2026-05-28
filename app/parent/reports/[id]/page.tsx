@@ -377,7 +377,7 @@ export default function ReportDetailPage() {
             className="text-xl font-black text-center leading-tight"
             style={{ color: "#7C3810", fontFamily: "PingFang SC, Hiragino Sans GB, sans-serif" }}
           >
-            {report.title}
+            {childName ? `${childName} · ${report.title}` : report.title}
           </h1>
         </div>
 
