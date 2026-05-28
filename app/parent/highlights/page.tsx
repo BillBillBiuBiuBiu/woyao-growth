@@ -2,8 +2,6 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import Link from "next/link";
-import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile } from "@ffmpeg/util";
 import { apiLoadGames, apiLoadClips } from "@/lib/gc-api";
 import type { ClipRecord } from "@/lib/gc-api";
 
@@ -37,7 +35,7 @@ interface FrameScore {
   score: number;
 }
 
-type Stage = "idle"|"loading_ffmpeg"|"extracting_color"|"writing"|"analyzing"|"cutting"|"done"|"error";
+type Stage = "idle"|"loading"|"extracting_color"|"analyzing"|"cutting"|"done"|"error";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -135,23 +133,6 @@ function extractPlayerSignature(img: HTMLImageElement): PlayerSignature {
     hasSock:   usable(sock,   jersey.color),
     hasShoe:   usable(shoe,   jersey.color),
   };
-}
-
-// ── Frame loading from PNG bytes ──────────────────────────────────────────────
-// Use Image element — universally supported including WeChat WKWebView
-
-function loadImageFromBytes(bytes: Uint8Array): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const copy = new Uint8Array(bytes.length); copy.set(bytes);
-    const blob = new Blob([copy.buffer], { type: "image/png" });
-    const url  = URL.createObjectURL(blob);
-    const img  = new Image();
-    const cleanup = () => URL.revokeObjectURL(url);
-    const timer = setTimeout(() => { cleanup(); reject(new Error("frame load timeout")); }, 8000);
-    img.onload  = () => { clearTimeout(timer); cleanup(); resolve(img); };
-    img.onerror = () => { clearTimeout(timer); cleanup(); reject(new Error("frame load failed")); };
-    img.src = url;
-  });
 }
 
 // ── Per-frame analysis (same 5-dimension scoring) ─────────────────────────────
@@ -445,6 +426,115 @@ function findHighlightSegments(
   ] as [number, number]);
 }
 
+// ── Native seek — browser hardware decoder, works for any file size ───────────
+function seekVideoTo(video: HTMLVideoElement, time: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (Math.abs(video.currentTime - time) < 0.05) { resolve(); return; }
+    const timer = setTimeout(() => {
+      video.removeEventListener("seeked", onSeeked);
+      reject(new Error(`seek timeout at ${time}s`));
+    }, 8000);
+    const onSeeked = () => { clearTimeout(timer); video.removeEventListener("seeked", onSeeked); resolve(); };
+    video.addEventListener("seeked", onSeeked);
+    video.currentTime = time;
+  });
+}
+
+// ── Cut video via MediaRecorder — no WASM, no file size limit ─────────────────
+async function cutVideoNative(
+  videoEl: HTMLVideoElement,
+  startT: number,
+  endT: number,
+  bgmBlob: Blob | null,
+  onProgress?: (p: number) => void,
+): Promise<Blob> {
+  const duration = Math.max(0.5, endT - startT);
+  const w = Math.min(720, videoEl.videoWidth || 720);
+  const h = Math.round(w * (videoEl.videoHeight || 1280) / Math.max(videoEl.videoWidth || 720, 1));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx2 = canvas.getContext("2d")!;
+
+  const captureFn = (canvas as any).captureStream ?? (canvas as any).mozCaptureStream;
+  if (typeof captureFn !== "function") {
+    throw new Error("当前浏览器暂不支持视频录制，请使用 Chrome 浏览器或最新版微信。");
+  }
+  const canvasStream: MediaStream = captureFn.call(canvas, 30);
+
+  const mimeType = [
+    "video/mp4;codecs=avc1,mp4a.40.2",
+    "video/webm;codecs=vp9,opus",
+    "video/webm;codecs=vp8,opus",
+    "video/webm",
+  ].find(t => { try { return MediaRecorder.isTypeSupported(t); } catch { return false; } }) ?? "video/webm";
+  const safeType = mimeType.split(";")[0] || "video/webm";
+
+  // Mix audio: video source + optional BGM via Web Audio API
+  const audioTracks: MediaStreamTrack[] = [];
+  let audioCtx: AudioContext | null = null;
+  try {
+    const AC = window.AudioContext || (window as any).webkitAudioContext;
+    if (AC) {
+      audioCtx = new AC() as AudioContext;
+      const dest = audioCtx.createMediaStreamDestination();
+      try {
+        const vidSrc = audioCtx.createMediaElementSource(videoEl);
+        const vidGain = audioCtx.createGain();
+        vidGain.gain.value = bgmBlob ? 0.3 : 1.0;
+        vidSrc.connect(vidGain); vidGain.connect(dest);
+      } catch {}
+      if (bgmBlob) {
+        try {
+          const buf = await audioCtx.decodeAudioData(await bgmBlob.arrayBuffer());
+          const src = audioCtx.createBufferSource();
+          src.buffer = buf; src.loop = true;
+          const gain = audioCtx.createGain(); gain.gain.value = 0.7;
+          src.connect(gain); gain.connect(dest);
+          src.start(0); src.stop(audioCtx.currentTime + duration + 2);
+        } catch {}
+      }
+      audioTracks.push(...dest.stream.getAudioTracks());
+    }
+  } catch {}
+
+  const stream = new MediaStream([...canvasStream.getVideoTracks(), ...audioTracks]);
+  const recorder = new MediaRecorder(stream, { mimeType: safeType });
+  const chunks: Blob[] = [];
+  recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+  await seekVideoTo(videoEl, startT);
+
+  return new Promise<Blob>((resolve, reject) => {
+    let stopped = false;
+    const stopAll = () => {
+      if (stopped) return; stopped = true;
+      try { recorder.stop(); } catch {}
+      videoEl.pause();
+      audioCtx?.close().catch(() => {});
+    };
+
+    recorder.onstop = () => resolve(new Blob(chunks, { type: recorder.mimeType || safeType }));
+    recorder.onerror = () => reject(new Error("视频录制失败，请重试"));
+
+    recorder.start(200);
+    videoEl.play().catch(() => {});
+
+    // Draw canvas in real time
+    const drawLoop = () => { if (!stopped) { ctx2.drawImage(videoEl, 0, 0, w, h); requestAnimationFrame(drawLoop); } };
+    requestAnimationFrame(drawLoop);
+
+    // Progress + stop condition
+    const wallStart = Date.now();
+    const tick = setInterval(() => {
+      const elapsed = (Date.now() - wallStart) / 1000;
+      onProgress?.(Math.min(elapsed / duration, 0.95));
+      if (elapsed >= duration + 0.5) { clearInterval(tick); stopAll(); }
+    }, 200);
+    setTimeout(() => { clearInterval(tick); stopAll(); }, (duration + 4) * 1000);
+  });
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function HighlightsPage() {
@@ -479,45 +569,6 @@ export default function HighlightsPage() {
   const [expandedClipId, setExpandedClipId] = useState<string|null>(null);
   const [nameInputVal,   setNameInputVal]   = useState("");
   const analyzeStartRef = useRef<number>(0);
-  const ffmpegRef     = useRef<FFmpeg|null>(null);
-  const ffmpegInitRef = useRef<Promise<void>|null>(null);
-
-  // Deduplicated loader — safe to call concurrently; resolves once WASM is ready.
-  const ensureFFmpegLoaded = useCallback(async () => {
-    if (ffmpegRef.current) return;
-    if (!ffmpegInitRef.current) {
-      ffmpegInitRef.current = (async () => {
-        const CDN_JS   = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js";
-        const CDN_WASM = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm";
-        let coreURL = "/ffmpeg/ffmpeg-core.js";
-        let wasmURL = "/ffmpeg/ffmpeg-core.wasm";
-        try {
-          const r = await Promise.race([
-            fetch(CDN_JS, { method: "HEAD" }),
-            new Promise<never>((_, rej) => setTimeout(() => rej(), 5000)),
-          ]);
-          if (r.ok) { coreURL = CDN_JS; wasmURL = CDN_WASM; }
-        } catch {}
-        const ff = new FFmpeg();
-        await Promise.race([
-          ff.load({ coreURL, wasmURL }),
-          new Promise<never>((_, rej) =>
-            setTimeout(() => rej(new Error("视频引擎加载超时，请在WiFi环境下重试")), 90_000)
-          ),
-        ]);
-        ffmpegRef.current = ff;
-      })();
-    }
-    await ffmpegInitRef.current;
-  }, []);
-
-  // Start WASM download silently on mount — user won't wait when they click Generate.
-  useEffect(() => {
-    ensureFFmpegLoaded().catch(() => {
-      // preload failed; will retry inside run() with proper error handling
-      ffmpegInitRef.current = null;
-    });
-  }, [ensureFFmpegLoaded]);
 
   // Detect WeChat WKWebView once on mount — used to show long-press save hint
   useEffect(() => {
@@ -604,28 +655,27 @@ export default function HighlightsPage() {
   }, []);
 
   const run = useCallback(async () => {
-    if (!videoFile||!photoFile) return;
+    if (!videoFile || !photoFile) return;
     setError(null); setResultUrl(null); setResultBlob(null);
     setFeedbackRating(0); setFeedbackTypes([]); setFeedbackDone(false);
 
-    try {
-      // ── 1. Load FFmpeg ────────────────────────────────────────────────────
-      setStage("loading_ffmpeg"); setProgress(2);
-      setStatusMsg(ffmpegRef.current ? "视频引擎已就绪，开始处理…" : "加载视频处理引擎…（首次需30–60秒，请耐心等待）");
+    const videoObjectUrl = URL.createObjectURL(videoFile);
+    const videoEl = document.createElement("video");
+    videoEl.src = videoObjectUrl;
+    videoEl.muted = true;
+    videoEl.playsInline = true;
+    videoEl.preload = "auto";
 
-      if (!ffmpegRef.current) {
-        // Animate progress 2→11% while WASM downloads (or finishes preloading)
-        let fake = 2;
-        const ticker = setInterval(() => {
-          fake = Math.min(11, fake + 0.4);
-          setProgress(Math.round(fake));
-        }, 1000);
-        try {
-          await ensureFFmpegLoaded();
-        } finally {
-          clearInterval(ticker);
-        }
-      }
+    try {
+      // ── 1. Load video metadata (native, any file size) ────────────────────
+      setStage("loading"); setProgress(3);
+      setStatusMsg("读取视频信息…");
+      const duration: number = await new Promise((res, rej) => {
+        const t = setTimeout(() => rej(new Error("视频加载超时，请检查文件格式")), 30_000);
+        videoEl.onloadedmetadata = () => { clearTimeout(t); res(videoEl.duration); };
+        videoEl.onerror = () => { clearTimeout(t); rej(new Error("无法加载视频，请检查文件格式（支持 MP4、MOV）")); };
+      });
+      if (!isFinite(duration) || duration <= 0) throw new Error("无法读取视频时长，请检查文件格式");
       setProgress(12);
 
       // ── 2. Extract player signature from photo ────────────────────────────
@@ -633,333 +683,130 @@ export default function HighlightsPage() {
       const photoUrl = URL.createObjectURL(photoFile);
       const img = new Image();
       try {
-        // Timeout guards against WKWebView never firing onload/onerror
         await new Promise<void>((res, rej) => {
           const t = setTimeout(() => rej(new Error("照片加载超时")), 10_000);
           img.onload  = () => { clearTimeout(t); res(); };
           img.onerror = () => { clearTimeout(t); rej(new Error("无法加载照片")); };
           img.src = photoUrl;
         });
-      } finally {
-        URL.revokeObjectURL(photoUrl); // revoke whether load succeeded or failed
-      }
+      } finally { URL.revokeObjectURL(photoUrl); }
       const sig = extractPlayerSignature(img);
       setProgress(18);
 
-      // ── 3. Write video to FFmpeg FS ───────────────────────────────────────
-      setStage("writing"); setStatusMsg("读取视频文件…");
-      const ff = ffmpegRef.current!;
-      // Mobile WASM heap guard: WKWebView / Chrome Android often caps ~256MB total.
-      // Input + output + frames + module itself ~50MB → safe ceiling is 150MB.
-      const MAX_VIDEO_MB = 150;
-      if (videoFile.size > MAX_VIDEO_MB * 1024 * 1024) {
-        throw new Error(`视频文件太大（${(videoFile.size / 1024 / 1024).toFixed(0)}MB），手机端处理上限约 ${MAX_VIDEO_MB}MB。建议先在电脑上压缩视频（剪短或降低分辨率），或选取更短的比赛片段。`);
-      }
-      await ff.writeFile("input.mp4", await fetchFile(videoFile));
-      setProgress(30);
-
-      // ── 4. Probe duration via FFmpeg log ──────────────────────────────────
-      setStage("analyzing"); setStatusMsg("读取视频信息…");
-      let duration = 0;
-      let hasAudio = false;
-      const onLog = ({ message }: { message: string }) => {
-        const m = message.match(/Duration:\s+(\d+):(\d+):([\d.]+)/);
-        if (m) duration = parseInt(m[1])*3600 + parseInt(m[2])*60 + parseFloat(m[3]);
-        if (/Stream.*Audio:/.test(message)) hasAudio = true;
-      };
-      ff.on("log", onLog);
-      try { await ff.exec(["-i", "input.mp4", "-t", "0", "-f", "null", "probe"]); } catch {}
-      ff.off("log", onLog);
-      if (duration <= 0) duration = Math.max(10, videoFile.size / 1024 / 1024 * 8);
-      setProgress(33);
-
-      // ── 5. Extract + analyze frames one at a time ─────────────────────────
-      // Single-frame extract: no bulk FS writes, minimal memory on mobile
+      // ── 3. Frame analysis via native seek — no WASM, no file size limit ──
       setStage("analyzing");
-      const canvas = document.createElement("canvas");
-      canvas.width = SAMPLE_W;
-      let sampleH = Math.round(SAMPLE_W * 9/16);
-      // Acquire context once before the loop — repeated getContext inside loop is wasteful.
-      // willReadFrequently keeps canvas in CPU memory so getImageData skips GPU readback.
-      const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
+      const analysisCv = document.createElement("canvas");
+      analysisCv.width = SAMPLE_W;
+      const sampleH = videoEl.videoWidth > 0
+        ? Math.round(SAMPLE_W * videoEl.videoHeight / videoEl.videoWidth)
+        : Math.round(SAMPLE_W * 9 / 16);
+      analysisCv.height = sampleH;
+      const ctx = analysisCv.getContext("2d", { willReadFrequently: true })!;
 
       const scores: FrameScore[] = [];
-      let prevFrame: ImageData|null = null;
-      let canvasReady = false; // true once canvas dimensions are sized to actual video aspect ratio
-      const track: TrackState = {x:-1,y:-1,vx:0,vy:0,framesSinceSeen:999,lastExitX:-1};
-      // Cap analysis frames so long videos (>10min at 1FPS = 600 frames) don't hang on mobile.
-      // Proportional sampling: for videos shorter than MAX frames, interval stays at 1s; for
-      // longer videos the interval stretches so we always cover the full video uniformly.
+      let prevFrame: ImageData | null = null;
+      const track: TrackState = { x: -1, y: -1, vx: 0, vy: 0, framesSinceSeen: 999, lastExitX: -1 };
       const MAX_ANALYSIS_FRAMES = 90;
       const totalFrames = Math.min(Math.ceil(duration * SAMPLE_FPS), MAX_ANALYSIS_FRAMES);
       const frameInterval = duration / Math.max(totalFrames, 1);
-      // Wallclock guard: per-frame has 8s image-load timeout, so 90×8s=720s worst case.
-      // If analysis takes over 3 min total, break early and use whatever scores were collected.
       const analysisDeadline = Date.now() + 180_000;
 
       for (let i = 0; i < totalFrames; i++) {
-        if (Date.now() > analysisDeadline) {
-          setStatusMsg(`分析超时，已处理 ${i}/${totalFrames} 帧，继续生成…`);
-          break;
-        }
+        if (Date.now() > analysisDeadline) { setStatusMsg(`分析超时，已处理 ${i}/${totalFrames} 帧，继续生成…`); break; }
         const t = i * frameInterval;
-        setStatusMsg(`分析帧 ${i+1} / ${totalFrames}（${Math.round(t)}s）`);
-
-        // Extract single frame at time t. ff.exec() returns exit code, never throws.
-        const frameRet = await ff.exec([
-          "-ss", t.toFixed(3),
-          "-i", "input.mp4",
-          "-frames:v", "1",
-          "-vf", `scale=${SAMPLE_W}:-2`,
-          "-f", "image2",
-          "-update", "1",   // always overwrite same file
-          "frame.png",
-        ]);
-        if (frameRet !== 0) break; // seek past end of video
-
-        let pngBytes: Uint8Array;
+        setStatusMsg(`分析帧 ${i + 1} / ${totalFrames}（${Math.round(t)}s）`);
         try {
-          const raw = await ff.readFile("frame.png");
-          pngBytes = raw as Uint8Array;
-          await ff.deleteFile("frame.png");
-        } catch {
-          break;
-        }
-
-        let frameImg: HTMLImageElement;
-        try {
-          frameImg = await loadImageFromBytes(pngBytes);
-        } catch {
-          continue; // skip corrupt/undecodable frame — don't abort entire generation
-        }
-        if (!canvasReady) {
-          // Size canvas to actual video aspect ratio on first decoded frame.
-          // Must not use i===0 because frame 0 may have been skipped via continue above.
-          sampleH = Math.round(SAMPLE_W * frameImg.naturalHeight / Math.max(frameImg.naturalWidth, 1));
-          canvas.height = sampleH;
-          canvasReady = true;
-        }
-
-        ctx.drawImage(frameImg, 0, 0, SAMPLE_W, sampleH);
-        const currFrame = ctx.getImageData(0, 0, SAMPLE_W, sampleH);
-
-        const fs = analyzeFrame(currFrame, prevFrame, sig, SAMPLE_W, sampleH, track);
-        fs.t = t;
-        scores.push(fs);
-
-        if (fs.hasPlayer) {
-          if (track.x >= 0) {
-            track.vx = track.vx*0.5 + (fs.playerX - track.x)*0.5;
-            track.vy = track.vy*0.5 + (fs.playerY - track.y)*0.5;
-          }
-          const nearEdge = fs.playerX < SAMPLE_W*0.08 || fs.playerX > SAMPLE_W*0.92
-                        || fs.playerY < sampleH*0.08  || fs.playerY > sampleH*0.92;
-          if (nearEdge) track.lastExitX = fs.playerX;
-          track.x = fs.playerX; track.y = fs.playerY; track.framesSinceSeen = 0;
-        } else {
-          track.framesSinceSeen++;
-        }
-
-        prevFrame = currFrame;
-        setProgress(33 + Math.round(((i+1) / totalFrames) * 43));
+          await seekVideoTo(videoEl, t);
+          ctx.drawImage(videoEl, 0, 0, SAMPLE_W, sampleH);
+          const currFrame = ctx.getImageData(0, 0, SAMPLE_W, sampleH);
+          const fs = analyzeFrame(currFrame, prevFrame, sig, SAMPLE_W, sampleH, track);
+          fs.t = t;
+          scores.push(fs);
+          if (fs.hasPlayer) {
+            if (track.x >= 0) {
+              track.vx = track.vx * 0.5 + (fs.playerX - track.x) * 0.5;
+              track.vy = track.vy * 0.5 + (fs.playerY - track.y) * 0.5;
+            }
+            const nearEdge = fs.playerX < SAMPLE_W * 0.08 || fs.playerX > SAMPLE_W * 0.92
+                          || fs.playerY < sampleH * 0.08  || fs.playerY > sampleH * 0.92;
+            if (nearEdge) track.lastExitX = fs.playerX;
+            track.x = fs.playerX; track.y = fs.playerY; track.framesSinceSeen = 0;
+          } else { track.framesSinceSeen++; }
+          prevFrame = currFrame;
+        } catch { continue; }
+        setProgress(18 + Math.round(((i + 1) / totalFrames) * 52));
       }
 
-      setProgress(76); setStatusMsg("计算精彩片段…");
+      setProgress(70); setStatusMsg("计算精彩片段…");
 
-      // Multi-frame voting: an isolated hasPlayer=true with both neighbors false is
-      // likely a same-jersey-color false positive. Suppress it (reduce score to 5%).
+      // Temporal noise suppression
       for (let i = 1; i < scores.length - 1; i++) {
-        if (scores[i].hasPlayer && !scores[i-1].hasPlayer && !scores[i+1].hasPlayer) {
+        if (scores[i].hasPlayer && !scores[i - 1].hasPlayer && !scores[i + 1].hasPlayer) {
           scores[i] = { ...scores[i], hasPlayer: false, score: scores[i].score * 0.05 };
         }
       }
 
-      // ── 6. Find highlight segments ────────────────────────────────────────
-      // Primary: collect all player-has-ball events; fallback: single best window.
-      const segs = findHighlightSegments(scores, duration);
-      const totalSegDur = segs.reduce((s, [a, b]) => s + (b - a), 0);
-      // Guard: if total segment duration exceeds 2× highlight length, the player
-      // was detected in most frames (same-team color matching). Fall back to
-      // findBestWindow so the output stays short and WASM heap stays sane with BGM.
-      const useMultiSeg = segs.length >= 2 && totalSegDur >= 4 && segs.length <= 10 && totalSegDur <= HIGHLIGHT_S * 2 && hasAudio;
+      // ── 4. Find highlight window ──────────────────────────────────────────
+      const [clipStart, clipEnd] = findBestWindow(scores, duration, bgmEnabled ? 120 : 0);
+      const clipDuration = clipEnd - clipStart;
 
-      const [fallbackStart, fallbackEnd] = findBestWindow(scores, duration, bgmEnabled ? 120 : 0);
-      const totalClipDur = useMultiSeg ? totalSegDur : (fallbackEnd - fallbackStart);
-
-      // ── 7. Cut video — optionally mix BGM ────────────────────────────────
+      // ── 5. Load BGM ───────────────────────────────────────────────────────
       setStage("cutting");
-      let hasBgm = false;
-      let bgmFile = "bgm.wav";
+      let bgmBlob: Blob | null = null;
       if (bgmEnabled) {
         setStatusMsg("加载BGM…");
-        let realMusicLoaded = false;
-
-        // Tier 1: user-provided file (max 3 MB to stay within 31 MB WASM heap)
         if (bgmUserFile && bgmUserFile.size <= 3 * 1024 * 1024) {
+          bgmBlob = bgmUserFile;
+        } else {
           try {
-            const data = new Uint8Array(await bgmUserFile.arrayBuffer());
-            await ff.writeFile("bgm.mp3", data);
-            bgmFile = "bgm.mp3";
-            realMusicLoaded = true;
-          } catch {}
-        }
-
-        // Tier 2: bundled sport track at /bgm/sport1.mp3 (~470KB)
-        if (!realMusicLoaded) {
-          try {
-            // fetchFile() does not check HTTP status — a 404 would write HTML to WASM FS and
-            // crash FFmpeg with "Invalid argument". Use fetch() directly and gate on resp.ok.
             const resp = await Promise.race([
               fetch("/bgm/sport1.mp3"),
-              new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), 8000)),
-            ]);
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            const data = new Uint8Array(await resp.arrayBuffer());
-            await ff.writeFile("bgm.mp3", data);
-            bgmFile = "bgm.mp3";
-            realMusicLoaded = true;
+              new Promise<never>((_, rej) => setTimeout(() => rej(), 8000)),
+            ]) as Response;
+            if (resp.ok) bgmBlob = await resp.blob();
           } catch {}
+          if (!bgmBlob) {
+            const wav = generateBeatWAV(clipDuration + 2);
+            bgmBlob = new Blob([wav.buffer as ArrayBuffer], { type: "audio/wav" });
+          }
         }
-
-        // Tier 3: synthesized 808-style beat WAV
-        if (!realMusicLoaded) {
-          const bgmWav = generateBeatWAV(Math.min(Math.ceil(totalClipDur) + 2, HIGHLIGHT_S + 5));
-          await ff.writeFile("bgm.wav", bgmWav);
-        }
-        hasBgm = true;
       }
 
-      const encodeLog: string[] = [];
-      const onEncodeLog = ({ message }: { message: string }) => {
-        if (message.includes("Error") || message.includes("error") || message.includes("Invalid") || message.includes("Failed")) {
-          encodeLog.push(message);
-        }
-      };
-      const onProgress = ({progress:p}: {progress:number}) => setProgress(78 + Math.round(p * 20));
-      ff.on("log", onEncodeLog);
-      ff.on("progress", onProgress);
-      try {
-        if (useMultiSeg) {
-          setStatusMsg(`找到 ${segs.length} 个精彩片段（共 ${totalSegDur.toFixed(0)}s），正在剪辑…`);
+      // ── 6. Cut clip natively via MediaRecorder ────────────────────────────
+      setStatusMsg(`精彩片段 ${clipStart.toFixed(1)}s–${clipEnd.toFixed(1)}s，实时剪辑中（约 ${Math.round(clipDuration)} 秒）…`);
+      const outputBlob = await cutVideoNative(
+        videoEl, clipStart, clipEnd, bgmBlob,
+        (p) => setProgress(70 + Math.round(p * 28)),
+      );
 
-          // Multiple -ss -t -i inputs + filter_complex concat (single FFmpeg pass)
-          const args: string[] = [];
-          for (const [s, e] of segs) {
-            args.push("-ss", s.toFixed(3), "-t", (e - s).toFixed(3), "-i", "input.mp4");
-          }
-          if (hasBgm) args.push("-i", bgmFile);
-
-          const n = segs.length;
-          const concatInputs = segs.map((_, i) => `[${i}:v][${i}:a]`).join("");
-          const filterParts = [
-            `${concatInputs}concat=n=${n}:v=1:a=1[rawv][ca]`,
-            `[rawv]scale=720:-2[cv]`,
-          ];
-          let mapArgs: string[];
-          if (hasBgm) {
-            filterParts.push(`[${n}:a]asetpts=PTS-STARTPTS[bgm]`);
-            filterParts.push(`[ca][bgm]amix=inputs=2:weights=0.3|0.7[fa]`);
-            mapArgs = ["-map", "[cv]", "-map", "[fa]"];
-          } else {
-            mapArgs = ["-map", "[cv]", "-map", "[ca]"];
-          }
-
-          args.push(
-            "-filter_complex", filterParts.join(";"),
-            ...mapArgs,
-            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
-            "-c:a", "aac", "-b:a", "96k",
-            ...(hasBgm ? ["-shortest"] : []),
-            "-movflags", "+faststart",
-            "-y", "highlight.mp4",
-          );
-          const ret1 = await ff.exec(args);
-          if (ret1 !== 0) throw new Error(`FFmpeg 编码失败 (exit ${ret1}) ${encodeLog.slice(-2).join(" | ")}`);
-        } else {
-          setStatusMsg(`精彩片段：${fallbackStart.toFixed(1)}s – ${fallbackEnd.toFixed(1)}s，正在剪辑…`);
-          const clipDur = (fallbackEnd - fallbackStart).toFixed(3);
-          // 3-way: (1) BGM + source audio → amix, (2) BGM + no source audio → BGM only, (3) no BGM
-          const singleArgs = hasBgm && hasAudio ? [
-            "-ss", fallbackStart.toFixed(3), "-i", "input.mp4",
-            "-i", bgmFile,
-            "-t", clipDur,
-            "-filter_complex", "[0:a][1:a]amix=inputs=2:weights=0.3|0.7[fa]",
-            "-map", "0:v", "-map", "[fa]",
-            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
-            "-vf", "scale=720:-2",
-            "-c:a", "aac", "-b:a", "96k", "-shortest", "-movflags", "+faststart",
-            "-y", "highlight.mp4",
-          ] : hasBgm ? [
-            "-ss", fallbackStart.toFixed(3), "-i", "input.mp4",
-            "-i", bgmFile,
-            "-t", clipDur,
-            "-map", "0:v", "-map", "1:a",
-            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
-            "-vf", "scale=720:-2",
-            "-c:a", "aac", "-b:a", "96k", "-shortest", "-movflags", "+faststart",
-            "-y", "highlight.mp4",
-          ] : [
-            "-ss", fallbackStart.toFixed(3), "-i", "input.mp4",
-            "-t", clipDur,
-            "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
-            "-vf", "scale=720:-2",
-            "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart",
-            "-y", "highlight.mp4",
-          ];
-          const ret2 = await ff.exec(singleArgs);
-          if (ret2 !== 0) throw new Error(`FFmpeg 编码失败 (exit ${ret2}) ${encodeLog.slice(-2).join(" | ")}`);
-        }
-      } finally {
-        ff.off("progress", onProgress);
-        ff.off("log", onEncodeLog);
-      }
-
-      const data = await ff.readFile("highlight.mp4");
-      const raw  = data as Uint8Array;
-      const copy = new Uint8Array(raw.length); copy.set(raw);
-      const blob = new Blob([copy.buffer],{type:"video/mp4"});
-      await ff.deleteFile("input.mp4"); await ff.deleteFile("highlight.mp4");
-      if (hasBgm) { try { await ff.deleteFile(bgmFile); } catch {} }
-
-      setResultBlob(blob);
-      setResultUrl(URL.createObjectURL(blob));
-      setResultDur(Math.round(totalClipDur));
+      setProgress(100);
+      setResultBlob(outputBlob);
+      setResultUrl(URL.createObjectURL(outputBlob));
+      setResultDur(Math.round(clipDuration));
       const childNameForFile = (() => { try { return localStorage.getItem("child_name") || ""; } catch { return ""; } })();
       const mmdd = (() => { const d = new Date(); return `${(d.getMonth()+1).toString().padStart(2,"0")}${d.getDate().toString().padStart(2,"0")}`; })();
-      const outputName = childNameForFile ? `${childNameForFile}_${mmdd}集锦.mp4` : videoFile.name.replace(/\.[^.]+$/,"")+"_highlight.mp4";
+      const outputName = childNameForFile ? `${childNameForFile}_${mmdd}集锦.mp4` : videoFile.name.replace(/\.[^.]+$/, "") + "_highlight.mp4";
       setResultName(outputName);
-      setStage("done"); setProgress(100);
-      setStatusMsg(useMultiSeg
-        ? `共 ${segs.length} 个精彩片段 · 总时长 ${totalSegDur.toFixed(0)}s`
-        : "");
+      setStage("done"); setProgress(100); setStatusMsg("");
       try {
-        const rec = { date: new Date().toISOString(), name: outputName, dur: Math.round(totalClipDur) };
+        const rec = { date: new Date().toISOString(), name: outputName, dur: Math.round(clipDuration) };
         const prev = JSON.parse(localStorage.getItem("my_highlights") || "[]");
         const next = [rec, ...prev].slice(0, 10);
         localStorage.setItem("my_highlights", JSON.stringify(next));
         setMyHighlights(next);
       } catch {}
 
-    } catch(e) {
+    } catch (e) {
       console.error(e);
-      if (ffmpegRef.current) {
-        try { await ffmpegRef.current.deleteFile("input.mp4"); } catch {}
-        try { await ffmpegRef.current.deleteFile("frame.png"); } catch {}
-        try { await ffmpegRef.current.deleteFile("highlight.mp4"); } catch {}
-        try { await ffmpegRef.current.deleteFile("bgm.wav"); } catch {}
-        try { await ffmpegRef.current.deleteFile("bgm.mp3"); } catch {}
-      }
-      const raw = e instanceof Error ? e.message : String(e);
-      const isOOM = /malloc|Out of bounds memory|out of memory/i.test(raw);
-      const msg = isOOM
-        ? `视频文件对手机内存来说太大了。请先在电脑上压缩视频（选短片段 / 降低分辨率），或使用 150MB 以内的视频。`
-        : raw || "未知错误，请检查网络后重试";
-      setError(msg);
+      setError((e instanceof Error ? e.message : String(e)) || "未知错误，请重试");
       setStage("error");
+    } finally {
+      videoEl.pause(); videoEl.src = "";
+      URL.revokeObjectURL(videoObjectUrl);
     }
-  }, [videoFile, photoFile, bgmEnabled, bgmUserFile, ensureFFmpegLoaded]);
+  }, [videoFile, photoFile, bgmEnabled, bgmUserFile]);
 
-  const isProcessing = ["loading_ffmpeg","extracting_color","writing","analyzing","cutting"].includes(stage);
+  const isProcessing = ["loading","extracting_color","analyzing","cutting"].includes(stage);
   const canRun = !!(videoFile && photoFile && !isProcessing);
 
   return (
@@ -1111,16 +958,10 @@ export default function HighlightsPage() {
             <span className="text-xs text-gray-400">支持 MP4、MOV 等格式</span></>
           )}
         </label>
-        {videoFile && videoFile.size > 150 * 1024 * 1024 && (
-          <div className="mt-2 flex items-start gap-1 text-xs text-red-600">
-            <span className="shrink-0">🚫</span>
-            <span>视频超过 150MB（当前 {(videoFile.size/1024/1024).toFixed(0)}MB），手机端无法处理。请先在电脑压缩后重新选择。</span>
-          </div>
-        )}
-        {videoFile && videoFile.size > 80 * 1024 * 1024 && videoFile.size <= 150 * 1024 * 1024 && (
+        {videoFile && videoFile.size > 500 * 1024 * 1024 && (
           <div className="mt-2 flex items-start gap-1 text-xs text-amber-600">
-            <span className="shrink-0">⚠️</span>
-            <span>视频较大（{(videoFile.size/1024/1024).toFixed(0)}MB），分析预计需要 1–3 分钟，请在 WiFi 下耐心等待</span>
+            <span className="shrink-0">⏱</span>
+            <span>视频较大（{(videoFile.size/1024/1024).toFixed(0)}MB），帧分析预计 2–4 分钟，请在 WiFi 下耐心等待</span>
           </div>
         )}
       </div>
