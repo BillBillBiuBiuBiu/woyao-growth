@@ -480,7 +480,7 @@ export default function ParentHome() {
               })}
               {visibleClips.length > 3 && (
                 <Link href="/parent/highlights?tab=clips" className="block">
-                  <div className="text-center py-1.5 text-xs font-medium text-orange-500 active:opacity-70">查看全部 {visibleClips.length} 个切片 →</div>
+                  <div className="text-center py-1.5 text-xs font-medium text-orange-500 active:opacity-70">查看{childName}全部切片 →</div>
                 </Link>
               )}
             </div>
