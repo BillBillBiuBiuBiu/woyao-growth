@@ -652,8 +652,15 @@ export default function ParentHome() {
                     childTeam === "away"
                       ? [{ label: selectedGame.awayTeam, color: "#3B82F6", stats: awayStats }, { label: selectedGame.homeTeam, color: "#F97316", stats: homeStats }]
                       : [{ label: selectedGame.homeTeam, color: "#F97316", stats: homeStats }, { label: selectedGame.awayTeam, color: "#3B82F6", stats: awayStats }];
+                  const topScorer = [...gameDetail.stats].sort((a, b) => b.pts - a.pts)[0];
                   return (
                   <div className="mb-4">
+                    {topScorer && topScorer.pts > 0 && (
+                      <div className="flex items-center gap-2 mb-2 px-1">
+                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold">🌟 本场最佳</span>
+                        <span className="text-xs text-gray-600 font-medium">{topScorer.name} · {topScorer.pts}分{topScorer.reb > 0 ? ` ${topScorer.reb}板` : ""}</span>
+                      </div>
+                    )}
                     <div className="text-xs font-bold text-gray-500 mb-2 px-1">球员数据</div>
                     <div className="rounded-xl overflow-hidden border border-gray-100">
                       <table className="w-full text-xs">
