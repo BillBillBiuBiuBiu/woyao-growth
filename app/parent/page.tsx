@@ -217,7 +217,7 @@ export default function ParentHome() {
                     className="w-full text-left active:opacity-75 transition-opacity"
                     onClick={() => heroGame && openGameDetail(heroGame)}
                   >
-                    <div className="text-xs font-medium text-yellow-100 mb-1">⭐ {childName}的最新表现 ›</div>
+                    <div className="text-xs font-medium text-yellow-100 mb-1">⭐ {childName}的近期表现 ›</div>
                     <div className="text-base font-bold leading-snug" style={{ color: "#7C3810" }}>
                       {heroChildStat.pts}分{heroChildStat.reb > 0 ? ` · ${heroChildStat.reb}板` : ""}{heroChildStat.ast > 0 ? ` · ${heroChildStat.ast}助` : ""}{heroChildStat.stl > 0 ? ` · ${heroChildStat.stl}断` : ""}
                     </div>
