@@ -462,23 +462,18 @@ export default function ParentHome() {
                     {isExpanded && (
                       <div className="px-2 pb-2 flex flex-col gap-2">
                         <video src={clip.public_url} controls playsInline className="w-full rounded-xl bg-black" style={{ maxHeight: 220 }} />
-                        <div className="flex gap-2">
-                          {"share" in navigator && (
-                            <button
-                              onClick={async () => {
-                                try { await (navigator as Navigator & {share:(d:ShareData)=>Promise<void>}).share({ url: clip.public_url, title: childName ? `${childName}的精彩集锦` : "精彩集锦" }); } catch {}
-                              }}
-                              className="flex-1 py-1.5 rounded-lg text-xs font-bold text-orange-600 bg-orange-50 border border-orange-200 active:opacity-70"
-                            >📤 分享</button>
-                          )}
-                          <button
-                            onClick={() => copyClipLink(clip.public_url)}
-                            className="flex-1 py-1.5 rounded-lg text-xs font-bold border active:opacity-70 transition-colors"
-                            style={{ borderColor: linkToast === clip.public_url ? "rgba(34,197,94,0.4)" : "rgba(249,115,22,0.4)", color: linkToast === clip.public_url ? "#4ade80" : "#F97316", background: linkToast === clip.public_url ? "rgba(34,197,94,0.08)" : "rgba(249,115,22,0.08)" }}
-                          >
-                            {linkToast === clip.public_url ? "✅ 已复制" : "🔗 复制链接"}
-                          </button>
-                        </div>
+                        <button
+                          onClick={async () => {
+                            if ("share" in navigator) {
+                              try { await (navigator as Navigator & {share:(d:ShareData)=>Promise<void>}).share({ url: clip.public_url, title: childName ? `${childName}的精彩集锦` : "精彩集锦" }); return; } catch {}
+                            }
+                            copyClipLink(clip.public_url);
+                          }}
+                          className="w-full py-1.5 rounded-lg text-xs font-bold border active:opacity-70 transition-colors"
+                          style={{ borderColor: linkToast === clip.public_url ? "rgba(34,197,94,0.4)" : "rgba(249,115,22,0.4)", color: linkToast === clip.public_url ? "#4ade80" : "#F97316", background: linkToast === clip.public_url ? "rgba(34,197,94,0.08)" : "rgba(249,115,22,0.08)" }}
+                        >
+                          {linkToast === clip.public_url ? "✅ 已复制" : "📤 分享集锦"}
+                        </button>
                       </div>
                     )}
                   </div>
