@@ -2,6 +2,8 @@
 import { mockOrgStats, mockStudentList } from "@/lib/mock-data";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { useState, useEffect } from "react";
+import { apiLoadGames } from "@/lib/gc-api";
 
 const EngagementChart = dynamic(() => import("@/components/OrgCharts").then((m) => m.EngagementChart), { ssr: false });
 
@@ -12,6 +14,12 @@ const growthTrendMap: Record<string, { icon: string; color: string }> = {
 };
 
 export default function OrgDashboard() {
+  const [realGameCount, setRealGameCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    apiLoadGames().then(games => setRealGameCount(games.length)).catch(() => {});
+  }, []);
+
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -23,7 +31,7 @@ export default function OrgDashboard() {
       <div className="grid grid-cols-2 gap-3">
         {[
           { label: "活跃学员", value: mockOrgStats.activeStudents, unit: "人", color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "本月报告", value: mockOrgStats.reportsThisMonth, unit: "份", color: "text-orange-600", bg: "bg-orange-50" },
+          { label: "实战场次", value: realGameCount ?? mockOrgStats.reportsThisMonth, unit: "场", color: "text-orange-600", bg: "bg-orange-50" },
           { label: "报告打开率", value: `${Math.round(mockOrgStats.reportOpenRate * 100)}%`, unit: "", color: "text-green-600", bg: "bg-green-50" },
           { label: "视频播放率", value: `${Math.round(mockOrgStats.videoPlayRate * 100)}%`, unit: "", color: "text-purple-600", bg: "bg-purple-50" },
         ].map((m) => (
