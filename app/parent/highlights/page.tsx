@@ -1290,10 +1290,20 @@ export default function HighlightsPage() {
                   <div className="text-sm text-gray-800 font-medium truncate">{hl.name.replace(/\.[^.]+$/,"")}</div>
                   <div className="text-xs text-gray-400 mt-0.5">{(() => { const d = new Date(hl.date); const now = new Date(); const hhmm = `${d.getHours().toString().padStart(2,"0")}:${d.getMinutes().toString().padStart(2,"0")}`; const diff = Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime() - new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()) / 86400000); return diff === 0 ? `今天 ${hhmm}` : diff === 1 ? `昨天 ${hhmm}` : diff <= 7 ? `${diff}天前 ${hhmm}` : `${d.getMonth()+1}/${d.getDate()} ${hhmm}`; })()} · {hl.dur}秒</div>
                 </div>
-                <button
-                  className="text-xs text-orange-500 font-medium shrink-0 ml-3 active:opacity-60 transition-opacity"
-                  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                >重新生成 →</button>
+                <div className="flex items-center gap-2 shrink-0 ml-3">
+                  <button
+                    className="text-xs text-orange-500 font-medium active:opacity-60 transition-opacity"
+                    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                  >重新生成 →</button>
+                  <button
+                    className="text-gray-300 text-sm active:opacity-60 transition-opacity"
+                    onClick={() => {
+                      const next = myHighlights.filter((_,j) => j !== i);
+                      setMyHighlights(next);
+                      try { localStorage.setItem("my_highlights", JSON.stringify(next)); } catch {}
+                    }}
+                  >✕</button>
+                </div>
               </div>
             ))}
           </div>
