@@ -112,7 +112,7 @@ export default function StudentProfilePage() {
             >
               {a.levelGrade}
             </div>
-            <div className="text-amber-200 text-xs font-bold tracking-wider">{a.level} 稳定阶段</div>
+            <div className="text-amber-200 text-xs font-bold tracking-wider">{a.level} 稳定阶段 · 教练测评</div>
           </div>
         </div>
 
