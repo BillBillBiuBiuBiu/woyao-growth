@@ -212,6 +212,9 @@ export default function ParentHome() {
                     <div className="text-xs font-medium text-yellow-100 mb-1">🏀 最近比赛</div>
                     <div className="text-base font-bold leading-snug" style={{ color: "#7C3810" }}>
                       {recentGames[0].homeTeam} {recentGames[0].homeScore} — {recentGames[0].awayScore} {recentGames[0].awayTeam}
+                      {" "}<span style={{ color: recentGames[0].homeScore > recentGames[0].awayScore ? "#4ade80" : recentGames[0].homeScore < recentGames[0].awayScore ? "#fca5a5" : "#fde68a" }}>
+                        {recentGames[0].homeScore > recentGames[0].awayScore ? "胜" : recentGames[0].homeScore < recentGames[0].awayScore ? "负" : "平"}
+                      </span>
                     </div>
                     <div className="text-xs text-yellow-200 mt-0.5">
                       {fmtRelDate(recentGames[0].ts)}
