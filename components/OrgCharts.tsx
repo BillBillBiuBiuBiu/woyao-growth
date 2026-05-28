@@ -1,12 +1,16 @@
 "use client";
 
-const data = [
-  { week: "4/28", open: 72, play: 58 },
-  { week: "5/5",  open: 75, play: 60 },
-  { week: "5/10", open: 70, play: 55 },
-  { week: "5/17", open: 80, play: 65 },
-  { week: "5/24", open: 78, play: 62 },
-];
+const OPEN_RATES = [72, 75, 70, 80, 78];
+const PLAY_RATES = [58, 60, 55, 65, 62];
+function buildData() {
+  const now = new Date();
+  return Array.from({ length: 5 }, (_, i) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - (4 - i) * 7);
+    return { week: `${d.getMonth() + 1}/${d.getDate()}`, open: OPEN_RATES[i], play: PLAY_RATES[i] };
+  });
+}
+const data = buildData();
 
 export function EngagementChart() {
   const maxVal = 100;
