@@ -112,9 +112,18 @@ export default function CoachPage() {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold">近期打点记录</h2>
-          {recentGames.length > 0 && (
-            <span className="text-xs text-gray-400">{recentGames.length} 场</span>
-          )}
+          {recentGames.length > 0 && (() => {
+            const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
+            const l = recentGames.filter(g => g.homeScore < g.awayScore).length;
+            const d = recentGames.filter(g => g.homeScore === g.awayScore).length;
+            return (
+              <div className="text-xs text-gray-400">
+                <span className="text-green-600 font-bold">{w}胜</span>
+                {l > 0 && <span className="text-red-500 font-bold ml-1">{l}负</span>}
+                {d > 0 && <span className="text-gray-400 ml-1">{d}平</span>}
+              </div>
+            );
+          })()}
         </div>
         {recentGames.length > 0 ? (
           <div className="rounded-2xl border border-border bg-white overflow-hidden">
