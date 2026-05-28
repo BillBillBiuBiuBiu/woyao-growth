@@ -283,10 +283,20 @@ export default function StudentProfilePage() {
 
       {/* ── BADGES ──────────────────────────────────── */}
       <div className="px-4 pt-3">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(to bottom, #FCD34D, #F97316)" }} />
-          <span className="text-sm font-bold text-gray-800">成长勋章</span>
-        </div>
+        {(() => {
+          const dynamicCount = (recentGames.length >= 5 ? 1 : 0)
+            + (recentGames.length >= 3 && recentGames.filter(g => g.homeScore > g.awayScore).length / recentGames.length >= 0.7 ? 1 : 0)
+            + (realStats && realStats.games >= 2 && realStats.pts / realStats.games >= 8 ? 1 : 0)
+            + (hasTesterBadge ? 1 : 0);
+          const total = mockBadges.length + dynamicCount;
+          return (
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(to bottom, #FCD34D, #F97316)" }} />
+              <span className="text-sm font-bold text-gray-800">成长勋章</span>
+              <span className="text-xs text-amber-500 font-medium">{total} 枚</span>
+            </div>
+          );
+        })()}
         <div className="grid grid-cols-2 gap-2">
           {mockBadges.map((b) => (
             <div key={b.id} className="flex items-center gap-2 p-3 rounded-2xl bg-white/90 border border-amber-100 shadow-sm">
