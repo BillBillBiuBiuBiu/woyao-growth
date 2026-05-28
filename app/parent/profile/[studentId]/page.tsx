@@ -307,7 +307,8 @@ export default function StudentProfilePage() {
             </div>
           )}
           {recentGames.length >= 5 && (
-            <div className="flex items-center gap-2 p-3 rounded-2xl bg-white/90 border border-green-100 shadow-sm">
+            <div className="relative flex items-center gap-2 p-3 rounded-2xl bg-white/90 border border-green-100 shadow-sm">
+              <span className="text-xs text-green-500 bg-green-50 px-1 py-0.5 rounded absolute top-1.5 right-1.5 leading-none">实战</span>
               <span className="text-2xl">⚔️</span>
               <div className="min-w-0">
                 <div className="text-xs font-bold text-gray-800 truncate">赛场老将</div>
@@ -318,7 +319,8 @@ export default function StudentProfilePage() {
           {recentGames.length >= 3 && (() => {
             const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
             return w / recentGames.length >= 0.7 ? (
-              <div className="flex items-center gap-2 p-3 rounded-2xl bg-white/90 border border-yellow-100 shadow-sm">
+              <div className="relative flex items-center gap-2 p-3 rounded-2xl bg-white/90 border border-yellow-100 shadow-sm">
+                <span className="text-xs text-yellow-500 bg-yellow-50 px-1 py-0.5 rounded absolute top-1.5 right-1.5 leading-none">实战</span>
                 <span className="text-2xl">🏆</span>
                 <div className="min-w-0">
                   <div className="text-xs font-bold text-gray-800 truncate">常胜将军</div>
@@ -328,7 +330,8 @@ export default function StudentProfilePage() {
             ) : null;
           })()}
           {realStats && realStats.games >= 2 && realStats.pts / realStats.games >= 8 && (
-            <div className="flex items-center gap-2 p-3 rounded-2xl bg-white/90 border border-orange-100 shadow-sm">
+            <div className="relative flex items-center gap-2 p-3 rounded-2xl bg-white/90 border border-orange-100 shadow-sm">
+              <span className="text-xs text-orange-500 bg-orange-50 px-1 py-0.5 rounded absolute top-1.5 right-1.5 leading-none">实战</span>
               <span className="text-2xl">🔥</span>
               <div className="min-w-0">
                 <div className="text-xs font-bold text-gray-800 truncate">得分手</div>
