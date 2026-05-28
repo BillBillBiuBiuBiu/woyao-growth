@@ -23,7 +23,13 @@ const sentCount = mockReports.filter((r) => r.status === "sent").length;
 
 function fmtGameDate(ts: string): string {
   const d = new Date(ts);
-  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  const now = new Date();
+  const hhmm = `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  const diff = Math.floor((new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) / 86400000);
+  if (diff === 0) return `今天 ${hhmm}`;
+  if (diff === 1) return `昨天 ${hhmm}`;
+  if (diff <= 7) return `${diff}天前 ${hhmm}`;
+  return `${d.getMonth() + 1}/${d.getDate()} ${hhmm}`;
 }
 
 export default function CoachPage() {

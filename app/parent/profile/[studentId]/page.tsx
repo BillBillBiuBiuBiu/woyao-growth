@@ -205,11 +205,16 @@ export default function StudentProfilePage() {
 
       {/* ── SKILL ITEMS TABLE ───────────────────────── */}
       <div className="px-4 py-3">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="text-white text-xs font-bold px-2.5 py-0.5 rounded" style={{ background: "#F97316" }}>
-            {a.level} 项目单
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            <div className="text-white text-xs font-bold px-2.5 py-0.5 rounded" style={{ background: "#F97316" }}>
+              {a.level} 项目单
+            </div>
+            <div className="text-xs text-orange-700 font-medium">测评项目得分（0–4分）</div>
           </div>
-          <div className="text-xs text-orange-700 font-medium">测评项目得分（0–4分）</div>
+          <div className="text-xs text-gray-400 flex items-center gap-1">
+            <span>✓</span><span>教练人工测评</span>
+          </div>
         </div>
         <div className="flex gap-1.5 mb-2 flex-wrap">
           {[
@@ -254,9 +259,12 @@ export default function StudentProfilePage() {
 
       {/* ── DIMENSION DETAIL CARDS ──────────────────── */}
       <div className="px-4 py-3">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(to bottom, #FCD34D, #F97316)" }} />
-          <span className="text-sm font-bold text-gray-800">六维能力详情</span>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(to bottom, #FCD34D, #F97316)" }} />
+            <span className="text-sm font-bold text-gray-800">六维能力详情</span>
+          </div>
+          <span className="text-xs text-gray-400">✓ 教练测评 · {(() => { const d = new Date(a.date); return `${d.getMonth()+1}月${d.getDate()}日`; })()}</span>
         </div>
         <div className="flex flex-col gap-3">
           {a.dimensionDetails.map((d) => (
