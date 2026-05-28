@@ -224,6 +224,7 @@ export default function StudentProfilePage() {
           <span className="text-sm font-bold text-gray-800">个人能力分布</span>
         </div>
         <GrowthRadarDual />
+        <div className="text-xs text-gray-400 text-center mt-2">📊 数据基于教练测评，定期更新</div>
       </div>
 
       {/* ── DIMENSION DETAIL CARDS ──────────────────── */}
