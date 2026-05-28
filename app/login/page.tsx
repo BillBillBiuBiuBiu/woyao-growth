@@ -39,7 +39,10 @@ export default function LoginPage() {
   function handleSelect(r: (typeof roles)[0]) {
     setRole(r.value);
     if (r.value === "parent") {
-      try { if (!localStorage.getItem("child_name")) localStorage.setItem("child_name", "蒋皓博"); } catch {}
+      try {
+        if (!localStorage.getItem("child_name")) localStorage.setItem("child_name", "蒋皓博");
+        if (!localStorage.getItem("child_plan")) localStorage.setItem("child_plan", "vip");
+      } catch {}
     }
     router.push(r.href);
   }
