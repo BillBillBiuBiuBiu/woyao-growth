@@ -79,7 +79,7 @@ export default function LeadsPage() {
     <div className="flex flex-col gap-5">
       <div>
         <h1 className="text-xl font-bold">转化线索</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">PAB球馆 · 2026年5月</p>
+        <p className="text-sm text-muted-foreground mt-0.5">{`PAB球馆 · ${new Date().getFullYear()}年${new Date().getMonth() + 1}月`}</p>
       </div>
 
       {/* Summary */}
