@@ -18,7 +18,7 @@ export async function GET(
   if (data.used_at) return NextResponse.json({ error: "used" }, { status: 410 });
   if (new Date(data.expires_at) < new Date()) return NextResponse.json({ error: "expired" }, { status: 410 });
 
-  const student = data.student as { name: string } | null;
+  const student = (Array.isArray(data.student) ? data.student[0] : data.student) as { name: string } | null;
   return NextResponse.json({ studentName: student?.name ?? "" });
 }
 
