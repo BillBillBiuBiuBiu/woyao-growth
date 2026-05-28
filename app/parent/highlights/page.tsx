@@ -463,7 +463,7 @@ export default function HighlightsPage() {
   const [analyzeElapsed, setAnalyzeElapsed] = useState(0);
   const [resultDur,      setResultDur]      = useState(0);
   const [hlMode, setHlMode] = useState<"upload"|"from_clips">("upload");
-  const [playerClips, setPlayerClips] = useState<Array<ClipRecord & { gameLabel: string }>|null>(null);
+  const [playerClips, setPlayerClips] = useState<Array<ClipRecord & { gameLabel: string; gameId?: string }>|null>(null);
   const [loadingPlayerClips, setLoadingPlayerClips] = useState(false);
   const [gamesWithEvents, setGamesWithEvents] = useState(0);
   const [expandedClipId, setExpandedClipId] = useState<string|null>(null);
@@ -533,7 +533,7 @@ export default function HighlightsPage() {
           const gameLabel = `${game.homeTeam} vs ${game.awayTeam}`;
           return clips
             .filter(clip => clip.label.split(",").map(s => s.trim()).includes(name))
-            .map(clip => ({ ...clip, gameLabel }));
+            .map(clip => ({ ...clip, gameLabel, gameId: game.id }));
         })
       );
       setPlayerClips(results.flat());
@@ -1025,7 +1025,7 @@ export default function HighlightsPage() {
           )}
           {!loadingPlayerClips && playerClips && playerClips.length > 0 && (
             <div className="text-xs text-gray-400 -mt-1">
-              找到 {playerClips.length} 个切片 · 来自 {new Set(playerClips.map(c => c.gameLabel)).size} 场比赛
+              找到 {playerClips.length} 个切片 · 来自 {new Set(playerClips.map(c => c.gameId ?? c.gameLabel)).size} 场比赛
             </div>
           )}
           {!loadingPlayerClips && playerClips && playerClips.length > 0 && playerClips.map((clip, i) => (
