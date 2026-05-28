@@ -224,7 +224,7 @@ export default function ParentHome() {
                     </div>
                     {heroGame && (
                       <div className="text-xs text-yellow-200 mt-0.5">
-                        {heroGame.homeTeam} {heroGame.homeScore}—{heroGame.awayScore} {heroGame.awayTeam} · {fmtRelDate(heroGame.ts)}
+                        vs {heroGame.awayTeam} {heroGame.homeScore}—{heroGame.awayScore} · {fmtRelDate(heroGame.ts)}
                       </div>
                     )}
                   </button>
