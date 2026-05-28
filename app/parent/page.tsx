@@ -261,7 +261,7 @@ export default function ParentHome() {
                   <span className="text-2xl">🏆</span>
                   <div>
                     <div className="text-xs font-bold text-gray-800">{mood}</div>
-                    <div className="text-xs text-amber-600">{recentGames.length}场 · {w}胜{l > 0 ? `${l}负` : ""} · {rate}%</div>
+                    <div className="text-xs text-amber-600">{recentGames.length}场 {w}胜{l > 0 ? `${l}负` : ""} {rate}%</div>
                   </div>
                 </div>
               );
