@@ -636,6 +636,8 @@ export default function HighlightsPage() {
   const [resultUrl,    setResultUrl]    = useState<string|null>(null);
   const [resultBlob,   setResultBlob]   = useState<Blob|null>(null);
   const [resultName,   setResultName]   = useState("highlight.mp4");
+  const [procMode,     setProcMode]     = useState<"server"|"client">("server");
+  const [serverUrl,    setServerUrl]    = useState<string|null>(null);
   const [error,        setError]        = useState<string|null>(null);
   const [feedbackRating, setFeedbackRating] = useState<number>(0);
   const [feedbackTypes,  setFeedbackTypes]  = useState<string[]>([]);
@@ -857,53 +859,103 @@ export default function HighlightsPage() {
       const clipStart = clipSpecs[0].start;
       const clipEnd = clipSpecs[0].end;
 
-      // ── 5. Load BGM ───────────────────────────────────────────────────────
-      setStage("cutting");
-      let bgmBlob: Blob | null = null;
-      if (bgmEnabled) {
-        setStatusMsg("加载BGM…");
-        if (bgmUserFile && bgmUserFile.size <= 3 * 1024 * 1024) {
-          bgmBlob = bgmUserFile;
-        } else {
-          try {
-            const resp = await Promise.race([
-              fetch("/bgm/sport1.mp3"),
-              new Promise<never>((_, rej) => setTimeout(() => rej(), 8000)),
-            ]) as Response;
-            if (resp.ok) bgmBlob = await resp.blob();
-          } catch {}
-          if (!bgmBlob) {
-            const wav = generateBeatWAV(clipDuration + 2);
-            bgmBlob = new Blob([wav.buffer as ArrayBuffer], { type: "audio/wav" });
-          }
-        }
-      }
-
-      // ── 6. Cut clips natively via MediaRecorder ───────────────────────────
-      setStatusMsg(`剪辑 ${clipSpecs.length} 段精彩，合计约 ${Math.round(clipDuration)} 秒…`);
-      const outputBlob = clipSpecs.length === 1
-        ? await cutVideoNative(clipSpecs[0].el, clipSpecs[0].start, clipSpecs[0].end, bgmBlob,
-            (p) => setProgress(70 + Math.round(p * 28)))
-        : await cutMultiVideoNative(clipSpecs, bgmBlob,
-            (p) => setProgress(70 + Math.round(p * 28)));
-
-      setProgress(100);
-      setResultBlob(outputBlob);
-      setResultUrl(URL.createObjectURL(outputBlob));
-      setResultDur(Math.round(clipDuration));
+      // ── 5. Build output filename ──────────────────────────────────────────
       const childNameForFile = (() => { try { return localStorage.getItem("child_name") || ""; } catch { return ""; } })();
       const mmdd = (() => { const d = new Date(); return `${(d.getMonth()+1).toString().padStart(2,"0")}${d.getDate().toString().padStart(2,"0")}`; })();
       const outputName = childNameForFile ? `${childNameForFile}_${mmdd}集锦.mp4` : videoFile.name.replace(/\.[^.]+$/, "") + "_highlight.mp4";
       setResultName(outputName);
-      setStage("done"); setProgress(100);
-      setStatusMsg(clipSpecs.length > 1 ? `${clipSpecs.length}段视频精华合并 · 共${Math.round(clipDuration)}秒` : "");
-      try {
-        const rec = { date: new Date().toISOString(), name: outputName, dur: Math.round(clipDuration) };
-        const prev = JSON.parse(localStorage.getItem("my_highlights") || "[]");
-        const next = [rec, ...prev].slice(0, 10);
-        localStorage.setItem("my_highlights", JSON.stringify(next));
-        setMyHighlights(next);
-      } catch {}
+
+      setStage("cutting");
+
+      if (procMode === "server") {
+        // ── 6a. Server-side FFmpeg path ─────────────────────────────────────
+        setStatusMsg("上传到服务器，后台处理中…");
+        const fd = new FormData();
+        for (let i = 0; i < clipSpecs.length; i++) {
+          fd.append(`video_${i}`, videoFiles[i] ?? videoFiles[0], videoFiles[i]?.name ?? outputName);
+          fd.append(`start_${i}`, clipSpecs[i].start.toFixed(3));
+          fd.append(`end_${i}`, clipSpecs[i].end.toFixed(3));
+        }
+        fd.append("bgm", bgmEnabled ? "true" : "false");
+        fd.append("name", outputName);
+
+        const startResp = await fetch("/api/highlights/encode", { method: "POST", body: fd });
+        if (!startResp.ok) throw new Error(`服务端错误 ${startResp.status}`);
+        const { jobId, error: startErr } = await startResp.json();
+        if (startErr) throw new Error(startErr);
+
+        // Poll job status via SSE
+        await new Promise<void>((resolve, reject) => {
+          const es = new EventSource(`/api/highlights/status/${jobId}`);
+          es.onmessage = (e) => {
+            try {
+              const data = JSON.parse(e.data) as { status: string; progress: number; stage: string; url?: string; error?: string };
+              if (data.stage) setStatusMsg(data.stage);
+              if (typeof data.progress === "number") setProgress(70 + Math.round(data.progress * 0.28));
+              if (data.status === "done" && data.url) {
+                es.close(); setServerUrl(data.url); resolve();
+              }
+              if (data.status === "error") { es.close(); reject(new Error(data.error || "服务端处理失败")); }
+            } catch { es.close(); reject(new Error("响应解析失败")); }
+          };
+          es.onerror = () => { es.close(); reject(new Error("连接中断，请检查网络")); };
+          // Fallback timeout: 3 minutes
+          setTimeout(() => { es.close(); reject(new Error("处理超时（>3分钟），请重试")); }, 180_000);
+        });
+
+        setResultDur(Math.round(clipDuration));
+        setStage("done"); setProgress(100);
+        setStatusMsg(`服务端处理完成 · 视频已保存云端${clipSpecs.length > 1 ? ` · ${clipSpecs.length}段合并` : ""}`);
+        try {
+          const rec = { date: new Date().toISOString(), name: outputName, dur: Math.round(clipDuration) };
+          const prev = JSON.parse(localStorage.getItem("my_highlights") || "[]");
+          localStorage.setItem("my_highlights", JSON.stringify([rec, ...prev].slice(0, 10)));
+          setMyHighlights([rec, ...prev].slice(0, 10));
+        } catch {}
+
+      } else {
+        // ── 6b. Client-side MediaRecorder path ─────────────────────────────
+        let bgmBlob: Blob | null = null;
+        if (bgmEnabled) {
+          setStatusMsg("加载BGM…");
+          if (bgmUserFile && bgmUserFile.size <= 3 * 1024 * 1024) {
+            bgmBlob = bgmUserFile;
+          } else {
+            try {
+              const resp = await Promise.race([
+                fetch("/bgm/sport1.mp3"),
+                new Promise<never>((_, rej) => setTimeout(() => rej(), 8000)),
+              ]) as Response;
+              if (resp.ok) bgmBlob = await resp.blob();
+            } catch {}
+            if (!bgmBlob) {
+              const wav = generateBeatWAV(clipDuration + 2);
+              bgmBlob = new Blob([wav.buffer as ArrayBuffer], { type: "audio/wav" });
+            }
+          }
+        }
+
+        setStatusMsg(`剪辑 ${clipSpecs.length} 段精彩，合计约 ${Math.round(clipDuration)} 秒…`);
+        const outputBlob = clipSpecs.length === 1
+          ? await cutVideoNative(clipSpecs[0].el, clipSpecs[0].start, clipSpecs[0].end, bgmBlob,
+              (p) => setProgress(70 + Math.round(p * 28)))
+          : await cutMultiVideoNative(clipSpecs, bgmBlob,
+              (p) => setProgress(70 + Math.round(p * 28)));
+
+        setProgress(100);
+        setResultBlob(outputBlob);
+        setResultUrl(URL.createObjectURL(outputBlob));
+        setResultDur(Math.round(clipDuration));
+        setStage("done"); setProgress(100);
+        setStatusMsg(clipSpecs.length > 1 ? `${clipSpecs.length}段视频精华合并 · 共${Math.round(clipDuration)}秒` : "");
+        try {
+          const rec = { date: new Date().toISOString(), name: outputName, dur: Math.round(clipDuration) };
+          const prev = JSON.parse(localStorage.getItem("my_highlights") || "[]");
+          const next = [rec, ...prev].slice(0, 10);
+          localStorage.setItem("my_highlights", JSON.stringify(next));
+          setMyHighlights(next);
+        } catch {}
+      }
 
     } catch (e) {
       console.error(e);
@@ -1143,6 +1195,26 @@ export default function HighlightsPage() {
         </div>
       )}
 
+      {/* Processing mode selector */}
+      {!isProcessing && (
+        <div className="flex rounded-xl bg-gray-100 p-0.5 gap-0.5">
+          <button
+            onClick={() => setProcMode("server")}
+            className={`flex-1 rounded-lg py-2 text-xs font-bold transition-colors flex flex-col items-center gap-0.5 ${procMode === "server" ? "bg-white text-orange-600 shadow-sm" : "text-gray-400"}`}
+          >
+            <span>☁️ 服务端处理</span>
+            <span className="font-normal opacity-70">快速 · 后台运行 · 云端链接</span>
+          </button>
+          <button
+            onClick={() => setProcMode("client")}
+            className={`flex-1 rounded-lg py-2 text-xs font-bold transition-colors flex flex-col items-center gap-0.5 ${procMode === "client" ? "bg-white text-gray-600 shadow-sm" : "text-gray-400"}`}
+          >
+            <span>📱 本地处理</span>
+            <span className="font-normal opacity-70">离线可用 · 保存到手机</span>
+          </button>
+        </div>
+      )}
+
       <button onClick={run} disabled={!canRun}
         className={`w-full py-4 rounded-2xl text-base font-bold shadow transition-all ${canRun?"bg-orange-500 text-white active:scale-95":"bg-gray-100 text-gray-400 cursor-not-allowed"}`}>
         {isProcessing ? "处理中…" : (videoFiles.length>0 && photoFile) ? `✨ 开始生成集锦${videoFiles.length>1?`（${videoFiles.length}段合并）`:""}` : (videoFiles.length>0 && !photoFile) ? "还差球员照片 ②" : (videoFiles.length===0 && photoFile) ? "还差比赛视频 ①" : "✨ 开始生成集锦"}
@@ -1172,6 +1244,31 @@ export default function HighlightsPage() {
         </div>
       )}
       </>)} {/* end upload mode wrapper */}
+
+      {stage==="done"&&serverUrl&&(
+        <div className="rounded-2xl bg-white border border-orange-100 shadow-sm p-4 flex flex-col gap-3">
+          <div className="text-sm font-bold text-gray-800">🎉 {childName ? `${childName}的` : ""}集锦已生成！</div>
+          {statusMsg && <div className="text-xs text-orange-500 -mt-1">{statusMsg}</div>}
+          <video src={serverUrl} controls playsInline className="w-full rounded-xl bg-black" style={{maxHeight:280}}/>
+          <button
+            onClick={async () => {
+              if ("share" in navigator) {
+                try { await (navigator as any).share({ url: serverUrl, title: `${childName || ""}的精彩集锦` }); return; } catch {}
+              }
+              try { await navigator.clipboard.writeText(serverUrl); setClipShareUrl("copied:" + serverUrl); } catch { setClipShareUrl(serverUrl); }
+            }}
+            className="w-full py-3 rounded-xl bg-orange-500 text-white text-sm font-bold text-center active:scale-95 transition-transform"
+          >
+            📤 分享集锦给家人
+          </button>
+          <a href={serverUrl} target="_blank" rel="noopener noreferrer"
+            className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-bold text-center block active:opacity-70">
+            🔗 在浏览器中打开（可长按保存）
+          </a>
+          <div className="text-xs text-green-600 text-center font-medium">✅ 视频已永久保存到云端，随时可分享</div>
+          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setResultDur(0);setServerUrl(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);setCloudUrl(null);setCloudUploading(false);setVideoFiles([]);}} className="text-sm text-gray-400 text-center">重新制作</button>
+        </div>
+      )}
 
       {stage==="done"&&resultUrl&&(
         <div className="rounded-2xl bg-white border border-orange-100 shadow-sm p-4 flex flex-col gap-3">
@@ -1274,7 +1371,7 @@ export default function HighlightsPage() {
           >
             {captionCopied ? "✅ 配文已复制！粘贴到微信群" : "📋 复制配文 · 发给家人群"}
           </button>
-          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setResultDur(0);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);setCloudUrl(null);setCloudUploading(false);setVideoFiles([]);}} className="text-sm text-gray-400 text-center">重新制作</button>
+          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setResultDur(0);setServerUrl(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);setCloudUrl(null);setCloudUploading(false);setVideoFiles([]);}} className="text-sm text-gray-400 text-center">重新制作</button>
           <Link href="/parent/profile/stu-001" className="w-full py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-bold text-center block active:scale-95 transition-transform">
             {childName ? `📊 查看${childName}的成长档案` : "📊 查看孩子的成长档案"}
           </Link>
