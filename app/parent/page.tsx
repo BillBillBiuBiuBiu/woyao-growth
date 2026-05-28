@@ -286,40 +286,6 @@ export default function ParentHome() {
       </div>
 
       <div className="flex flex-col gap-4 px-4">
-        {/* Highlight reel — core feature, first visible CTA after hero */}
-        <Link href="/parent/highlights">
-          <div
-            className="rounded-3xl p-5 active:scale-98 transition-transform shadow-md relative overflow-hidden"
-            style={{ background: "linear-gradient(135deg, #F97316 0%, #FB923C 50%, #FBBF24 100%)" }}
-          >
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-6xl opacity-20 select-none">🎬</div>
-            <div className="relative">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-xs font-bold text-orange-100 bg-white/20 px-2 py-0.5 rounded-full">AI 自动剪辑</span>
-              </div>
-              <div className="text-lg font-black text-white leading-tight">{childName ? `生成${childName}的精彩集锦` : "生成孩子的精彩集锦"}</div>
-              <div className="text-sm text-orange-100 mt-1">上传比赛视频 · AI识别有球片段 · 一键生成</div>
-              <div className="mt-3 inline-flex items-center gap-1 bg-white text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full">
-                立即体验 →
-              </div>
-            </div>
-          </div>
-        </Link>
-
-        {/* Last highlight record — shown when parent has previously generated a highlight */}
-        {myLastHighlight && (
-          <Link href="/parent/highlights">
-            <div className="rounded-2xl bg-white/90 border border-orange-100 shadow-sm px-4 py-3 flex items-center justify-between active:bg-orange-50 transition-colors">
-              <div className="min-w-0 flex-1">
-                <div className="text-xs text-orange-500 font-medium mb-0.5">✨ 最近集锦</div>
-                <div className="text-sm font-semibold text-gray-800 truncate">{myLastHighlight.name.replace(/\.mp4$/i, "") || (childName ? `${childName}的精彩集锦` : "精彩集锦")}</div>
-                <div className="text-xs text-gray-400 mt-0.5">{fmtRelDate(myLastHighlight.date)} · {myLastHighlight.dur}秒</div>
-              </div>
-              <div className="text-orange-300 ml-3 shrink-0 text-xl">›</div>
-            </div>
-          </Link>
-        )}
-
         {/* Volunteer annotation entry — same person who watches is often the volunteer scorer */}
         <Link href="/gc/live">
           <div className="rounded-2xl bg-white/90 border border-orange-200 shadow-sm px-4 py-3 flex items-center justify-between active:bg-orange-50 transition-colors">
@@ -398,6 +364,39 @@ export default function ParentHome() {
             });
             })()}
           </div>
+        )}
+
+        {/* Highlight reel CTA — placed after game list so games are the first thing parents see */}
+        <Link href="/parent/highlights">
+          <div
+            className="rounded-3xl p-5 active:scale-98 transition-transform shadow-md relative overflow-hidden"
+            style={{ background: "linear-gradient(135deg, #F97316 0%, #FB923C 50%, #FBBF24 100%)" }}
+          >
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-6xl opacity-20 select-none">🎬</div>
+            <div className="relative">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-xs font-bold text-orange-100 bg-white/20 px-2 py-0.5 rounded-full">AI 自动剪辑</span>
+              </div>
+              <div className="text-lg font-black text-white leading-tight">{childName ? `生成${childName}的精彩集锦` : "生成孩子的精彩集锦"}</div>
+              <div className="text-sm text-orange-100 mt-1">上传比赛视频 · AI识别有球片段 · 一键生成</div>
+              <div className="mt-3 inline-flex items-center gap-1 bg-white text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full">
+                立即体验 →
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        {myLastHighlight && (
+          <Link href="/parent/highlights">
+            <div className="rounded-2xl bg-white/90 border border-orange-100 shadow-sm px-4 py-3 flex items-center justify-between active:bg-orange-50 transition-colors">
+              <div className="min-w-0 flex-1">
+                <div className="text-xs text-orange-500 font-medium mb-0.5">✨ 最近集锦</div>
+                <div className="text-sm font-semibold text-gray-800 truncate">{myLastHighlight.name.replace(/\.mp4$/i, "") || (childName ? `${childName}的精彩集锦` : "精彩集锦")}</div>
+                <div className="text-xs text-gray-400 mt-0.5">{fmtRelDate(myLastHighlight.date)} · {myLastHighlight.dur}秒</div>
+              </div>
+              <div className="text-orange-300 ml-3 shrink-0 text-xl">›</div>
+            </div>
+          </Link>
         )}
 
         {/* Latest report — shown only when no real games exist (demo state) */}

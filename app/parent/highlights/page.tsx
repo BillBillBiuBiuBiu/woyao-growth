@@ -895,7 +895,8 @@ export default function HighlightsPage() {
       const mmdd = (() => { const d = new Date(); return `${(d.getMonth()+1).toString().padStart(2,"0")}${d.getDate().toString().padStart(2,"0")}`; })();
       const outputName = childNameForFile ? `${childNameForFile}_${mmdd}集锦.mp4` : videoFile.name.replace(/\.[^.]+$/, "") + "_highlight.mp4";
       setResultName(outputName);
-      setStage("done"); setProgress(100); setStatusMsg("");
+      setStage("done"); setProgress(100);
+      setStatusMsg(clipSpecs.length > 1 ? `${clipSpecs.length}段视频精华合并 · 共${Math.round(clipDuration)}秒` : "");
       try {
         const rec = { date: new Date().toISOString(), name: outputName, dur: Math.round(clipDuration) };
         const prev = JSON.parse(localStorage.getItem("my_highlights") || "[]");
@@ -1273,7 +1274,7 @@ export default function HighlightsPage() {
           >
             {captionCopied ? "✅ 配文已复制！粘贴到微信群" : "📋 复制配文 · 发给家人群"}
           </button>
-          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setResultDur(0);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);setCloudUrl(null);setCloudUploading(false);}} className="text-sm text-gray-400 text-center">重新制作</button>
+          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setResultDur(0);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);setCloudUrl(null);setCloudUploading(false);setVideoFiles([]);}} className="text-sm text-gray-400 text-center">重新制作</button>
           <Link href="/parent/profile/stu-001" className="w-full py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-bold text-center block active:scale-95 transition-transform">
             {childName ? `📊 查看${childName}的成长档案` : "📊 查看孩子的成长档案"}
           </Link>
