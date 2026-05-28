@@ -1,44 +1,72 @@
 "use client";
-import { useRole, Role } from "@/lib/store";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
-const roles = [
-  {
-    value: "parent" as Role,
-    label: "家长 欣冉",
-    emoji: "👨‍👦",
-    desc: "查看孩子的成长报告和成长档案",
-    href: "/parent",
-    color: "from-orange-50 to-amber-50 border-orange-200 hover:border-orange-400",
-    badge: "bg-orange-100 text-orange-700",
-  },
-  {
-    value: "coach" as Role,
-    label: "王教练",
-    emoji: "🏀",
-    desc: "确认片段标注，发布成长报告",
-    href: "/coach",
-    color: "from-blue-50 to-sky-50 border-blue-200 hover:border-blue-400",
-    badge: "bg-blue-100 text-blue-700",
-  },
-  {
-    value: "org" as Role,
-    label: "PAB球馆管理员",
-    emoji: "🏢",
-    desc: "查看运营数据，管理转化线索",
-    href: "/org",
-    color: "from-purple-50 to-violet-50 border-purple-200 hover:border-purple-400",
-    badge: "bg-purple-100 text-purple-700",
-  },
-];
+type Step = "phone" | "otp";
 
 export default function LoginPage() {
-  const { setRole } = useRole();
   const router = useRouter();
+  const [step, setStep] = useState<Step>("phone");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleSelect(r: (typeof roles)[0]) {
-    setRole(r.value);
-    router.push(r.href);
+  const e164 = "+86" + phone.trim();
+
+  async function sendOtp() {
+    if (!/^1[3-9]\d{9}$/.test(phone.trim())) {
+      setError("请输入正确的11位手机号");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    const supabase = getSupabaseBrowser();
+    const { error: err } = await supabase.auth.signInWithOtp({ phone: e164 });
+    setLoading(false);
+    if (err) {
+      setError("发送失败：" + err.message);
+      return;
+    }
+    setStep("otp");
+  }
+
+  async function verifyOtp() {
+    if (otp.length !== 6) {
+      setError("请输入6位验证码");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    const supabase = getSupabaseBrowser();
+    const { data, error: err } = await supabase.auth.verifyOtp({
+      phone: e164,
+      token: otp,
+      type: "sms",
+    });
+    setLoading(false);
+    if (err || !data.session) {
+      setError("验证码错误或已过期");
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.session.user.id)
+      .single();
+
+    if (!profile) {
+      router.push("/onboarding");
+    } else {
+      const roleHome: Record<string, string> = {
+        coach: "/coach",
+        parent: "/parent",
+        org_admin: "/org",
+      };
+      router.push(roleHome[profile.role] ?? "/");
+    }
   }
 
   return (
@@ -46,40 +74,78 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <div className="text-5xl mb-3">🏀</div>
-          <h1 className="text-2xl font-bold text-foreground">我耀成长证据系统</h1>
+          <h1 className="text-2xl font-bold text-foreground">我耀成长</h1>
           <p className="text-muted-foreground text-sm mt-2">让每一次成长，都有证据</p>
         </div>
 
-        <div className="text-xs text-muted-foreground text-center mb-4 px-2">
-          演示模式 · 选择你的角色
-        </div>
-
-        <div className="flex flex-col gap-3">
-          {roles.map((r) => (
-            <button
-              key={r.value}
-              onClick={() => handleSelect(r)}
-              className={`w-full text-left rounded-2xl border-2 bg-gradient-to-br p-4 transition-all duration-200 cursor-pointer ${r.color}`}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">{r.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-foreground">{r.label}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${r.badge}`}>
-                      {r.value === "parent" ? "家长端" : r.value === "coach" ? "教练端" : "机构端"}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{r.desc}</p>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
+          {step === "phone" ? (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">手机号</label>
+                <div className="flex rounded-xl border border-gray-200 overflow-hidden focus-within:border-orange-400 transition-colors">
+                  <span className="flex items-center px-3 bg-gray-50 text-gray-500 text-sm border-r border-gray-200 select-none">
+                    +86
+                  </span>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={11}
+                    placeholder="请输入手机号"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                    onKeyDown={(e) => e.key === "Enter" && sendOtp()}
+                    className="flex-1 px-3 py-3 text-sm outline-none bg-white"
+                    autoFocus
+                  />
                 </div>
-                <span className="text-muted-foreground">›</span>
               </div>
-            </button>
-          ))}
+              {error && <p className="text-sm text-red-500">{error}</p>}
+              <button
+                onClick={sendOtp}
+                disabled={loading || phone.length < 11}
+                className="w-full py-3 rounded-xl bg-orange-500 text-white font-semibold text-sm disabled:opacity-40 active:scale-95 transition-all"
+              >
+                {loading ? "发送中…" : "获取验证码"}
+              </button>
+            </>
+          ) : (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">验证码</label>
+                <p className="text-xs text-muted-foreground mb-3">已发送至 +86 {phone}</p>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="请输入6位验证码"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                  onKeyDown={(e) => e.key === "Enter" && verifyOtp()}
+                  className="w-full px-3 py-3 text-sm rounded-xl border border-gray-200 outline-none focus:border-orange-400 transition-colors tracking-widest text-center text-lg"
+                  autoFocus
+                />
+              </div>
+              {error && <p className="text-sm text-red-500">{error}</p>}
+              <button
+                onClick={verifyOtp}
+                disabled={loading || otp.length < 6}
+                className="w-full py-3 rounded-xl bg-orange-500 text-white font-semibold text-sm disabled:opacity-40 active:scale-95 transition-all"
+              >
+                {loading ? "验证中…" : "登录"}
+              </button>
+              <button
+                onClick={() => { setStep("phone"); setOtp(""); setError(""); }}
+                className="w-full py-2 text-sm text-muted-foreground"
+              >
+                重新获取验证码
+              </button>
+            </>
+          )}
         </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-8">
-          Demo学员：蒋皓博 · PAB U10提高班 · 教练王教练
+        <p className="text-center text-xs text-muted-foreground mt-6">
+          登录即代表同意用户协议和隐私政策
         </p>
       </div>
     </div>
