@@ -89,11 +89,20 @@ export default function ParentHome() {
       const merged = arrays.flat().sort((a, b) => b.created_at.localeCompare(a.created_at));
       setLatestClips(merged);
     }).catch(() => setLatestClips([]));
-    if (!childName || recentGames[0].eventCount === 0) { setHeroChildStat(null); return; }
-    apiLoadEvents(recentGames[0].id).then((evts) => {
-      const s = computeStats(evts).find(p => p.name === childName);
-      setHeroChildStat(s ? { pts: s.pts, reb: s.reb, ast: s.ast, stl: s.stl } : null);
-    }).catch(() => {});
+    if (!childName) { setHeroChildStat(null); return; }
+    // Try up to 3 recent games to find one with the child's data
+    const candidates = recentGames.slice(0, 3).filter(g => g.eventCount > 0);
+    if (candidates.length === 0) { setHeroChildStat(null); return; }
+    (async () => {
+      for (const game of candidates) {
+        try {
+          const evts = await apiLoadEvents(game.id);
+          const s = computeStats(evts).find(p => p.name === childName);
+          if (s) { setHeroChildStat({ pts: s.pts, reb: s.reb, ast: s.ast, stl: s.stl }); return; }
+        } catch {}
+      }
+      setHeroChildStat(null);
+    })();
   }, [childName, recentGames]);
 
   function saveName() {
