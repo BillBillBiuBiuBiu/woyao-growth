@@ -121,8 +121,9 @@ export default function ParentHome() {
       apiLoadEvents(game.id).catch(() => [] as StoredEvent[]),
       apiLoadClips(game.id).catch(() => [] as ClipRecord[]),
     ]);
-    setGameDetail({ loading: false, stats: computeStats(events), clips });
-    if (clips.length > 0) setExpandedClipId(clips[0].id);
+    const sortedClips = [...clips].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    setGameDetail({ loading: false, stats: computeStats(events), clips: sortedClips });
+    if (sortedClips.length > 0) setExpandedClipId(sortedClips[0].id);
   }
 
   async function copyClipLink(url: string) {
