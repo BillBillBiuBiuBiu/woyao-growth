@@ -161,6 +161,9 @@ export default function StudentProfilePage() {
                 <div key={s.label} className="bg-gray-50 rounded-xl py-2.5">
                   <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
                   <div className="text-xs text-gray-400 mt-0.5">{s.label}</div>
+                  {realStats.games > 1 && (
+                    <div className="text-xs text-gray-300 mt-0.5">场均{(s.value / realStats.games).toFixed(1)}</div>
+                  )}
                 </div>
               ))}
             </div>
