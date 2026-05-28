@@ -164,7 +164,11 @@ function AddStudentSheet({ onClose, onSaved }: { onClose: () => void; onSaved: (
       }),
     });
     setSaving(false);
-    if (!res.ok) { setError("保存失败，请重试"); return; }
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setError(`保存失败 (${res.status}): ${body.error ?? "未知错误"}`);
+      return;
+    }
     onSaved();
   }
 

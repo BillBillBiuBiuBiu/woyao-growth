@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { createSupabaseServer } from "@/lib/supabase-server";
 
 export async function GET() {
@@ -37,21 +38,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }
 
-  const { data, error } = await supabase
-    .from("students")
-    .insert({
-      coach_id: user.id,
-      name: body.name.trim(),
-      age: body.age ?? null,
-      gender: body.gender ?? null,
-      class_name: body.class_name ?? "",
-      avatar_url: body.avatar_url ?? null,
-      plan: body.plan ?? "basic",
-      player_name: body.player_name ?? body.name.trim(),
-    })
-    .select()
-    .single();
+  const id = randomUUID();
+  const row = {
+    id,
+    coach_id: user.id,
+    name: body.name.trim(),
+    age: body.age ?? null,
+    gender: body.gender ?? null,
+    class_name: body.class_name ?? "",
+    avatar_url: body.avatar_url ?? null,
+    plan: body.plan ?? "basic",
+    player_name: body.player_name ?? body.name.trim(),
+  };
+
+  const { error } = await supabase.from("students").insert(row);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
+  return NextResponse.json(row, { status: 201 });
 }

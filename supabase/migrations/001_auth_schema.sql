@@ -30,13 +30,12 @@ create table if not exists students (
 );
 
 alter table students enable row level security;
--- Coaches can manage their own students
 create policy "coaches manage own students" on students for all using (
   coach_id = auth.uid()
 ) with check (coach_id = auth.uid());
--- Parents can read students they're linked to
+-- Uses security definer function to avoid RLS cycle with parent_student
 create policy "parents read linked students" on students for select using (
-  exists (select 1 from parent_student where student_id = students.id and parent_id = auth.uid())
+  public.auth_is_parent_of(id)
 );
 
 -- Parent ↔ student relationships
@@ -47,12 +46,13 @@ create table if not exists parent_student (
 );
 
 alter table parent_student enable row level security;
-create policy "parents read own links"  on parent_student for select using (parent_id = auth.uid());
+create policy "parents read own links" on parent_student for select using (parent_id = auth.uid());
+-- Uses security definer function to avoid RLS cycle with students
 create policy "coaches read student links" on parent_student for select using (
-  exists (select 1 from students where id = student_id and coach_id = auth.uid())
+  public.auth_is_coach_of(student_id)
 );
 create policy "coaches insert parent links" on parent_student for insert with check (
-  exists (select 1 from students where id = student_id and coach_id = auth.uid())
+  public.auth_is_coach_of(student_id)
 );
 
 -- Invite codes for parents (coach generates, parent redeems)
