@@ -649,6 +649,12 @@ export default function HighlightsPage() {
       // ── 3. Write video to FFmpeg FS ───────────────────────────────────────
       setStage("writing"); setStatusMsg("读取视频文件…");
       const ff = ffmpegRef.current!;
+      // Mobile WASM heap guard: WKWebView / Chrome Android often caps ~256MB total.
+      // Input + output + frames + module itself ~50MB → safe ceiling is 150MB.
+      const MAX_VIDEO_MB = 150;
+      if (videoFile.size > MAX_VIDEO_MB * 1024 * 1024) {
+        throw new Error(`视频文件太大（${(videoFile.size / 1024 / 1024).toFixed(0)}MB），手机端处理上限约 ${MAX_VIDEO_MB}MB。建议先在电脑上压缩视频（剪短或降低分辨率），或选取更短的比赛片段。`);
+      }
       await ff.writeFile("input.mp4", await fetchFile(videoFile));
       setProgress(30);
 
@@ -943,8 +949,12 @@ export default function HighlightsPage() {
         try { await ffmpegRef.current.deleteFile("bgm.wav"); } catch {}
         try { await ffmpegRef.current.deleteFile("bgm.mp3"); } catch {}
       }
-      const msg = e instanceof Error ? e.message : String(e);
-      setError(msg || "未知错误，请检查网络后重试");
+      const raw = e instanceof Error ? e.message : String(e);
+      const isOOM = /malloc|Out of bounds memory|out of memory/i.test(raw);
+      const msg = isOOM
+        ? `视频文件对手机内存来说太大了。请先在电脑上压缩视频（选短片段 / 降低分辨率），或使用 150MB 以内的视频。`
+        : raw || "未知错误，请检查网络后重试";
+      setError(msg);
       setStage("error");
     }
   }, [videoFile, photoFile, bgmEnabled, bgmUserFile, ensureFFmpegLoaded]);
@@ -1101,10 +1111,16 @@ export default function HighlightsPage() {
             <span className="text-xs text-gray-400">支持 MP4、MOV 等格式</span></>
           )}
         </label>
-        {videoFile && videoFile.size > 100 * 1024 * 1024 && (
+        {videoFile && videoFile.size > 150 * 1024 * 1024 && (
+          <div className="mt-2 flex items-start gap-1 text-xs text-red-600">
+            <span className="shrink-0">🚫</span>
+            <span>视频超过 150MB（当前 {(videoFile.size/1024/1024).toFixed(0)}MB），手机端无法处理。请先在电脑压缩后重新选择。</span>
+          </div>
+        )}
+        {videoFile && videoFile.size > 80 * 1024 * 1024 && videoFile.size <= 150 * 1024 * 1024 && (
           <div className="mt-2 flex items-start gap-1 text-xs text-amber-600">
             <span className="shrink-0">⚠️</span>
-            <span>视频较大（{(videoFile.size/1024/1024).toFixed(0)}MB），分析预计需要 1–2 分钟，请耐心等待</span>
+            <span>视频较大（{(videoFile.size/1024/1024).toFixed(0)}MB），分析预计需要 1–3 分钟，请在 WiFi 下耐心等待</span>
           </div>
         )}
       </div>
