@@ -151,9 +151,11 @@ export default function CoachPage() {
                       ? <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-medium">{game.eventCount}个打点</span>
                       : <span className="text-xs text-gray-400">无记录</span>
                     }
-                    {(clipCounts[game.id] ?? 0) > 0 && (
+                    {(clipCounts[game.id] ?? 0) > 0 ? (
                       <span className="text-xs bg-green-100 text-green-600 px-1.5 py-0.5 rounded-full font-medium">{clipCounts[game.id]}个切片</span>
-                    )}
+                    ) : game.eventCount > 0 ? (
+                      <span className="text-xs bg-orange-500 text-white px-1.5 py-0.5 rounded-full font-medium">🎬 待剪辑</span>
+                    ) : null}
                     <span className="text-orange-300 text-sm">›</span>
                   </div>
                 </div>
