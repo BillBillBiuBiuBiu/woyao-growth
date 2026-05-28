@@ -87,7 +87,13 @@ export default function ParentHome() {
     Promise.all(
       recentGames.slice(0, 5).map(g => apiLoadClips(g.id).catch(() => [] as ClipRecord[]))
     ).then(arrays => {
-      const merged = arrays.flat().sort((a, b) => b.created_at.localeCompare(a.created_at));
+      // Sort by game timestamp desc (most recent game first), then by clip upload time within same game
+      const gameOrder = Object.fromEntries(recentGames.slice(0, 5).map((g, i) => [g.id, i]));
+      const merged = arrays.flat().sort((a, b) => {
+        const oa = gameOrder[a.game_id ?? ""] ?? 99;
+        const ob = gameOrder[b.game_id ?? ""] ?? 99;
+        return oa !== ob ? oa - ob : a.created_at.localeCompare(b.created_at);
+      });
       setLatestClips(merged);
     }).catch(() => setLatestClips([]));
     if (!childName) { setHeroChildStat(null); setHeroGame(null); return; }
