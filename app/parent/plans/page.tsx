@@ -53,7 +53,7 @@ export default function ParentPlansPage() {
     >
       <div className="px-4 pt-8 pb-4">
         <h1 className="text-2xl font-black mb-1" style={{ color: "#7C3810" }}>版本权益</h1>
-        <p className="text-sm text-orange-600">选择最适合孩子的成长记录方案</p>
+        <p className="text-sm text-orange-600">{currentPlan ? `已开通 ${PLAN_LABELS[currentPlan]} · 查看全部权益` : "选择最适合孩子的成长记录方案"}</p>
       </div>
       {currentPlan === null && (
         <div className="mx-4 mb-2 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-xs text-orange-700 leading-relaxed">
