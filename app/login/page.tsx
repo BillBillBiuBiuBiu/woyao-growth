@@ -44,6 +44,11 @@ export default function LoginPage() {
         if (!localStorage.getItem("child_plan")) localStorage.setItem("child_plan", "vip");
       } catch {}
     }
+    if (r.value === "coach") {
+      try {
+        if (!localStorage.getItem("coach_name")) localStorage.setItem("coach_name", "王教练");
+      } catch {}
+    }
     router.push(r.href);
   }
 
