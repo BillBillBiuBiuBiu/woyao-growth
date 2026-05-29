@@ -210,6 +210,41 @@ export default function CoachPage() {
         </div>
       </div>
 
+      {/* Training rankings */}
+      {(() => {
+        const dims = [
+          { label: "专注力", emoji: "🎯", ranks: ["蒋皓博", "季禹澄", "小杰", "陈梓轩", "小然", "李晨阳"] },
+          { label: "完成度", emoji: "✅", ranks: ["小杰", "蒋皓博", "陈梓轩", "季禹澄", "李晨阳", "小然"] },
+          { label: "积极性", emoji: "🔥", ranks: ["季禹澄", "蒋皓博", "小然", "小杰", "陈梓轩", "李晨阳"] },
+        ];
+        const medals = ["🥇", "🥈", "🥉"];
+        return (
+          <div>
+            <h2 className="text-sm font-semibold mb-3">本期训练表现排名</h2>
+            <div className="flex flex-col gap-3">
+              {dims.map(dim => (
+                <div key={dim.label} className="rounded-2xl border border-border bg-white p-4">
+                  <div className="text-xs font-bold text-gray-700 mb-2">{dim.emoji} {dim.label}排名</div>
+                  <div className="flex flex-col gap-1">
+                    {dim.ranks.map((name, i) => (
+                      <div key={name} className="flex items-center gap-2 py-1" style={{ borderTop: i > 0 ? "1px solid rgba(0,0,0,0.04)" : "none" }}>
+                        <span className="text-sm w-6 text-center shrink-0">{i < 3 ? medals[i] : <span className="text-xs text-gray-400 font-medium">{i + 1}</span>}</span>
+                        <span className={`text-sm flex-1 ${i < 3 ? "font-semibold text-gray-800" : "text-gray-500"}`}>{name}</span>
+                        <div className="flex gap-0.5">
+                          {Array.from({ length: 5 }).map((_, j) => (
+                            <div key={j} className="w-2.5 h-2.5 rounded-sm" style={{ background: j < Math.max(1, 5 - i) ? (i === 0 ? "#f59e0b" : i === 1 ? "#94a3b8" : i === 2 ? "#d97706" : "#e5e7eb") : "#f3f4f6" }} />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Pending list */}
       <div>
         <h2 className="text-sm font-semibold mb-3">需要你确认的报告</h2>

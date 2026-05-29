@@ -216,7 +216,14 @@ export default function StudentProfilePage() {
       {realStats && (
         <div className="px-4 pt-3">
           <div className="rounded-2xl bg-white/90 border border-orange-100 p-4">
-            <div className="text-xs font-bold text-orange-600 mb-3">📊 实战统计（{realStats.games}场有个人数据）</div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-xs font-bold text-orange-600">📊 实战统计（{realStats.games}场有个人数据）</div>
+              {realStats.games > 0 && (() => {
+                const avg = realStats.pts / realStats.games;
+                const rank = avg >= 8 ? "班级前2名" : avg >= 5 ? "班级前4名" : "班级前6名";
+                return <span className="text-xs bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded-full font-medium">{rank}</span>;
+              })()}
+            </div>
             <div className="grid grid-cols-4 gap-2 text-center">
               {([
                 { label: "得分", value: realStats.pts, color: "text-orange-600" },
