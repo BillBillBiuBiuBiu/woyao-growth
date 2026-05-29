@@ -13,6 +13,7 @@ import {
 } from "@/lib/gc-teams";
 import { apiSaveGame, apiSaveEvents, apiUploadClip, apiLoadGames, type StoredEvent } from "@/lib/gc-api";
 import type { GameRecord } from "@/lib/gc-teams";
+import { translateError } from "@/lib/translate-error";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -559,7 +560,7 @@ export default function GcReviewPage() {
         try { await ffmpegRef.current.deleteFile("input.mp4");     } catch {}
         try { await ffmpegRef.current.deleteFile("highlight.mp4"); } catch {}
       }
-      setError(e instanceof Error ? e.message : String(e));
+      setError(translateError(e instanceof Error ? e.message : String(e)));
       setPhase("error");
     }
   }, [videoFile, events, ensureFFmpegLoaded]);
