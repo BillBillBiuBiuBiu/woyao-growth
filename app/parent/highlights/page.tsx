@@ -686,6 +686,10 @@ export default function HighlightsPage() {
             </div>
           )}
         </label>
+        <div className="mt-3 flex items-start gap-1.5 text-xs leading-relaxed text-gray-400">
+          <span className="shrink-0">🔒</span>
+          <span>照片仅用于在视频中识别该球员，处理后不作他用。请确保已征得孩子监护人同意。<span className="text-gray-500">本地处理模式下，视频与照片全程不离开你的设备。</span></span>
+        </div>
       </div>
 
       <div className="rounded-2xl bg-[#141824] border border-white/10 px-4 py-3">
