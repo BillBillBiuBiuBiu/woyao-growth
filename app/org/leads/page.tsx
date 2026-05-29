@@ -29,12 +29,32 @@ const priorityColors: Record<string, string> = {
   low: "border-l-slate-300",
 };
 
+const referralTemplates = [
+  {
+    label: "体验课邀请",
+    emoji: "🏀",
+    gen: () => `你好！我是PAB篮球班的一位家长，我家孩子在这里训练了3个月，真的感受到了成长。\n\n最近教练给我们发了一份成长报告，里面有孩子的专项数据、教练点评，还有精彩集锦视频，我一下子就看懂了孩子在哪里进步了——太有价值了！\n\n如果你在考虑让孩子学篮球，我很推荐PAB。特别适合0基础到进阶的孩子，目前还有体验课名额。需要我帮你联系一下王教练吗？🙌\n\n——来自「我耀成长」`,
+  },
+  {
+    label: "成长报告分享",
+    emoji: "📊",
+    gen: () => `分享一下我家孩子最近的篮球成长报告，看了真的很感动～\n\n本赛季打了9场，8胜，教练说在「团队协作」和「比赛心态」上进步明显！还有一段精彩集锦视频，孩子知道自己被记录了特别开心。\n\n如果你家孩子也对篮球感兴趣，可以来PAB试试，用数据记录孩子每一步成长，特别有成就感。\n\n——来自「我耀成长」`,
+  },
+  {
+    label: "家长口碑推荐",
+    emoji: "⭐",
+    gen: () => `强烈推荐PAB篮球班！\n\n以前我完全不懂孩子在球场上什么情况，现在「我耀成长」会把每场比赛的精彩时刻剪成短视频，还有教练点评和成长数据，让我作为家长真正看懂了孩子的进步。\n\n最让我感动的是教练会用孩子能理解的语言解释每个技术动作——孩子打球更有自信了，也更懂得配合队友了。\n\n名额有限，有兴趣的可以联系我～ 🏀`,
+  },
+];
+
 export default function LeadsPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [statuses, setStatuses] = useState<Record<string, string>>(
     Object.fromEntries(mockLeads.map((l) => [l.id, l.status]))
   );
   const [copied, setCopied] = useState<string | null>(null);
+  const [refTemplate, setRefTemplate] = useState(0);
+  const [refCopied, setRefCopied] = useState(false);
 
   function toggleExpand(id: string) {
     setExpanded((prev) => (prev === id ? null : id));
@@ -80,6 +100,40 @@ export default function LeadsPage() {
       <div>
         <h1 className="text-xl font-bold">转化线索</h1>
         <p className="text-sm text-muted-foreground mt-0.5">{`PAB球馆 · ${new Date().getFullYear()}年${new Date().getMonth() + 1}月`}</p>
+      </div>
+
+      {/* Referral message generator */}
+      <div className="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-base">🤝</span>
+          <div className="text-sm font-bold text-orange-800">转介绍文案生成器</div>
+          <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">一键复制发微信</span>
+        </div>
+        <div className="flex gap-2 mb-3">
+          {referralTemplates.map((t, i) => (
+            <button
+              key={t.label}
+              onClick={() => setRefTemplate(i)}
+              className={`flex-1 text-xs py-1.5 rounded-lg border font-medium transition-colors ${refTemplate === i ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-600 border-gray-200"}`}
+            >
+              {t.emoji} {t.label}
+            </button>
+          ))}
+        </div>
+        <div className="rounded-xl bg-white border border-orange-100 p-3 text-xs text-gray-700 leading-relaxed whitespace-pre-line mb-3">
+          {referralTemplates[refTemplate].gen()}
+        </div>
+        <button
+          onClick={() => {
+            const text = referralTemplates[refTemplate].gen();
+            if (navigator.clipboard?.writeText) {
+              navigator.clipboard.writeText(text).then(() => { setRefCopied(true); setTimeout(() => setRefCopied(false), 2000); }).catch(() => {});
+            }
+          }}
+          className={`w-full py-2.5 rounded-xl text-sm font-bold transition-colors ${refCopied ? "bg-green-500 text-white" : "bg-orange-500 text-white active:opacity-80"}`}
+        >
+          {refCopied ? "✅ 已复制！发给家长吧" : "📋 复制文案"}
+        </button>
       </div>
 
       {/* Summary */}
