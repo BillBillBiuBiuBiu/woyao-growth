@@ -159,6 +159,22 @@ export default function ParentHome() {
           background: "linear-gradient(to bottom, rgba(10,12,18,0.35) 0%, rgba(10,12,18,0.55) 50%, rgba(10,12,18,0.92) 100%)"
         }} />
 
+        {/* ── Floating star card top-right ── */}
+        <div className="absolute top-5 right-4 z-20">
+          <div className="rounded-2xl px-3 py-2.5 text-center"
+            style={{ background: "rgba(10,12,18,0.7)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(12px)", minWidth: 90 }}>
+            <div className="text-xs font-bold tracking-widest text-orange-400 mb-0.5">
+              #{card.number} · {card.position}
+            </div>
+            <div className="text-sm font-black text-white">{childName || card.name}</div>
+            <div className="text-[10px] text-gray-400 mt-0.5">PAB U10提高班</div>
+            {recentGames.length > 0 && (() => {
+              const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
+              return <div className="text-xs font-bold text-yellow-400 mt-1">{recentGames.length}场 {w}胜</div>;
+            })()}
+          </div>
+        </div>
+
         {/* Content layer */}
         <div className="relative z-10 flex flex-col justify-end px-5 pt-12 pb-6" style={{ minHeight: 400 }}>
           {/* WOYAO MOMENT label */}
@@ -212,11 +228,12 @@ export default function ParentHome() {
               const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
               const rate = Math.round(w / recentGames.length * 100);
               return (
-                <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
+                  style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.1)" }}>
                   <span className="text-xs text-white/70">{recentGames.length}场</span>
-                  <span className="text-xs font-bold text-green-400">{w}胜</span>
-                  <span className="text-xs text-white/60">{rate}%</span>
-                  {coachName && <><span className="text-white/30 text-xs">·</span><span className="text-xs text-white/60">教练{coachName}</span></>}
+                  <span className="text-xs font-bold text-yellow-400">{w}胜</span>
+                  <span className="text-xs font-bold text-orange-400">{rate}%</span>
+                  {coachName && <><span className="text-white/20 text-xs">·</span><span className="text-xs text-white/50">教练{coachName}</span></>}
                 </div>
               );
             })()}
@@ -264,9 +281,24 @@ export default function ParentHome() {
           );
         })()}
 
+        {/* 给妈妈的话 — 情绪承接区 */}
+        {recentGames.length >= 3 && childName && (
+          <div className="rounded-2xl px-4 py-4"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(12px)" }}>
+            <div className="text-xs font-bold text-orange-400 mb-2">给妈妈的话</div>
+            <p className="text-sm text-white font-semibold leading-snug mb-1">
+              你看到的不只是一段视频，是孩子一点点变勇敢的样子。
+            </p>
+            <p className="text-xs text-gray-400 leading-relaxed">
+              {childName}在球场上每一次抬头、奔跑和再尝试，当时可能很快就过去了。但这些小小的瞬间拼在一起，就是孩子认真长大的证据。妈妈不用懂所有数据，我们会替你好好保存下来。
+            </p>
+          </div>
+        )}
+
         {/* Recent games list — each row clickable, opens detail sheet */}
         {recentGames.length > 0 && (
-          <div className="rounded-3xl overflow-hidden">
+          <div className="rounded-3xl overflow-hidden"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
             <div className="px-4 pt-3 pb-2 flex items-center justify-between">
               <div className="text-sm font-bold text-white">🏀 比赛记录</div>
               {recentGames.length >= 2 && (() => {
