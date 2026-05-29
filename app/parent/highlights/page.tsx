@@ -983,9 +983,49 @@ export default function HighlightsPage() {
   const isProcessing = ["loading","extracting_color","analyzing","cutting"].includes(stage);
   const canRun = !!(videoFiles.length > 0 && photoFile && !isProcessing);
 
+  const todayKey = (() => { const d = new Date(); return `home_training_checkin_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`; })();
+  const [checkedInToday, setCheckedInToday] = useState(() => { try { return !!localStorage.getItem(todayKey); } catch { return false; } });
+  const [streakDays] = useState(() => {
+    try {
+      let streak = 0;
+      const now = new Date();
+      for (let i = 0; i < 30; i++) {
+        const d = new Date(now); d.setDate(d.getDate() - i);
+        const k = `home_training_checkin_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+        if (localStorage.getItem(k)) streak++; else break;
+      }
+      return streak;
+    } catch { return 0; }
+  });
+
+  function doCheckin() {
+    try { localStorage.setItem(todayKey, "1"); } catch {}
+    setCheckedInToday(true);
+    document.getElementById("upload-section")?.scrollIntoView({ behavior: "smooth" });
+  }
+
   return (
     <>
     <div className="pb-16 flex flex-col gap-5">
+      {/* Home training checkin */}
+      <div className={`rounded-2xl border p-3 flex items-center justify-between gap-3 ${checkedInToday ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"}`}>
+        <div>
+          <div className="text-xs font-bold text-gray-700 mb-0.5">🏠 家庭训练打卡</div>
+          {checkedInToday
+            ? <div className="text-xs text-green-600">✅ 今日已打卡{streakDays >= 2 ? ` · 已连续 ${streakDays} 天` : ""} 🔥</div>
+            : <div className="text-xs text-amber-600">上传一段家训视频，AI 帮你分析成长，连续打卡赢得徽章</div>
+          }
+        </div>
+        {!checkedInToday && (
+          <button onClick={doCheckin} className="shrink-0 bg-amber-500 text-white text-xs font-bold px-3 py-2 rounded-xl active:opacity-70">
+            今日打卡 →
+          </button>
+        )}
+        {checkedInToday && streakDays >= 3 && (
+          <span className="text-xs bg-green-100 text-green-700 border border-green-200 px-2 py-1 rounded-full font-bold shrink-0">📅 连续打卡达人</span>
+        )}
+      </div>
+
       <div className="rounded-3xl p-5 shadow-lg" style={{background:"linear-gradient(135deg,#f7971e 0%,#ffd200 100%)"}}>
         <div className="text-2xl font-black mb-1" style={{color:"#7C3810"}}>🎬 生成{childName ? `${childName}的` : ""}精彩集锦</div>
         <p className="text-sm" style={{color:"#7C3810",opacity:0.85}}>
@@ -1117,6 +1157,7 @@ export default function HighlightsPage() {
       )}
 
       {/* Upload mode form */}
+      <div id="upload-section" />
       {(stage !== "idle" || hlMode === "upload") && (<>
       <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
         <div className="text-sm font-bold text-gray-700 mb-3">① 上传比赛视频</div>

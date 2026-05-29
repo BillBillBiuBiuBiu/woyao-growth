@@ -478,10 +478,12 @@ export default function StudentProfilePage() {
             })()}
             {/* Advanced badges */}
             {(() => {
+              const checkinStreak = (() => { try { let s = 0; const now = new Date(); for (let i=0;i<30;i++) { const d=new Date(now); d.setDate(d.getDate()-i); const k=`home_training_checkin_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`; if(localStorage.getItem(k)) s++; else break; } return s; } catch { return 0; } })();
               const advBadges = [
                 recentGames.length >= 5 ? { name: "🎯 专注力达人", desc: "专注力班级TOP3" } : null,
                 realStats && realStats.games >= 2 && realStats.pts / realStats.games >= 3 ? { name: "✅ 完成度之星", desc: "完成度班级TOP3" } : null,
                 recentGames.filter(g => g.homeScore > g.awayScore).length >= 5 ? { name: "🔥 积极性勋章", desc: "参与5场以上且积极进取" } : null,
+                checkinStreak >= 3 ? { name: "📅 打卡达人", desc: `连续打卡 ${checkinStreak} 天` } : null,
               ].filter(Boolean);
               if (advBadges.length === 0) return (
                 <div className="text-xs text-gray-400 text-center py-2">专注力、完成度、积极性进入班级前20%可获得进阶徽章</div>
