@@ -382,10 +382,10 @@ export default function ParentHome() {
 
         {myLastHighlight && (
           <Link href="/parent/highlights">
-            <div className="rounded-2xl bg-white/90 border border-orange-100 shadow-sm px-4 py-3 flex items-center justify-between active:bg-orange-50 transition-colors">
+            <div className="rounded-2xl px-4 py-3 flex items-center justify-between active:bg-white/5 transition-colors" style={{ background: "#141824", border: "1px solid rgba(255,255,255,0.08)" }}>
               <div className="min-w-0 flex-1">
                 <div className="text-xs text-orange-500 font-medium mb-0.5">✨ 最近集锦</div>
-                <div className="text-sm font-semibold text-gray-800 truncate">{myLastHighlight.name.replace(/\.mp4$/i, "") || (childName ? `${childName}的精彩集锦` : "精彩集锦")}</div>
+                <div className="text-sm font-semibold text-white truncate">{myLastHighlight.name.replace(/\.mp4$/i, "") || (childName ? `${childName}的精彩集锦` : "精彩集锦")}</div>
                 <div className="text-xs text-gray-400 mt-0.5">{fmtRelDate(myLastHighlight.date)} · {myLastHighlight.dur}秒</div>
               </div>
               <div className="text-orange-300 ml-3 shrink-0 text-xl">›</div>
@@ -399,7 +399,7 @@ export default function ParentHome() {
             <div className="rounded-3xl p-4 flex items-center justify-between active:scale-98 transition-transform">
               <div>
                 <div className="text-xs text-orange-500 mb-1 font-medium">📋 最新成长报告</div>
-                <div className="font-bold text-gray-800">{mockReport.title}</div>
+                <div className="font-bold text-white">{mockReport.title}</div>
                 <div className="text-xs text-gray-400 mt-1">{mockReport.clips.length}个成长证据 · 教练已确认 ✓</div>
               </div>
               <div className="text-2xl text-orange-300 ml-2">›</div>
@@ -410,7 +410,7 @@ export default function ParentHome() {
         {/* Clips — real when available, mock demo when no games, generate CTA when no clips */}
         {recentGames.length === 0 ? (
           <div className="rounded-3xl p-4">
-            <div className="text-sm font-bold text-gray-800 mb-3">🎞️ 教练标注片段</div>
+            <div className="text-sm font-bold text-white mb-3">🎞️ 教练标注片段</div>
             <div className="grid grid-cols-3 gap-2">
               {mockReport.clips.map((clip) => (
                 <Link key={clip.id} href={`/parent/reports/${mockReport.id}`}>
@@ -431,10 +431,10 @@ export default function ParentHome() {
           </div>
         ) : latestClips === null ? (
           <div className="rounded-3xl p-4">
-            <div className="text-sm font-bold text-gray-800 mb-3">🎞️ 集锦切片</div>
+            <div className="text-sm font-bold text-white mb-3">🎞️ 集锦切片</div>
             <div className="flex flex-col gap-2">
               {[0, 1].map(i => (
-                <div key={i} className="h-12 rounded-xl bg-orange-50 animate-pulse" />
+                <div key={i} className="h-12 rounded-xl bg-white/5 animate-pulse" />
               ))}
             </div>
           </div>
@@ -444,7 +444,7 @@ export default function ParentHome() {
             : latestClips;
           return (
           <div className="rounded-3xl p-4">
-            <div className="text-sm font-bold text-gray-800 mb-3">{childName ? `🎞️ ${childName}的集锦切片` : "🎞️ 最新集锦切片"}</div>
+            <div className="text-sm font-bold text-white mb-3">{childName ? `🎞️ ${childName}的集锦切片` : "🎞️ 最新集锦切片"}</div>
             <div className="flex flex-col gap-2">
               {visibleClips.length === 0 ? (
                 <Link href="/parent/highlights" className="block">
@@ -455,7 +455,7 @@ export default function ParentHome() {
                 return (
                   <div key={clip.id} className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
                     <button
-                      className="flex items-center justify-between w-full px-3 py-2.5 text-left active:bg-orange-50 transition-colors"
+                      className="flex items-center justify-between w-full px-3 py-2.5 text-left active:bg-white/5 transition-colors"
                       onClick={() => setHomeExpandedClipId(isExpanded ? null : clip.id)}
                     >
                       <div className="min-w-0 flex-1">
@@ -499,12 +499,12 @@ export default function ParentHome() {
                 <div className="text-xs text-orange-500 mb-1 font-medium">🎞️ 集锦切片</div>
                 {myLastHighlight ? (
                   <>
-                    <div className="font-bold text-gray-800 truncate">{myLastHighlight.name.replace(/\.mp4$/i, "")}</div>
+                    <div className="font-bold text-white truncate">{myLastHighlight.name.replace(/\.mp4$/i, "")}</div>
                     <div className="text-xs text-gray-400 mt-1">{myLastHighlight.dur}秒 · 已生成 → 去查看</div>
                   </>
                 ) : (
                   <>
-                    <div className="font-bold text-gray-800">暂无集锦</div>
+                    <div className="font-bold text-white">暂无集锦</div>
                     <div className="text-xs text-gray-400 mt-1">上传比赛视频，AI帮你剪精彩片段</div>
                   </>
                 )}
@@ -516,11 +516,11 @@ export default function ParentHome() {
 
         {/* Next steps — shown only in demo state (no real games) */}
         {recentGames.length === 0 && (
-          <div className="rounded-3xl bg-white/90 border border-blue-100 shadow-sm p-4">
-            <div className="text-sm font-bold text-gray-800 mb-3">📌 下阶段建议</div>
+          <div className="rounded-3xl p-4" style={{ background: "#141824", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="text-sm font-bold text-white mb-3">📌 下阶段建议</div>
             <ul className="flex flex-col gap-2">
               {mockReport.nextSteps.map((step, i) => (
-                <li key={i} className="flex gap-2 text-sm text-gray-700">
+                <li key={i} className="flex gap-2 text-sm text-gray-300">
                   <span className="text-orange-400 font-bold shrink-0">{i + 1}.</span>
                   <span>{step}</span>
                 </li>
@@ -532,7 +532,7 @@ export default function ParentHome() {
         {/* Cards showcase — shown only in demo state (no real games) */}
         {recentGames.length === 0 && (
           <div className="rounded-3xl p-4">
-            <div className="text-sm font-bold text-gray-800 mb-3">🃏 球星卡</div>
+            <div className="text-sm font-bold text-white mb-3">🃏 球星卡</div>
             <div className="flex gap-3 overflow-x-auto pb-1">
               {mockStudentCards.map((c) => (
                 <div key={c.id} className="shrink-0 flex flex-col items-center gap-1">
@@ -626,7 +626,7 @@ export default function ParentHome() {
                             className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
                           >
                             <button
-                              className="flex items-center justify-between w-full px-3 py-2.5 text-left active:bg-orange-50 transition-colors"
+                              className="flex items-center justify-between w-full px-3 py-2.5 text-left active:bg-white/5 transition-colors"
                               onClick={() => setExpandedClipId(expanded ? null : clip.id)}
                             >
                               <div className="min-w-0 flex-1">
