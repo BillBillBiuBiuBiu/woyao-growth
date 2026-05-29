@@ -575,9 +575,18 @@ export default function GcReviewPage() {
       <div className="flex flex-col gap-5 pb-10" style={{ background: "#0f1117", minHeight: "100vh" }}>
         <div className="text-center pt-8 px-4">
           <div className="text-2xl font-black text-white mb-1">🎬 视频打点集锦</div>
-          <div className="text-sm text-gray-500 leading-relaxed">
-            上传一节比赛视频 · 边看边记录事件 · 自动切片生成集锦
-          </div>
+          {linkedGame ? (
+            <div className="inline-flex items-center gap-2 mt-2 px-4 py-2 rounded-2xl" style={{ background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.25)" }}>
+              <span className="text-orange-400 font-black text-sm">{linkedGame.homeTeam} {linkedGame.homeScore}—{linkedGame.awayScore} {linkedGame.awayTeam}</span>
+              <span className="text-gray-500 text-xs">·</span>
+              <span className="text-gray-400 text-xs">{fmtGameDate(linkedGame.ts)}</span>
+              {linkedGame.eventCount > 0 && <span className="text-xs bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded-full">{linkedGame.eventCount}个打点</span>}
+            </div>
+          ) : (
+            <div className="text-sm text-gray-500 leading-relaxed mt-1">
+              上传一节比赛视频 · 边看边记录事件 · 自动切片生成集锦
+            </div>
+          )}
         </div>
 
         {isWeChat && (
