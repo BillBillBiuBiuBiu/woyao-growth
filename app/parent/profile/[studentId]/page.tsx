@@ -45,10 +45,9 @@ export default function StudentProfilePage() {
   }, []);
 
   useEffect(() => {
-    if (!childName) return;
-    apiLoadGames().then(async (games) => {
-      const recent = games.slice(0, 5);
-      const allEvents = await Promise.all(recent.map(g => apiLoadEvents(g.id).catch(() => [])));
+    if (!childName || recentGames.length === 0) return;
+    (async () => {
+      const allEvents = await Promise.all(recentGames.map(g => apiLoadEvents(g.id).catch(() => [])));
       let gamesWithHits = 0;
       const acc = { pts: 0, reb: 0, ast: 0, stl: 0, games: 0 };
       for (const evts of allEvents) {
@@ -65,8 +64,8 @@ export default function StudentProfilePage() {
       if (gamesWithHits === 0) return;
       acc.games = gamesWithHits;
       setRealStats(acc);
-    }).catch(() => {});
-  }, [childName]);
+    })().catch(() => {});
+  }, [childName, recentGames]);
 
   return (
     <div
