@@ -462,14 +462,14 @@ export default function HighlightsPage() {
 
   return (
     <>
-    <div className="pb-16 flex flex-col gap-5">
+    <div className="-mx-4 -mt-6 px-4 pt-6 pb-16 flex flex-col gap-5 min-h-screen" style={{ background: "#0b0f1a" }}>
       {/* Home training checkin */}
-      <div className={`rounded-2xl border p-3 flex items-center justify-between gap-3 ${checkedInToday ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"}`}>
+      <div className={`rounded-2xl border p-3 flex items-center justify-between gap-3 ${checkedInToday ? "bg-green-500/10 border-green-500/25" : "bg-amber-500/10 border-amber-500/25"}`}>
         <div>
-          <div className="text-xs font-bold text-gray-700 mb-0.5">🏠 家庭训练打卡</div>
+          <div className="text-xs font-bold text-white mb-0.5">🏠 家庭训练打卡</div>
           {checkedInToday
-            ? <div className="text-xs text-green-600">✅ 今日已打卡{streakDays >= 2 ? ` · 已连续 ${streakDays} 天` : ""} 🔥</div>
-            : <div className="text-xs text-amber-600">上传一段家训视频，AI 帮你分析成长，连续打卡赢得徽章</div>
+            ? <div className="text-xs text-green-400">✅ 今日已打卡{streakDays >= 2 ? ` · 已连续 ${streakDays} 天` : ""} 🔥</div>
+            : <div className="text-xs text-amber-400">上传一段家训视频，AI 帮你分析成长，连续打卡赢得徽章</div>
           }
         </div>
         {!checkedInToday && (
@@ -478,7 +478,7 @@ export default function HighlightsPage() {
           </button>
         )}
         {checkedInToday && streakDays >= 3 && (
-          <span className="text-xs bg-green-100 text-green-700 border border-green-200 px-2 py-1 rounded-full font-bold shrink-0">📅 连续打卡达人</span>
+          <span className="text-xs bg-green-500/15 text-green-300 border border-green-500/25 px-2 py-1 rounded-full font-bold shrink-0">📅 连续打卡达人</span>
         )}
       </div>
 
@@ -495,13 +495,13 @@ export default function HighlightsPage() {
 
       {/* Mode tabs */}
       {stage === "idle" && (
-        <div className="flex rounded-2xl bg-gray-100 p-1 gap-1">
+        <div className="flex rounded-2xl bg-white/5 p-1 gap-1">
           <button
-            className={`flex-1 rounded-xl py-2 text-sm font-bold transition-colors ${hlMode === "upload" ? "bg-white text-orange-600 shadow-sm" : "text-gray-500"}`}
+            className={`flex-1 rounded-xl py-2 text-sm font-bold transition-colors ${hlMode === "upload" ? "bg-orange-500 text-white shadow-sm" : "text-gray-500"}`}
             onClick={() => setHlMode("upload")}
           >📹 上传视频</button>
           <button
-            className={`flex-1 rounded-xl py-2 text-sm font-bold transition-colors ${hlMode === "from_clips" ? "bg-white text-orange-600 shadow-sm" : "text-gray-500"}`}
+            className={`flex-1 rounded-xl py-2 text-sm font-bold transition-colors ${hlMode === "from_clips" ? "bg-orange-500 text-white shadow-sm" : "text-gray-500"}`}
             onClick={() => { setHlMode("from_clips"); if (playerClips === null) loadPlayerClips(); }}
           >🏀 已标注集锦</button>
         </div>
@@ -509,9 +509,9 @@ export default function HighlightsPage() {
 
       {/* From clips mode */}
       {stage === "idle" && hlMode === "from_clips" && (
-        <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+        <div className="rounded-2xl bg-[#141824] border border-white/10 p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-bold text-gray-700">
+            <div className="text-sm font-bold text-white">
               {childName ? `${childName}的比赛集锦` : "比赛集锦"}
             </div>
             <button
@@ -524,14 +524,14 @@ export default function HighlightsPage() {
           {loadingPlayerClips && (
             <div className="flex flex-col gap-2">
               {[0, 1, 2].map(i => (
-                <div key={i} className="rounded-xl bg-gray-100 animate-pulse" style={{ height: 56 }} />
+                <div key={i} className="rounded-xl bg-white/5 animate-pulse" style={{ height: 56 }} />
               ))}
             </div>
           )}
           {!loadingPlayerClips && clipsLoadError && (
             <div className="text-sm text-center py-6 flex flex-col items-center gap-2">
               <div className="text-2xl">⚠️</div>
-              <div className="text-gray-600 font-medium">加载失败，请检查网络后重试</div>
+              <div className="text-gray-300 font-medium">加载失败，请检查网络后重试</div>
               <button
                 onClick={() => { setClipsLoadError(false); loadPlayerClips(); }}
                 className="text-xs font-bold text-orange-600 border border-orange-300 px-4 py-1.5 rounded-full active:opacity-70"
@@ -543,7 +543,7 @@ export default function HighlightsPage() {
               {!childName ? (
                 <>
                   <div className="text-2xl mb-2">👤</div>
-                  <div className="text-gray-600 font-medium mb-3">先告诉我孩子叫什么名字</div>
+                  <div className="text-gray-300 font-medium mb-3">先告诉我孩子叫什么名字</div>
                   <div className="flex gap-2 justify-center">
                     <input
                       value={nameInputVal}
@@ -551,7 +551,7 @@ export default function HighlightsPage() {
                       onKeyDown={e => { if (e.key === "Enter") confirmChildName(); }}
                       placeholder="输入孩子的名字"
                       autoFocus
-                      className="text-sm rounded-xl border border-orange-300 px-3 py-2 outline-none focus:border-orange-500 bg-white text-gray-800 w-36"
+                      className="text-sm rounded-xl border border-orange-400/40 px-3 py-2 outline-none focus:border-orange-500 bg-white/10 text-white w-36"
                     />
                     <button
                       onClick={confirmChildName}
@@ -590,15 +590,15 @@ export default function HighlightsPage() {
             </div>
           )}
           {!loadingPlayerClips && playerClips && playerClips.length > 0 && playerClips.map((clip, i) => (
-            <div key={clip.id} className="rounded-xl border border-orange-100 bg-orange-50 p-3 flex flex-col gap-2">
+            <div key={clip.id} className="rounded-xl border border-orange-500/20 bg-orange-500/10 p-3 flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold text-gray-800">{formatClipLabel(clip.label)}</div>
+                  <div className="text-sm font-semibold text-white">{formatClipLabel(clip.label)}</div>
                   <div className="text-xs text-gray-400 mt-0.5">{fmtClipDate(clip.created_at)} · {clip.gameLabel}</div>
                 </div>
                 <button
                   onClick={() => setExpandedClipId(expandedClipId === clip.id ? null : clip.id)}
-                  className="text-xs font-bold text-orange-600 bg-orange-100 px-3 py-1.5 rounded-full active:opacity-70 shrink-0"
+                  className="text-xs font-bold text-orange-600 bg-orange-500/15 px-3 py-1.5 rounded-full active:opacity-70 shrink-0"
                 >
                   {expandedClipId === clip.id ? "▾ 收起" : "▶ 播放"}
                 </button>
@@ -615,7 +615,7 @@ export default function HighlightsPage() {
                       try { await navigator.clipboard.writeText(clip.public_url); setClipShareUrl("copied:" + clip.public_url); return; } catch {}
                       setClipShareUrl(clip.public_url);
                     }}
-                    className="w-full py-2 rounded-xl text-xs font-bold text-orange-600 bg-orange-50 border border-orange-100 active:opacity-70 transition-opacity"
+                    className="w-full py-2 rounded-xl text-xs font-bold text-orange-600 bg-orange-500/10 border border-orange-500/20 active:opacity-70 transition-opacity"
                   >
                     {clipShareUrl?.startsWith("copied:") && clipShareUrl.slice(7) === clip.public_url ? "✅ 链接已复制" : "📤 分享集锦给家人"}
                   </button>
@@ -629,13 +629,13 @@ export default function HighlightsPage() {
       {/* Upload mode form */}
       <div id="upload-section" />
       {(stage !== "idle" || hlMode === "upload") && (<>
-      <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
-        <div className="text-sm font-bold text-gray-700 mb-3">① 上传比赛视频</div>
-        <label className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 cursor-pointer transition-colors ${videoFiles.length>0?"border-orange-300 bg-orange-50":"border-gray-200 bg-gray-50"}`}>
+      <div className="rounded-2xl bg-[#141824] border border-white/10 p-4">
+        <div className="text-sm font-bold text-white mb-3">① 上传比赛视频</div>
+        <label className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 cursor-pointer transition-colors ${videoFiles.length>0?"border-orange-400/40 bg-orange-500/10":"border-white/15 bg-white/5"}`}>
           <input type="file" accept="video/*" multiple className="hidden" onChange={handleVideoChange} disabled={isProcessing}/>
           {videoFiles.length>0?(
             <><span className="text-2xl">✅</span>
-            <span className="text-sm font-medium text-orange-700 text-center">{videoFiles.length}段视频 · 点击添加更多</span>
+            <span className="text-sm font-medium text-orange-300 text-center">{videoFiles.length}段视频 · 点击添加更多</span>
             <span className="text-xs text-gray-400">最多5段，各取最精彩片段合并</span></>
           ):(
             <><span className="text-3xl text-gray-300">🎥</span>
@@ -646,8 +646,8 @@ export default function HighlightsPage() {
         {videoFiles.length > 0 && (
           <div className="mt-2 flex flex-col gap-1">
             {videoFiles.map((f, i) => (
-              <div key={i} className="flex items-center justify-between text-xs bg-orange-50 rounded-lg px-3 py-1.5">
-                <span className="text-orange-700 font-medium truncate flex-1 mr-2">{f.name}</span>
+              <div key={i} className="flex items-center justify-between text-xs bg-orange-500/10 rounded-lg px-3 py-1.5">
+                <span className="text-orange-300 font-medium truncate flex-1 mr-2">{f.name}</span>
                 <span className="text-gray-400 shrink-0 mr-2">{(f.size/1024/1024).toFixed(1)}MB</span>
                 <button
                   type="button"
@@ -658,7 +658,7 @@ export default function HighlightsPage() {
               </div>
             ))}
             {formatWarn && (
-              <div className="mt-1 flex items-start gap-1.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-700 leading-snug">
+              <div className="mt-1 flex items-start gap-1.5 bg-amber-500/10 border border-amber-500/25 rounded-lg px-3 py-2 text-xs text-amber-300 leading-snug">
                 {formatWarn}
               </div>
             )}
@@ -666,16 +666,16 @@ export default function HighlightsPage() {
         )}
       </div>
 
-      <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
-        <div className="text-sm font-bold text-gray-700 mb-1">② 上传球员参考照片</div>
+      <div className="rounded-2xl bg-[#141824] border border-white/10 p-4">
+        <div className="text-sm font-bold text-white mb-1">② 上传球员参考照片</div>
         <div className="text-xs text-gray-400 mb-3">全身照效果最佳 · 按队服颜色识别（同队多人会同时追踪，号码识别暂不支持）</div>
-        <label className={`flex flex-col items-center rounded-xl border-2 border-dashed cursor-pointer overflow-hidden ${photoFile?"border-orange-300 bg-orange-50":"border-gray-200 bg-gray-50 p-6"}`}>
+        <label className={`flex flex-col items-center rounded-xl border-2 border-dashed cursor-pointer overflow-hidden ${photoFile?"border-orange-400/40 bg-orange-500/10":"border-white/15 bg-white/5 p-6"}`}>
           <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} disabled={isProcessing}/>
           {photoPreview?(
             <>
               <img src={photoPreview} alt="参考照片" className="w-full object-contain" style={{maxHeight:220}}/>
-              <div className="w-full flex items-center justify-between px-3 py-2 bg-orange-50 border-t border-orange-100">
-                <span className="text-xs font-medium text-orange-700 truncate flex-1 mr-2">{photoFile?.name}</span>
+              <div className="w-full flex items-center justify-between px-3 py-2 bg-orange-500/10 border-t border-orange-500/20">
+                <span className="text-xs font-medium text-orange-300 truncate flex-1 mr-2">{photoFile?.name}</span>
                 <span className="text-xs text-gray-400 shrink-0">点击更换</span>
               </div>
             </>
@@ -688,19 +688,19 @@ export default function HighlightsPage() {
         </label>
       </div>
 
-      <div className="rounded-2xl bg-white border border-gray-100 shadow-sm px-4 py-3">
+      <div className="rounded-2xl bg-[#141824] border border-white/10 px-4 py-3">
         <button onClick={()=>{ if(bgmEnabled) setBgmUserFile(null); setBgmEnabled(v=>!v); }} disabled={isProcessing}
           className="flex items-center gap-3 w-full text-left">
-          <div className={`w-11 h-6 rounded-full transition-colors shrink-0 relative ${bgmEnabled?"bg-orange-500":"bg-gray-200"}`}>
+          <div className={`w-11 h-6 rounded-full transition-colors shrink-0 relative ${bgmEnabled?"bg-orange-500":"bg-white/15"}`}>
             <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${bgmEnabled?"translate-x-5":"translate-x-0.5"}`}/>
           </div>
           <div>
-            <div className="text-sm font-bold text-gray-700">添加运动BGM 🎵</div>
+            <div className="text-sm font-bold text-white">添加运动BGM 🎵</div>
             <div className="text-xs text-gray-400">{bgmEnabled?"将替换原声，配上节奏感音乐":"保留视频原声"}</div>
           </div>
         </button>
         {bgmEnabled&&!isProcessing&&(
-          <label className="mt-3 flex items-center gap-2 cursor-pointer rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-2">
+          <label className="mt-3 flex items-center gap-2 cursor-pointer rounded-xl border border-dashed border-white/15 bg-white/5 px-3 py-2">
             <input type="file" accept="audio/*,.mp3,.m4a,.aac" className="hidden" onChange={handleBgmFileChange}/>
             <span className="text-base shrink-0">🎵</span>
             {bgmUserFile
@@ -718,7 +718,7 @@ export default function HighlightsPage() {
       </div>
 
       {videoDuration > 60 && !isProcessing && (
-        <div className="flex items-center gap-2 px-1 text-xs text-amber-600">
+        <div className="flex items-center gap-2 px-1 text-xs text-amber-400">
           <span className="shrink-0">⏱</span>
           <span>预计处理时间：{Math.round(videoDuration / 10)}–{Math.round(videoDuration / 5)} 秒（视频 {Math.round(videoDuration)} 秒）</span>
         </div>
@@ -733,14 +733,14 @@ export default function HighlightsPage() {
               <span>正在检测最优处理方式…</span>
             </div>
           )}
-          <div className="flex rounded-xl bg-gray-100 p-0.5 gap-0.5">
+          <div className="flex rounded-xl bg-white/5 p-0.5 gap-0.5">
             <button
               onClick={() => setProcMode("server")}
               disabled={serverCheckDoneRef.current && serverOkRef.current === false}
               className={`flex-1 rounded-lg py-2 text-xs font-bold transition-colors flex flex-col items-center gap-0.5
                 ${serverCheckDoneRef.current && serverOkRef.current === false
                   ? "opacity-40 cursor-not-allowed text-gray-400"
-                  : procMode === "server" ? "bg-white text-orange-600 shadow-sm" : "text-gray-400"}`}
+                  : procMode === "server" ? "bg-orange-500 text-white shadow-sm" : "text-gray-400"}`}
             >
               <span className="flex items-center gap-1">
                 ☁️ 服务端处理
@@ -754,7 +754,7 @@ export default function HighlightsPage() {
             </button>
             <button
               onClick={() => setProcMode("client")}
-              className={`flex-1 rounded-lg py-2 text-xs font-bold transition-colors flex flex-col items-center gap-0.5 ${procMode === "client" ? "bg-white text-gray-600 shadow-sm" : "text-gray-400"}`}
+              className={`flex-1 rounded-lg py-2 text-xs font-bold transition-colors flex flex-col items-center gap-0.5 ${procMode === "client" ? "bg-white/15 text-white shadow-sm" : "text-gray-400"}`}
             >
               <span>📱 本地处理</span>
               <span className="font-normal opacity-70">离线可用 · 保存到手机</span>
@@ -764,17 +764,17 @@ export default function HighlightsPage() {
       )}
 
       <button onClick={run} disabled={!canRun}
-        className={`w-full py-4 rounded-2xl text-base font-bold shadow transition-all ${canRun?"bg-orange-500 text-white active:scale-95":"bg-gray-100 text-gray-400 cursor-not-allowed"}`}>
+        className={`w-full py-4 rounded-2xl text-base font-bold shadow transition-all ${canRun?"bg-orange-500 text-white active:scale-95":"bg-white/5 text-gray-400 cursor-not-allowed"}`}>
         {isProcessing ? "处理中…" : (videoFiles.length>0 && photoFile) ? `✨ 开始生成集锦${videoFiles.length>1?`（${videoFiles.length}段合并）`:""}` : (videoFiles.length>0 && !photoFile) ? "还差球员照片 ②" : (videoFiles.length===0 && photoFile) ? "还差比赛视频 ①" : "✨ 开始生成集锦"}
       </button>
 
       {isProcessing&&(
-        <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+        <div className="rounded-2xl bg-[#141824] border border-white/10 p-4 flex flex-col gap-3">
           <div className="flex justify-between items-center">
-            <span className={`text-sm font-medium flex-1 mr-2 ${stage === "analyzing" ? "text-orange-600" : "text-gray-700"}`}>{statusMsg}</span>
+            <span className={`text-sm font-medium flex-1 mr-2 ${stage === "analyzing" ? "text-orange-400" : "text-gray-200"}`}>{statusMsg}</span>
             <span className="text-sm font-bold text-orange-500 shrink-0">{progress}%</span>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+          <div className="w-full bg-white/5 rounded-full h-3 overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
@@ -795,17 +795,17 @@ export default function HighlightsPage() {
       )}
 
       {stage==="error"&&error&&(
-        <div className="rounded-2xl bg-red-50 border border-red-200 p-4">
-          <div className="text-sm font-bold text-red-700 mb-1">处理失败</div>
-          <div className="text-xs text-red-600 break-all">{error}</div>
-          <button onClick={()=>{setStage("idle");setError(null);setProgress(0);}} className="mt-3 text-sm text-red-600 underline">重试</button>
+        <div className="rounded-2xl bg-red-500/10 border border-red-500/30 p-4">
+          <div className="text-sm font-bold text-red-300 mb-1">处理失败</div>
+          <div className="text-xs text-red-300 break-all">{error}</div>
+          <button onClick={()=>{setStage("idle");setError(null);setProgress(0);}} className="mt-3 text-sm text-red-300 underline">重试</button>
         </div>
       )}
       </>)} {/* end upload mode wrapper */}
 
       {stage==="done"&&serverUrl&&(
-        <div className="rounded-2xl bg-white border border-orange-100 shadow-sm p-4 flex flex-col gap-3">
-          <div className="text-sm font-bold text-gray-800">🎉 {childName ? `${childName}的` : ""}集锦已生成！</div>
+        <div className="rounded-2xl bg-[#141824] border border-orange-500/20 p-4 flex flex-col gap-3">
+          <div className="text-sm font-bold text-white">🎉 {childName ? `${childName}的` : ""}集锦已生成！</div>
           {statusMsg && <div className="text-xs text-orange-500 -mt-1">{statusMsg}</div>}
           <video src={serverUrl} controls playsInline className="w-full rounded-xl bg-black" style={{maxHeight:280}}/>
           <button
@@ -820,17 +820,17 @@ export default function HighlightsPage() {
             📤 分享集锦给家人
           </button>
           <a href={serverUrl} target="_blank" rel="noopener noreferrer"
-            className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-bold text-center block active:opacity-70">
+            className="w-full py-2.5 rounded-xl border border-white/15 text-gray-300 text-sm font-bold text-center block active:opacity-70">
             🔗 在浏览器中打开（可长按保存）
           </a>
-          <div className="text-xs text-green-600 text-center font-medium">✅ 视频已永久保存到云端，随时可分享</div>
+          <div className="text-xs text-green-400 text-center font-medium">✅ 视频已永久保存到云端，随时可分享</div>
           <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setResultDur(0);setServerUrl(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);setCloudUrl(null);setCloudUploading(false);setVideoFiles([]);setFormatWarn(null);}} className="text-sm text-gray-400 text-center">重新制作</button>
         </div>
       )}
 
       {stage==="done"&&resultUrl&&(
-        <div className="rounded-2xl bg-white border border-orange-100 shadow-sm p-4 flex flex-col gap-3">
-          <div className="text-sm font-bold text-gray-800">🎉 {childName ? `${childName}的` : ""}集锦已生成！</div>
+        <div className="rounded-2xl bg-[#141824] border border-orange-500/20 p-4 flex flex-col gap-3">
+          <div className="text-sm font-bold text-white">🎉 {childName ? `${childName}的` : ""}集锦已生成！</div>
           {statusMsg && <div className="text-xs text-orange-500 -mt-1">{statusMsg}</div>}
           <video src={resultUrl} controls playsInline className="w-full rounded-xl bg-black" style={{maxHeight:280}}/>
           {resultBlob && !isWeChat && "share" in navigator && (
@@ -854,16 +854,16 @@ export default function HighlightsPage() {
           )}
           {!isWeChat && (
             <a href={resultUrl} download={resultName}
-              className={`w-full py-3 rounded-xl text-sm font-bold text-center block ${resultBlob && "share" in navigator ? "border border-gray-200 text-gray-600" : "bg-orange-500 text-white"}`}>
+              className={`w-full py-3 rounded-xl text-sm font-bold text-center block ${resultBlob && "share" in navigator ? "border border-white/15 text-gray-300" : "bg-orange-500 text-white"}`}>
               ⬇️ 下载集锦视频
             </a>
           )}
           {isWeChat && (
             <div className="rounded-xl p-3 flex flex-col gap-2" style={{background:"linear-gradient(135deg,#fff3e0,#ffe0b2)",border:"1px solid rgba(249,115,22,0.25)"}}>
-              <div className="text-xs font-black text-orange-800">📱 微信内保存视频</div>
+              <div className="text-xs font-black text-orange-300">📱 微信内保存视频</div>
               {cloudUrl ? (
                 <>
-                  <div className="text-xs text-green-700 font-medium">✅ 已上传到云端，可直接分享链接</div>
+                  <div className="text-xs text-green-300 font-medium">✅ 已上传到云端，可直接分享链接</div>
                   <button
                     onClick={async () => {
                       try { await (navigator as any).share?.({ url: cloudUrl, title: "精彩集锦" }); return; } catch {}
@@ -878,7 +878,7 @@ export default function HighlightsPage() {
                 </>
               ) : (
                 <>
-                  <div className="flex flex-col gap-1.5 text-xs text-orange-700">
+                  <div className="flex flex-col gap-1.5 text-xs text-orange-300">
                     <div className="flex items-start gap-1.5"><span className="font-black shrink-0 text-orange-500">方法①</span><span>长按上方视频 → 点「保存视频」→ 存到相册</span></div>
                     <div className="flex items-start gap-1.5"><span className="font-black shrink-0 text-orange-500">方法②</span><span>上传到云端，生成可分享链接（推荐）</span></div>
                   </div>
@@ -930,12 +930,12 @@ export default function HighlightsPage() {
             {captionCopied ? "✅ 配文已复制！粘贴到微信群" : "📋 复制配文 · 发给家人群"}
           </button>
           <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setResultDur(0);setServerUrl(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);setCloudUrl(null);setCloudUploading(false);setVideoFiles([]);setFormatWarn(null);}} className="text-sm text-gray-400 text-center">重新制作</button>
-          <Link href="/parent/profile/stu-001" className="w-full py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-bold text-center block active:scale-95 transition-transform">
+          <Link href="/parent/profile/stu-001" className="w-full py-2.5 rounded-xl border border-orange-500/20 bg-orange-500/10 text-orange-300 text-sm font-bold text-center block active:scale-95 transition-transform">
             {childName ? `📊 查看${childName}的成长档案` : "📊 查看孩子的成长档案"}
           </Link>
-          <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">
+          <div className="border-t border-white/10 pt-3 flex flex-col gap-2">
             {!feedbackDone ? (<>
-              <div className="text-xs font-bold text-gray-600">集锦效果怎么样？</div>
+              <div className="text-xs font-bold text-gray-300">集锦效果怎么样？</div>
               <div className="flex gap-2">
                 {[1,2,3,4,5].map(s=>(
                   <button key={s} onClick={()=>setFeedbackRating(s)}
@@ -946,7 +946,7 @@ export default function HighlightsPage() {
                 <div className="flex flex-col gap-1.5 mt-1">
                   <div className="text-xs text-gray-500">哪里有问题？（可多选）</div>
                   {["进度卡死","球员识别错误","剪辑位置不准","下载失败","其他"].map(t=>(
-                    <label key={t} className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+                    <label key={t} className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
                       <input type="checkbox" checked={feedbackTypes.includes(t)}
                         onChange={e=>setFeedbackTypes(p=>e.target.checked?[...p,t]:p.filter(x=>x!==t))}/>
                       {t}
@@ -959,13 +959,13 @@ export default function HighlightsPage() {
                   const entry={time:new Date().toISOString(),rating:feedbackRating,types:feedbackTypes,video:videoFiles[0]?.name||""};
                   try{const prev=JSON.parse(localStorage.getItem("highlight_feedback")||"[]");localStorage.setItem("highlight_feedback",JSON.stringify([...prev,entry]));localStorage.setItem("tester_badge","true");}catch{}
                   setFeedbackDone(true);
-                }} className="self-start px-3 py-1.5 rounded-lg bg-orange-100 text-orange-700 text-xs font-bold">
+                }} className="self-start px-3 py-1.5 rounded-lg bg-orange-500/15 text-orange-300 text-xs font-bold">
                   提交反馈
                 </button>
               )}
             </>) : (
               <div className="flex flex-col items-center gap-1">
-                <div className="text-xs text-center text-green-600 font-medium">✅ 感谢反馈，帮助我们持续改进！</div>
+                <div className="text-xs text-center text-green-400 font-medium">✅ 感谢反馈，帮助我们持续改进！</div>
                 <div className="text-xs text-center text-orange-600 font-bold">🏅 测试员徽章已解锁</div>
               </div>
             )}
@@ -974,13 +974,13 @@ export default function HighlightsPage() {
       )}
 
       {stage==="idle"&&myHighlights.length>0&&(
-        <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
-          <div className="text-sm font-bold text-gray-700 mb-2">📼 历史集锦</div>
+        <div className="rounded-2xl bg-[#141824] border border-white/10 p-4">
+          <div className="text-sm font-bold text-white mb-2">📼 历史集锦</div>
           <div className="flex flex-col">
             {myHighlights.map((hl,i)=>(
-              <div key={i} className="flex items-center justify-between py-2.5 border-t border-gray-50 first:border-0">
+              <div key={i} className="flex items-center justify-between py-2.5 border-t border-white/5 first:border-0">
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm text-gray-800 font-medium truncate">{hl.name.replace(/\.[^.]+$/,"")}</div>
+                  <div className="text-sm text-white font-medium truncate">{hl.name.replace(/\.[^.]+$/,"")}</div>
                   <div className="text-xs text-gray-400 mt-0.5">{(() => { const d = new Date(hl.date); const now = new Date(); const hhmm = `${d.getHours().toString().padStart(2,"0")}:${d.getMinutes().toString().padStart(2,"0")}`; const diff = Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime() - new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()) / 86400000); return diff === 0 ? `今天 ${hhmm}` : diff === 1 ? `昨天 ${hhmm}` : diff <= 7 ? `${diff}天前 ${hhmm}` : `${d.getMonth()+1}/${d.getDate()} ${hhmm}`; })()} · {hl.dur}秒</div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 ml-3">
@@ -1000,14 +1000,14 @@ export default function HighlightsPage() {
               </div>
             ))}
           </div>
-          <div className="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-50">本地生成的视频不会保存，可随时重新生成</div>
+          <div className="text-xs text-gray-400 mt-2 pt-2 border-t border-white/5">本地生成的视频不会保存，可随时重新生成</div>
         </div>
       )}
 
       {stage==="idle"&&(
-        <div className="rounded-2xl bg-amber-50 border border-amber-100 p-4">
+        <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4">
           <div className="text-xs font-bold text-amber-800 mb-2">📸 拍照小贴士 · 效果更好</div>
-          <ul className="flex flex-col gap-1.5 text-xs text-amber-700">
+          <ul className="flex flex-col gap-1.5 text-xs text-amber-300">
             <li>👕 <b>全身入镜</b>：要能看到球衣 + 短裤，颜色越完整识别越准</li>
             <li>☀️ <b>光线充足</b>：避免逆光或阴影遮住球衣颜色</li>
             <li>🧍 <b>单独一人</b>：不要和其他队员挤在一起，避免误识别</li>
