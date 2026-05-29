@@ -33,15 +33,15 @@ function ReportCard({ r }: { r: Report }) {
   const s = statusLabel[r.status] || statusLabel.draft;
   return (
     <Link href={`/parent/reports/${r.id}`}>
-      <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-start justify-between gap-3 active:scale-98 transition-transform hover:shadow-md">
+      <div className="rounded-3xl p-4 flex items-start justify-between gap-3 active:scale-98 transition-transform" style={{ background: "#141824", border: "1px solid rgba(255,255,255,0.08)" }}>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
             <PlanBadge plan={r.reportType} size="sm" />
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s.color}`}>{s.label}</span>
             <span className="text-xs text-gray-400">{sceneLabel[r.scene] ?? r.scene}</span>
           </div>
-          <div className="font-bold text-gray-800 text-sm leading-snug mb-1">{r.title}</div>
-          <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">{r.summary}</p>
+          <div className="font-bold text-white text-sm leading-snug mb-1">{r.title}</div>
+          <p className="text-xs text-gray-400 leading-relaxed line-clamp-2">{r.summary}</p>
           <div className="text-xs text-orange-400 mt-2">{r.createdAt}</div>
         </div>
         <div className="shrink-0 mt-1 flex flex-col items-center gap-1">
@@ -86,16 +86,13 @@ export default function ParentReportsPage() {
   return (
     <div
       className="-mx-4 -mt-6 pb-10 min-h-screen"
-      style={{ background: "linear-gradient(160deg, #fff3e0 0%, #ffe9cc 40%, #fff8ec 100%)" }}
+      style={{ background: "#0b0f1a" }}
     >
       <div className="px-4 pt-8 pb-4">
-        <h1
-          className="text-2xl font-black mb-1"
-          style={{ color: "#7C3810" }}
-        >
+        <h1 className="text-2xl font-black mb-1 text-white">
           成长报告
         </h1>
-        <p className="text-sm text-orange-600">{childName ? `${childName}的所有成长记录` : "孩子的所有成长记录"}</p>
+        <p className="text-sm text-orange-400">{childName ? `${childName}的所有成长记录` : "孩子的所有成长记录"}</p>
       </div>
 
       {/* Monthly growth summary */}
@@ -136,9 +133,7 @@ export default function ParentReportsPage() {
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-              tab === t.key
-                ? "bg-orange-500 text-white shadow-sm"
-                : "bg-white/70 text-gray-500 border border-orange-100"
+              tab === t.key ? "bg-orange-500 text-white shadow-sm" : "text-gray-500 border border-white/10 bg-white/5"
             }`}
           >
             {t.label}

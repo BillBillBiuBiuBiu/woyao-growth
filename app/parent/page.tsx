@@ -143,7 +143,7 @@ export default function ParentHome() {
   }
 
   return (
-    <div className="-mx-4 -mt-6 pb-10" style={{ background: "#f8f4ef" }}>
+    <div className="-mx-4 -mt-6 pb-10" style={{ background: "#0b0f1a" }}>
 
       {/* ── CINEMATIC HERO ─────────────────────────────────────── */}
       <div className="relative overflow-hidden" style={{ minHeight: 400 }}>
@@ -230,13 +230,13 @@ export default function ParentHome() {
       <div className="flex flex-col gap-4 px-4">
         {/* Volunteer annotation entry — same person who watches is often the volunteer scorer */}
         <Link href="/gc/live">
-          <div className="rounded-2xl bg-white/90 border border-orange-200 shadow-sm px-4 py-3 flex items-center justify-between active:bg-orange-50 transition-colors">
+          <div className="rounded-2xl px-4 py-3 flex items-center justify-between active:opacity-70 transition-opacity">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(249,115,22,0.10)" }}>
                 <span className="text-xl">📋</span>
               </div>
               <div>
-                <div className="text-sm font-bold text-gray-800">比赛现场记录</div>
+                <div className="text-sm font-bold text-white">比赛现场记录</div>
                 <div className="text-xs text-gray-400 mt-0.5">
                   {childName ? `${childName} · ${mockAssessment.level}稳定阶段 · 现场参与记录精彩时刻` : "现场参与 · 记录孩子的精彩时刻"}
                 </div>
@@ -255,9 +255,9 @@ export default function ParentHome() {
               ? `赢下了其中 ${w} 场，稳步成长`
               : `每一场都全力以赴`;
           return (
-            <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(249,115,22,0.06)", border: "1px solid rgba(249,115,22,0.15)" }}>
+            <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.25)" }}>
               <div className="text-xs font-bold text-orange-500 mb-1">📖 成长记录</div>
-              <p className="text-sm text-gray-700 leading-relaxed">
+              <p className="text-sm text-gray-300 leading-relaxed">
                 {childName}这个赛季，我们一起记录了 <span className="font-bold text-orange-600">{recentGames.length} 场</span> 比赛，{winDesc}。不只是比分，是每一次在球场上认真努力的证据。
               </p>
             </div>
@@ -266,17 +266,17 @@ export default function ParentHome() {
 
         {/* Recent games list — each row clickable, opens detail sheet */}
         {recentGames.length > 0 && (
-          <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm overflow-hidden">
+          <div className="rounded-3xl overflow-hidden">
             <div className="px-4 pt-3 pb-2 flex items-center justify-between">
-              <div className="text-sm font-bold text-gray-800">🏀 比赛记录</div>
+              <div className="text-sm font-bold text-white">🏀 比赛记录</div>
               {recentGames.length >= 2 && (() => {
                 const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
                 const l = recentGames.filter(g => g.homeScore < g.awayScore).length;
                 const d = recentGames.filter(g => g.homeScore === g.awayScore).length;
                 return (
                   <div className="text-xs text-gray-400">
-                    <span className="text-green-600 font-bold">{w}胜</span>
-                    {l > 0 && <span className="text-red-500 font-bold ml-1">{l}负</span>}
+                    <span className="text-green-400 font-bold">{w}胜</span>
+                    {l > 0 && <span className="text-red-400 font-bold ml-1">{l}负</span>}
                     {d > 0 && <span className="text-gray-400 ml-1">{d}平</span>}
                   </div>
                 );
@@ -298,11 +298,11 @@ export default function ParentHome() {
               <button
                 key={game.id}
                 onClick={() => openGameDetail(game)}
-                className="w-full flex items-center justify-between px-4 py-3 active:bg-orange-50 transition-colors text-left"
-                style={{ borderTop: i === 0 ? "none" : "1px solid rgba(249,115,22,0.08)" }}
+                className="w-full flex items-center justify-between px-4 py-3 active:bg-white/5 transition-colors text-left"
+                style={{ borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.06)" }}
               >
                 <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-gray-800 text-sm">
+                  <div className="font-semibold text-white text-sm">
                     {game.homeTeam} <span style={{ color: won ? "#16A34A" : lost ? "#9CA3AF" : "#F97316" }}>{game.homeScore}</span>
                     <span className="text-gray-300 mx-1">—</span>
                     <span style={{ color: lost ? "#16A34A" : won ? "#9CA3AF" : "#F97316" }}>{game.awayScore}</span> {game.awayTeam}
@@ -310,11 +310,11 @@ export default function ParentHome() {
                   <div className="text-xs text-gray-400 mt-0.5">{fmtRelDate(game.ts)}</div>
                 </div>
                 <div className="flex items-center gap-2 ml-2 shrink-0">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${won ? "bg-green-100 text-green-700" : lost ? "bg-gray-100 text-gray-500" : "bg-orange-100 text-orange-600"}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${won ? "bg-green-500/20 text-green-400" : lost ? "bg-white/10 text-gray-400" : "bg-orange-500/20 text-orange-400"}`}>
                     {won ? "胜" : lost ? "负" : "平"}
                   </span>
                   {game.eventCount > 0
-                    ? <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-medium">
+                    ? <span className="text-xs bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded-full font-medium">
                         {clipCount ? `📹 ${clipCount}个集锦` : "📹 有集锦素材"}
                       </span>
                     : null
@@ -364,7 +364,7 @@ export default function ParentHome() {
         {/* Latest report — shown only when no real games exist (demo state) */}
         {recentGames.length === 0 && (
           <Link href={`/parent/reports/${mockReport.id}`}>
-            <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-center justify-between active:scale-98 transition-transform">
+            <div className="rounded-3xl p-4 flex items-center justify-between active:scale-98 transition-transform">
               <div>
                 <div className="text-xs text-orange-500 mb-1 font-medium">📋 最新成长报告</div>
                 <div className="font-bold text-gray-800">{mockReport.title}</div>
@@ -377,7 +377,7 @@ export default function ParentHome() {
 
         {/* Clips — real when available, mock demo when no games, generate CTA when no clips */}
         {recentGames.length === 0 ? (
-          <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4">
+          <div className="rounded-3xl p-4">
             <div className="text-sm font-bold text-gray-800 mb-3">🎞️ 教练标注片段</div>
             <div className="grid grid-cols-3 gap-2">
               {mockReport.clips.map((clip) => (
@@ -398,7 +398,7 @@ export default function ParentHome() {
             </div>
           </div>
         ) : latestClips === null ? (
-          <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4">
+          <div className="rounded-3xl p-4">
             <div className="text-sm font-bold text-gray-800 mb-3">🎞️ 集锦切片</div>
             <div className="flex flex-col gap-2">
               {[0, 1].map(i => (
@@ -411,7 +411,7 @@ export default function ParentHome() {
             ? latestClips.filter(c => !c.label || c.label.split(",").map((s: string) => s.trim()).includes(childName))
             : latestClips;
           return (
-          <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4">
+          <div className="rounded-3xl p-4">
             <div className="text-sm font-bold text-gray-800 mb-3">{childName ? `🎞️ ${childName}的集锦切片` : "🎞️ 最新集锦切片"}</div>
             <div className="flex flex-col gap-2">
               {visibleClips.length === 0 ? (
@@ -421,13 +421,13 @@ export default function ParentHome() {
               ) : visibleClips.slice(0, 3).map((clip) => {
                 const isExpanded = homeExpandedClipId === clip.id;
                 return (
-                  <div key={clip.id} className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
+                  <div key={clip.id} className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
                     <button
                       className="flex items-center justify-between w-full px-3 py-2.5 text-left active:bg-orange-50 transition-colors"
                       onClick={() => setHomeExpandedClipId(isExpanded ? null : clip.id)}
                     >
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-gray-800 truncate">{formatClipLabel(clip.label)}</div>
+                        <div className="text-sm font-medium text-white truncate">{formatClipLabel(clip.label)}</div>
                         <div className="text-xs text-gray-400">{fmtRelDate(clip.created_at)}{(() => { const g = recentGames.find(x => x.id === clip.game_id); return g ? ` · ${g.homeScore}-${g.awayScore} ${g.awayTeam}` : ""; })()}</div>
                       </div>
                       <span className="shrink-0 ml-3 text-orange-400 text-sm" style={{ display: "inline-block", transform: isExpanded ? "rotate(180deg)" : "none" }}>▾</span>
@@ -462,7 +462,7 @@ export default function ParentHome() {
           );
         })() : latestClips !== null ? (
           <Link href="/parent/highlights">
-            <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-center justify-between active:scale-98 transition-transform">
+            <div className="rounded-3xl p-4 flex items-center justify-between active:scale-98 transition-transform">
               <div className="min-w-0 flex-1">
                 <div className="text-xs text-orange-500 mb-1 font-medium">🎞️ 集锦切片</div>
                 {myLastHighlight ? (
@@ -499,7 +499,7 @@ export default function ParentHome() {
 
         {/* Cards showcase — shown only in demo state (no real games) */}
         {recentGames.length === 0 && (
-          <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4">
+          <div className="rounded-3xl p-4">
             <div className="text-sm font-bold text-gray-800 mb-3">🃏 球星卡</div>
             <div className="flex gap-3 overflow-x-auto pb-1">
               {mockStudentCards.map((c) => (
@@ -522,9 +522,9 @@ export default function ParentHome() {
 
         {/* Profile link */}
         <Link href="/parent/profile/stu-001">
-          <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4 flex items-center justify-between active:scale-98 transition-transform">
+          <div className="rounded-3xl p-4 flex items-center justify-between active:scale-98 transition-transform">
             <div>
-              <div className="font-bold text-sm text-gray-800">{childName ? `${childName}的成长档案` : "查看完整成长档案"}</div>
+              <div className="font-bold text-sm text-white">{childName ? `${childName}的成长档案` : "查看完整成长档案"}</div>
               <div className="text-xs text-gray-400 mt-0.5">技术分析 · 成长曲线 · 历史比赛</div>
             </div>
             <div className="text-2xl text-orange-300">›</div>
@@ -591,14 +591,14 @@ export default function ParentHome() {
                         return (
                           <div
                             key={clip.id}
-                            className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden"
+                            className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
                           >
                             <button
                               className="flex items-center justify-between w-full px-3 py-2.5 text-left active:bg-orange-50 transition-colors"
                               onClick={() => setExpandedClipId(expanded ? null : clip.id)}
                             >
                               <div className="min-w-0 flex-1">
-                                <div className="text-sm font-medium text-gray-800 truncate">
+                                <div className="text-sm font-medium text-white truncate">
                                   {formatClipLabel(clip.label)}
                                 </div>
                                 <div className="text-xs text-gray-400">{fmtRelDate(clip.created_at)}</div>

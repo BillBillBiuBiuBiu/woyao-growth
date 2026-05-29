@@ -48,14 +48,14 @@ export default function CoachPage() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 min-h-screen" style={{ background: "#0b0f1a", padding: "0 1px" }}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">把每场比赛，变成成长证据</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{`PAB篮球馆 · 王教练工作台 · ${new Date().getFullYear()}年${new Date().getMonth() + 1}月`}</p>
+          <h1 className="text-xl font-bold text-white">把每场比赛，变成成长证据</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{`PAB篮球馆 · 王教练工作台 · ${new Date().getFullYear()}年${new Date().getMonth() + 1}月`}</p>
         </div>
-        <div className="bg-orange-100 text-orange-700 text-sm font-bold px-3 py-1.5 rounded-xl">
+        <div className="bg-orange-500/20 text-orange-400 text-sm font-bold px-3 py-1.5 rounded-xl">
           {pending.length} 待确认
         </div>
       </div>
@@ -71,35 +71,35 @@ export default function CoachPage() {
             { label: "打点总数", value: totalEvents, sub: perGame ? `场均 ${perGame}` : null, color: "text-blue-600" },
             { label: "切片总数", value: Object.values(clipCounts).reduce((s, n) => s + n, 0), sub: recentGames.length > 0 && Object.keys(clipCounts).length > 0 ? `${(Object.values(clipCounts).reduce((s,n)=>s+n,0)/recentGames.length).toFixed(1)}个/场` : null, color: "text-green-600" },
           ].map((s) => (
-            <div key={s.label} className="rounded-xl border border-border bg-white p-3 text-center">
+            <div key={s.label} className="rounded-xl p-3 text-center" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
               <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{s.label}</div>
-              {s.sub && <div className="text-xs text-gray-400 mt-0.5">{s.sub}</div>}
+              <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
+              {s.sub && <div className="text-xs text-gray-500 mt-0.5">{s.sub}</div>}
             </div>
           ));
         })()}
       </div>
 
       {/* Plan breakdown */}
-      <div className="rounded-2xl border border-border bg-white p-4">
-        <h2 className="text-sm font-semibold mb-3">学员套餐分布</h2>
+      <div className="rounded-2xl p-4" style={{ background: "#141824", border: "1px solid rgba(255,255,255,0.08)" }}>
+        <h2 className="text-sm font-semibold text-white mb-3">学员套餐分布</h2>
         <div className="flex gap-3">
-          <div className="flex-1 bg-slate-50 rounded-xl p-3 text-center">
-            <div className="text-lg font-bold text-slate-600">{planCount.basic}</div>
-            <div className="text-xs text-muted-foreground">基础版</div>
+          <div className="flex-1 rounded-xl p-3 text-center" style={{ background: "rgba(255,255,255,0.05)" }}>
+            <div className="text-lg font-bold text-gray-300">{planCount.basic}</div>
+            <div className="text-xs text-gray-500">基础版</div>
           </div>
-          <div className="flex-1 bg-blue-50 rounded-xl p-3 text-center">
+          <div className="flex-1 rounded-xl p-3 text-center" style={{ background: "rgba(59,130,246,0.15)" }}>
             <div className="text-lg font-bold text-blue-600">{planCount.vip}</div>
-            <div className="text-xs text-muted-foreground">专业版</div>
+            <div className="text-xs text-gray-500">专业版</div>
           </div>
-          <div className="flex-1 bg-amber-50 rounded-xl p-3 text-center">
+          <div className="flex-1 rounded-xl p-3 text-center" style={{ background: "rgba(245,158,11,0.15)" }}>
             <div className="text-lg font-bold text-amber-600">{planCount.supervip}</div>
-            <div className="text-xs text-muted-foreground">高阶版</div>
+            <div className="text-xs text-gray-500">高阶版</div>
           </div>
         </div>
         {planCount.basic > 0 && (
-          <div className="mt-3 flex items-center justify-between bg-orange-50 rounded-xl px-3 py-2">
-            <div className="text-xs text-orange-700">
+          <div className="mt-3 flex items-center justify-between rounded-xl px-3 py-2" style={{ background: "rgba(249,115,22,0.12)" }}>
+            <div className="text-xs text-orange-400">
               💡 <span className="font-bold">{planCount.basic} 名基础版</span>学员可考虑升专业版
             </div>
             <Link href="/org/leads">
@@ -132,13 +132,13 @@ export default function CoachPage() {
       {/* Recent game records — real data from Supabase */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold">近期打点记录</h2>
+          <h2 className="text-sm font-semibold text-white">近期打点记录</h2>
           {recentGames.length > 0 && (() => {
             const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
             const l = recentGames.filter(g => g.homeScore < g.awayScore).length;
             const d = recentGames.filter(g => g.homeScore === g.awayScore).length;
             return (
-              <div className="text-xs text-gray-400">
+              <div className="text-xs text-gray-500">
                 <span className="text-green-600 font-bold">{w}胜</span>
                 {l > 0 && <span className="text-red-500 font-bold ml-1">{l}负</span>}
                 {d > 0 && <span className="text-gray-400 ml-1">{d}平</span>}
@@ -147,33 +147,33 @@ export default function CoachPage() {
           })()}
         </div>
         {recentGames.length > 0 ? (
-          <div className="rounded-2xl border border-border bg-white overflow-hidden">
+          <div className="rounded-2xl overflow-hidden" style={{ background: "#141824", border: "1px solid rgba(255,255,255,0.08)" }}>
             {recentGames.map((game, i) => {
               const won  = game.homeScore > game.awayScore;
               const lost = game.homeScore < game.awayScore;
               return (
               <Link key={game.id} href={`/gc/review?gameId=${game.id}`}>
                 <div
-                  className="flex items-center justify-between px-4 py-3 active:bg-orange-50 transition-colors"
-                  style={{ borderTop: i === 0 ? "none" : "1px solid rgba(0,0,0,0.05)" }}
+                  className="flex items-center justify-between px-4 py-3 active:bg-white/5 transition-colors"
+                  style={{ borderTop: i === 0 ? "none" : "1px solid rgba(255,255,255,0.05)" }}
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-gray-800">
+                    <div className="text-sm font-semibold text-white">
                       {game.homeTeam}{" "}
                       <span style={{ color: won ? "#16A34A" : lost ? "#9CA3AF" : "#F97316" }}>{game.homeScore}</span>
                       <span className="text-gray-300 mx-1">—</span>
                       <span style={{ color: lost ? "#16A34A" : won ? "#9CA3AF" : "#F97316" }}>{game.awayScore}</span>{" "}
                       {game.awayTeam}
                     </div>
-                    <div className="text-xs text-gray-400 mt-0.5">{fmtGameDate(game.ts)}</div>
+                    <div className="text-xs text-gray-500 mt-0.5">{fmtGameDate(game.ts)}</div>
                   </div>
                   <div className="flex items-center gap-2 ml-2 shrink-0">
                     {game.eventCount > 0
-                      ? <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-medium">{game.eventCount}个打点</span>
-                      : <span className="text-xs text-gray-400">无记录</span>
+                      ? <span className="text-xs bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded-full font-medium">{game.eventCount}个打点</span>
+                      : <span className="text-xs text-gray-500">无记录</span>
                     }
                     {(clipCounts[game.id] ?? 0) > 0 ? (
-                      <span className="text-xs bg-green-100 text-green-600 px-1.5 py-0.5 rounded-full font-medium">{clipCounts[game.id]}个切片</span>
+                      <span className="text-xs bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded-full font-medium">{clipCounts[game.id]}个切片</span>
                     ) : game.eventCount > 0 ? (
                       <span className="text-xs bg-orange-500 text-white px-1.5 py-0.5 rounded-full font-medium">🎬 待剪辑</span>
                     ) : null}
@@ -197,7 +197,7 @@ export default function CoachPage() {
 
       {/* Quick actions */}
       <div>
-        <h2 className="text-sm font-semibold mb-3">快捷操作</h2>
+        <h2 className="text-sm font-semibold text-white mb-3">快捷操作</h2>
         <div className="grid grid-cols-3 gap-3">
           <Link href="/coach/videos">
             <div className="rounded-2xl p-4 text-center active:opacity-80 transition-opacity cursor-pointer" style={{ background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" }}>
@@ -230,16 +230,16 @@ export default function CoachPage() {
         const medals = ["🥇", "🥈", "🥉"];
         return (
           <div>
-            <h2 className="text-sm font-semibold mb-3">本期训练表现排名</h2>
+            <h2 className="text-sm font-semibold text-white mb-3">本期训练表现排名</h2>
             <div className="flex flex-col gap-3">
               {dims.map(dim => (
-                <div key={dim.label} className="rounded-2xl border border-border bg-white p-4">
-                  <div className="text-xs font-bold text-gray-700 mb-2">{dim.emoji} {dim.label}排名</div>
+                <div key={dim.label} className="rounded-2xl p-4" style={{ background: "#141824", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <div className="text-xs font-bold text-gray-300 mb-2">{dim.emoji} {dim.label}排名</div>
                   <div className="flex flex-col gap-1">
                     {dim.ranks.map((name, i) => (
                       <div key={name} className="flex items-center gap-2 py-1" style={{ borderTop: i > 0 ? "1px solid rgba(0,0,0,0.04)" : "none" }}>
                         <span className="text-sm w-6 text-center shrink-0">{i < 3 ? medals[i] : <span className="text-xs text-gray-400 font-medium">{i + 1}</span>}</span>
-                        <span className={`text-sm flex-1 ${i < 3 ? "font-semibold text-gray-800" : "text-gray-500"}`}>{name}</span>
+                        <span className={`text-sm flex-1 ${i < 3 ? "font-semibold text-white" : "text-gray-500"}`}>{name}</span>
                         <div className="flex gap-0.5">
                           {Array.from({ length: 5 }).map((_, j) => (
                             <div key={j} className="w-2.5 h-2.5 rounded-sm" style={{ background: j < Math.max(1, 5 - i) ? (i === 0 ? "#f59e0b" : i === 1 ? "#94a3b8" : i === 2 ? "#d97706" : "#e5e7eb") : "#f3f4f6" }} />
@@ -257,27 +257,27 @@ export default function CoachPage() {
 
       {/* Pending list */}
       <div>
-        <h2 className="text-sm font-semibold mb-3">需要你确认的报告</h2>
+        <h2 className="text-sm font-semibold text-white mb-3">需要你确认的报告</h2>
         <div className="flex flex-col gap-3">
           {pending.map((r) => {
             const s = statusMap[r.status] || statusMap.draft;
             return (
               <Link key={r.id} href={`/coach/annotate/${r.id}`}>
-                <div className="rounded-2xl border border-border bg-white p-4 hover:shadow-md transition-shadow cursor-pointer">
+                <div className="rounded-2xl p-4 active:opacity-80 transition-opacity cursor-pointer" style={{ background: "#141824", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold">{r.student}</span>
+                        <span className="font-semibold text-white">{r.student}</span>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s.color}`}>{s.label}</span>
                         <span className="text-xs text-muted-foreground ml-auto">{r.date}</span>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant="secondary" className="text-xs">{r.type}</Badge>
-                        <span className="text-xs text-muted-foreground">{r.clipCount}个片段</span>
+                        <span className="text-xs text-gray-500">{r.clipCount}个片段</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2 leading-snug">{r.aiSummary}</p>
                     </div>
-                    <span className="text-xl text-muted-foreground shrink-0 mt-1">›</span>
+                    <span className="text-xl text-gray-500 shrink-0 mt-1">›</span>
                   </div>
                 </div>
               </Link>
