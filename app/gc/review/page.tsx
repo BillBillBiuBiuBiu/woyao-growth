@@ -576,6 +576,9 @@ export default function GcReviewPage() {
         try { await ffmpegRef.current.deleteFile("input.mp4");     } catch {}
         try { await ffmpegRef.current.deleteFile("highlight.mp4"); } catch {}
       }
+      // Reset so next retry re-initializes a fresh FFmpeg instance
+      ffmpegRef.current = null;
+      ffmpegInitRef.current = null;
       setError(translateError(e instanceof Error ? e.message : String(e)));
       setPhase("error");
     }

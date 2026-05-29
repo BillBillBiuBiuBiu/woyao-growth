@@ -1025,7 +1025,6 @@ export default function HighlightsPage() {
     } finally {
       videoEls.forEach(el => { el.pause(); el.src = ""; });
       videoObjectUrls.forEach(url => URL.revokeObjectURL(url));
-      // Remove video processing URLs from tracker (result URL stays tracked for cleanup on unmount)
       trackedUrlsRef.current = trackedUrlsRef.current.filter(u => !videoObjectUrls.includes(u));
     }
   }, [videoFiles, photoFile, bgmEnabled, bgmUserFile]);
