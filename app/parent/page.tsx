@@ -143,15 +143,29 @@ export default function ParentHome() {
   }
 
   return (
-    <div className="-mx-4 -mt-6 pb-10" style={{ background: "linear-gradient(160deg, #fff3e0 0%, #ffe9cc 40%, #fff8ec 100%)" }}>
-      {/* Hero header */}
-      <div className="relative flex flex-col items-center pt-8 pb-4 px-4">
-        <span className="absolute top-5 left-8 text-amber-400 text-xl select-none">✦</span>
-        <span className="absolute top-10 right-10 text-orange-300 text-sm select-none">✦</span>
-        <span className="absolute top-4 right-6 text-yellow-300 text-xs select-none">✦</span>
+    <div className="-mx-4 -mt-6 pb-10" style={{ background: "#f8f4ef" }}>
 
-        {editingName ? (
-          <div className="flex items-center gap-2 mb-1">
+      {/* ── CINEMATIC HERO ─────────────────────────────────────── */}
+      <div className="relative overflow-hidden" style={{ minHeight: 400 }}>
+        {/* Background photo */}
+        <img
+          src={card.photo || "/students/jiang-haob0.jpg"}
+          alt={childName || card.name}
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ objectPosition: "center 10%" }}
+        />
+        {/* Cinematic dark overlay — gradient fades photo into content */}
+        <div className="absolute inset-0" style={{
+          background: "linear-gradient(to bottom, rgba(10,12,18,0.35) 0%, rgba(10,12,18,0.55) 50%, rgba(10,12,18,0.92) 100%)"
+        }} />
+
+        {/* Content layer */}
+        <div className="relative z-10 flex flex-col justify-end px-5 pt-12 pb-6" style={{ minHeight: 400 }}>
+          {/* WOYAO MOMENT label */}
+          <div className="text-xs font-bold tracking-widest text-orange-400 mb-2.5">WOYAO MOMENT</div>
+
+          {/* Narrative headline — tap to edit name */}
+          {editingName ? (
             <input
               autoFocus
               value={nameInput}
@@ -159,133 +173,55 @@ export default function ParentHome() {
               onBlur={saveName}
               onKeyDown={e => { if (e.key === "Enter") saveName(); if (e.key === "Escape") setEditingName(false); }}
               placeholder="输入孩子的名字"
-              className="text-xl font-black text-center rounded-xl px-3 py-1 border-2 border-orange-400 outline-none bg-white/90"
-              style={{ color: "#7C3810", minWidth: 0, width: 180 }}
+              className="text-2xl font-black rounded-xl px-3 py-1 border-2 border-orange-400 outline-none bg-white/10 text-white mb-2"
+              style={{ width: 220 }}
             />
-          </div>
-        ) : (
-          <button
-            className="flex items-center gap-1.5 mb-1 group"
-            onClick={() => { setNameInput(childName); setEditingName(true); }}
-          >
-            <h1 className="text-2xl font-black text-center leading-tight" style={{ color: "#7C3810" }}>
-              {childName ? `${childName}的篮球成长日记` : <span className="text-lg text-orange-400">点击设置孩子名字 ✏️</span>}
-            </h1>
-            {childName && <span className="text-base text-orange-400/60 group-active:text-orange-400 transition-colors">✏️</span>}
-          </button>
-        )}
-        <div className="flex items-center gap-1.5 bg-white/70 border border-orange-200 rounded-full px-3 py-1 mb-4">
-          <span className="text-xs font-medium text-orange-700">
-            {recentGames.length > 0 ? "⭐ 实战记录中" : "篮球学员"}
-          </span>
-          <span className="text-orange-400 text-xs">♡</span>
-        </div>
+          ) : (
+            <button className="text-left mb-2.5" onClick={() => { setNameInput(childName); setEditingName(true); }}>
+              <h1 className="text-2xl font-black text-white leading-snug">
+                {childName && recentGames.length > 0 ? (() => {
+                  const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
+                  const rate = Math.round(w / recentGames.length * 100);
+                  const suffix = rate >= 80 ? "，越打越稳了" : rate >= 60 ? "，越来越好了" : "，每场都在成长";
+                  return `${childName}${suffix}`;
+                })() : childName ? `${childName}的篮球成长` : <span className="text-orange-300 text-lg">点击设置孩子名字 ✏️</span>}
+              </h1>
+            </button>
+          )}
 
-        {/* Card + info side by side */}
-        <div className="flex gap-4 items-start w-full">
-          <BasketballCard
-            name={childName || card.name}
-            namePinyin={card.namePinyin}
-            number={card.number}
-            position={card.position}
-            photo={card.photo}
-            prebuiltCard={card.prebuiltCard}
-            size="full"
-          />
-          <div className="flex-1 min-w-0 flex flex-col gap-3 pt-1">
-            <div>
-              {recentGames.length > 0 ? (
-                <>
-                  <div className="text-sm text-gray-500">🏀 真实成长记录</div>
-                  {coachName && <div className="text-xs text-gray-400">教练：{coachName}</div>}
-                  {(() => {
-                    const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
-                    const l = recentGames.filter(g => g.homeScore < g.awayScore).length;
-                    const rate = Math.round(w / recentGames.length * 100);
-                    return (
-                      <div className="text-xs bg-orange-100 text-orange-700 rounded-full px-2.5 py-1 inline-block mt-1.5 font-medium">
-                        本赛季 {recentGames.length}场 <span className="text-green-700">{w}胜</span>{l > 0 ? <span className="text-gray-500 ml-0.5">{l}负</span> : null} <span className="text-orange-600">{rate}%</span>
-                      </div>
-                    );
-                  })()}
-                </>
-              ) : (
-                <>
-                  <div className="text-sm text-gray-500">教练：{coachName || "我的教练"}</div>
-                  <div className="text-xs bg-orange-100 text-orange-700 rounded-full px-2.5 py-1 inline-block mt-1.5 font-medium">成长中</div>
-                </>
-              )}
-            </div>
+          {/* Emotional subtext */}
+          <p className="text-sm text-gray-300 leading-relaxed mb-4 max-w-xs">
+            {heroChildStat
+              ? `最近高光：${heroChildStat.pts}分${heroChildStat.reb > 0 ? ` · ${heroChildStat.reb}板` : ""}。不只是数字，是每一次认真上场的证据。`
+              : recentGames.length > 0
+                ? `这个赛季已有 ${recentGames.length} 场比赛被完整记录下来。`
+                : "让教练开始现场打点，我们帮你记录孩子每一次上场的时刻。"}
+          </p>
 
-            {/* Today's growth — real last-game data when available, mock otherwise */}
-            <div className="rounded-2xl p-3 text-white shadow-sm" style={{ background: "linear-gradient(135deg, #f7971e 0%, #ffd200 100%)" }}>
-              {recentGames.length > 0 ? (
-                heroChildStat ? (
-                  <button
-                    className="w-full text-left active:opacity-75 transition-opacity"
-                    onClick={() => heroGame && openGameDetail(heroGame)}
-                  >
-                    <div className="text-xs font-medium text-yellow-100 mb-1">⭐ {childName}的近期表现 ›</div>
-                    <div className="text-base font-bold leading-snug" style={{ color: "#7C3810" }}>
-                      {heroChildStat.pts}分{heroChildStat.reb > 0 ? ` · ${heroChildStat.reb}板` : ""}{heroChildStat.ast > 0 ? ` · ${heroChildStat.ast}助` : ""}{heroChildStat.stl > 0 ? ` · ${heroChildStat.stl}断` : ""}
-                    </div>
-                    {heroGame && (
-                      <div className="text-xs text-yellow-200 mt-0.5">
-                        vs {heroGame.awayTeam} {heroGame.homeScore}—{heroGame.awayScore} · {fmtRelDate(heroGame.ts)}
-                      </div>
-                    )}
-                  </button>
-                ) : (
-                  <>
-                    <div className="text-xs font-medium text-yellow-100 mb-1">🏀 最近比赛</div>
-                    <div className="text-base font-bold leading-snug" style={{ color: "#7C3810" }}>
-                      {recentGames[0].homeTeam} {recentGames[0].homeScore} — {recentGames[0].awayScore} {recentGames[0].awayTeam}
-                      {" "}<span style={{ color: recentGames[0].homeScore > recentGames[0].awayScore ? "#4ade80" : recentGames[0].homeScore < recentGames[0].awayScore ? "#fca5a5" : "#fde68a" }}>
-                        {recentGames[0].homeScore > recentGames[0].awayScore ? "胜" : recentGames[0].homeScore < recentGames[0].awayScore ? "负" : "平"}
-                      </span>
-                    </div>
-                    <div className="text-xs text-yellow-200 mt-0.5">
-                      {fmtRelDate(recentGames[0].ts)}
-                    </div>
-                  </>
-                )
-              ) : (
-                <>
-                  <div className="text-xs font-medium text-yellow-100 mb-1">🏀 期待第一场</div>
-                  <div className="text-sm font-bold leading-snug" style={{ color: "#7C3810" }}>请教练打开我耀<br/>现场记录，生成精彩集锦</div>
-                </>
-              )}
-            </div>
-
-            {/* Badge — narrative style when real data, mock otherwise */}
-            {recentGames.length > 0 ? (() => {
+          {/* CTA + stats row */}
+          <div className="flex items-center gap-3 flex-wrap">
+            {(recentGames.length > 0 || heroGame) && (
+              <button
+                onClick={() => heroGame ? openGameDetail(heroGame) : null}
+                className="flex items-center gap-2 bg-orange-500 text-white text-sm font-bold px-5 py-2.5 rounded-full active:scale-95 transition-transform shadow-lg"
+              >
+                ▶ 播放最新高光
+              </button>
+            )}
+            {recentGames.length > 0 && (() => {
               const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
-              const l = recentGames.filter(g => g.homeScore < g.awayScore).length;
               const rate = Math.round(w / recentGames.length * 100);
-              const narrative = rate >= 80
-                ? `越打越稳了 🔥`
-                : rate >= 60
-                  ? `状态越来越好 💪`
-                  : `每场都在成长 ⚡`;
               return (
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-2.5 flex items-center gap-2 shadow-sm">
-                  <span className="text-2xl">🏆</span>
-                  <div>
-                    <div className="text-xs font-bold text-gray-800">
-                      {childName ? `${childName}，${narrative}` : narrative}
-                    </div>
-                    <div className="text-xs text-amber-600">{recentGames.length}场 {w}胜{l > 0 ? `${l}负` : ""} · {rate}%</div>
-                  </div>
+                <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">
+                  <span className="text-xs text-white/70">{recentGames.length}场</span>
+                  <span className="text-xs font-bold text-green-400">{w}胜</span>
+                  <span className="text-xs text-white/60">{rate}%</span>
+                  {coachName && <><span className="text-white/30 text-xs">·</span><span className="text-xs text-white/60">教练{coachName}</span></>}
                 </div>
               );
-            })() : (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-2.5 flex items-center gap-2 shadow-sm">
-                <span className="text-2xl">{badge.icon}</span>
-                <div>
-                  <div className="text-xs font-bold text-gray-800">{badge.name}</div>
-                  <div className="text-xs text-amber-600">{badge.dimension}</div>
-                </div>
-              </div>
+            })()}
+            {!childName && (
+              <div className="text-xs text-white/50">↑ 点标题设置名字</div>
             )}
           </div>
         </div>
