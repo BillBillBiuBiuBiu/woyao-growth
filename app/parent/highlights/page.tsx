@@ -638,6 +638,7 @@ export default function HighlightsPage() {
   const [resultBlob,   setResultBlob]   = useState<Blob|null>(null);
   const [resultName,   setResultName]   = useState("highlight.mp4");
   const [procMode,     setProcMode]     = useState<"server"|"client">("server");
+  const [formatWarn,   setFormatWarn]   = useState<string|null>(null);
   const [serverUrl,    setServerUrl]    = useState<string|null>(null);
   const [error,        setError]        = useState<string|null>(null);
   const [feedbackRating, setFeedbackRating] = useState<number>(0);
@@ -756,6 +757,9 @@ export default function HighlightsPage() {
   const handleVideoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []).slice(0, 5);
     if (!files.length) return;
+    // Warn if any file is .mov or has quicktime MIME — HEVC may not be supported
+    const hasMov = files.some(f => /\.mov$/i.test(f.name) || f.type === "video/quicktime");
+    setFormatWarn(hasMov ? "📱 检测到 iPhone 视频（.MOV）· 建议在手机「设置→相机→格式」选「最兼容」后重新录制，或先转码为 MP4" : null);
     setVideoFiles(prev => {
       const combined = [...prev, ...files].slice(0, 5);
       return combined;
@@ -1217,6 +1221,11 @@ export default function HighlightsPage() {
                 >✕</button>
               </div>
             ))}
+            {formatWarn && (
+              <div className="mt-1 flex items-start gap-1.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-700 leading-snug">
+                {formatWarn}
+              </div>
+            )}
           </div>
         )}
       </div>

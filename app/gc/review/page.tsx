@@ -471,10 +471,17 @@ export default function GcReviewPage() {
         setProgress(40 + Math.round(p * 55));
       ff.on("log",      onLog);
       ff.on("progress", onProgress);
+      // Fake ticker: keeps bar moving 40→90% if FFmpeg doesn't emit progress events
+      let fakePct = 40;
+      const fakeTicker = setInterval(() => {
+        fakePct = Math.min(90, fakePct + 0.4);
+        setProgress(p => Math.max(p, Math.round(fakePct)));
+      }, 1000);
       let ret: number;
       try {
         ret = await ff.exec(args);
       } finally {
+        clearInterval(fakeTicker);
         ff.off("log",      onLog);
         ff.off("progress", onProgress);
       }
