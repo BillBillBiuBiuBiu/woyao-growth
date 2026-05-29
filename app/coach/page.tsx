@@ -200,21 +200,21 @@ export default function CoachPage() {
         <h2 className="text-sm font-semibold mb-3">快捷操作</h2>
         <div className="grid grid-cols-3 gap-3">
           <Link href="/coach/videos">
-            <div className="rounded-2xl border border-border bg-white p-4 text-center hover:shadow-md transition-shadow cursor-pointer">
+            <div className="rounded-2xl p-4 text-center active:opacity-80 transition-opacity cursor-pointer" style={{ background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" }}>
               <div className="text-2xl mb-1">📊</div>
-              <div className="text-xs font-medium text-gray-700">视频分析</div>
+              <div className="text-xs font-bold text-white">视频分析</div>
             </div>
           </Link>
           <Link href="/coach/reports/generate">
-            <div className="rounded-2xl border border-border bg-white p-4 text-center hover:shadow-md transition-shadow cursor-pointer">
+            <div className="rounded-2xl p-4 text-center active:opacity-80 transition-opacity cursor-pointer" style={{ background: "linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)" }}>
               <div className="text-2xl mb-1">✨</div>
-              <div className="text-xs font-medium text-gray-700">生成报告</div>
+              <div className="text-xs font-bold text-white">生成报告</div>
             </div>
           </Link>
           <Link href="/coach/students">
-            <div className="rounded-2xl border border-border bg-white p-4 text-center hover:shadow-md transition-shadow cursor-pointer">
+            <div className="rounded-2xl p-4 text-center active:opacity-80 transition-opacity cursor-pointer" style={{ background: "linear-gradient(135deg, #10b981 0%, #059669 100%)" }}>
               <div className="text-2xl mb-1">👥</div>
-              <div className="text-xs font-medium text-gray-700">查看学员</div>
+              <div className="text-xs font-bold text-white">查看学员</div>
             </div>
           </Link>
         </div>

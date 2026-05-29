@@ -257,18 +257,24 @@ export default function ParentHome() {
               )}
             </div>
 
-            {/* Badge — real stats when available, mock demo otherwise */}
+            {/* Badge — narrative style when real data, mock otherwise */}
             {recentGames.length > 0 ? (() => {
               const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
               const l = recentGames.filter(g => g.homeScore < g.awayScore).length;
               const rate = Math.round(w / recentGames.length * 100);
-              const mood = rate >= 80 ? "🔥 高光赛季！" : rate >= 60 ? "💪 状态不错" : "⚡ 继续加油";
+              const narrative = rate >= 80
+                ? `越打越稳了 🔥`
+                : rate >= 60
+                  ? `状态越来越好 💪`
+                  : `每场都在成长 ⚡`;
               return (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-2.5 flex items-center gap-2 shadow-sm">
                   <span className="text-2xl">🏆</span>
                   <div>
-                    <div className="text-xs font-bold text-gray-800">{mood}</div>
-                    <div className="text-xs text-amber-600">{recentGames.length}场 {w}胜{l > 0 ? `${l}负` : ""} {rate}%</div>
+                    <div className="text-xs font-bold text-gray-800">
+                      {childName ? `${childName}，${narrative}` : narrative}
+                    </div>
+                    <div className="text-xs text-amber-600">{recentGames.length}场 {w}胜{l > 0 ? `${l}负` : ""} · {rate}%</div>
                   </div>
                 </div>
               );
