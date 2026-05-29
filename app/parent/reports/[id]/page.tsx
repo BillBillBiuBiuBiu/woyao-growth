@@ -348,6 +348,7 @@ export default function ReportDetailPage() {
   const [liked, setLiked] = useState(() => {
     try { return localStorage.getItem(`report_liked_${id}`) === "1"; } catch { return false; }
   });
+  const [shareCopied, setShareCopied] = useState(false);
   const [coachName] = useState(() => {
     try { return localStorage.getItem("coach_name") || ""; } catch { return ""; }
   });
@@ -435,6 +436,24 @@ export default function ReportDetailPage() {
             <div className="text-xs font-normal opacity-80 mt-0.5">AI自动剪辑精彩片段</div>
           </button>
         </Link>
+      </div>
+
+      {/* Share report */}
+      <div className="px-4 pt-3 pb-2">
+        <button
+          onClick={async () => {
+            const name = childName || "孩子";
+            const strength = report.strengths?.[0] || "综合成长";
+            const msg = `🏀 ${name}收到了一份成长报告！\n\n「${report.summary}」\n\n本次进步：${strength}\n${coachName ? `——${coachName}教练点评` : ""}\n\n来自「我耀成长」· 让每一次成长都有证据`;
+            if ("share" in navigator) {
+              try { await (navigator as Navigator & { share: (d: ShareData) => Promise<void> }).share({ text: msg, title: `${name}的成长报告` }); return; } catch {}
+            }
+            try { await navigator.clipboard.writeText(msg); setShareCopied(true); setTimeout(() => setShareCopied(false), 2500); } catch {}
+          }}
+          className={`w-full rounded-2xl py-3 text-sm font-bold border transition-colors active:opacity-70 ${shareCopied ? "bg-green-50 border-green-300 text-green-600" : "bg-white border-orange-200 text-orange-600"}`}
+        >
+          {shareCopied ? "✅ 文案已复制，发给家人吧！" : "📤 分享报告给家人"}
+        </button>
       </div>
     </div>
   );
