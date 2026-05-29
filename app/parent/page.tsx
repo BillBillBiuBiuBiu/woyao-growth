@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { mockReport, mockBadges, mockStudentCards } from "@/lib/mock-data";
+import { mockReport, mockBadges, mockStudentCards, mockAssessment } from "@/lib/mock-data";
 import BasketballCard from "@/components/BasketballCard";
 import { apiLoadGames, apiLoadEvents, apiLoadClips, type StoredEvent, type ClipRecord } from "@/lib/gc-api";
 import type { GameRecord } from "@/lib/gc-teams";
@@ -295,7 +295,9 @@ export default function ParentHome() {
               </div>
               <div>
                 <div className="text-sm font-bold text-gray-800">比赛现场记录</div>
-                <div className="text-xs text-gray-400 mt-0.5">现场参与 · 记录孩子的精彩时刻</div>
+                <div className="text-xs text-gray-400 mt-0.5">
+                  {childName ? `${childName} · ${mockAssessment.level}稳定阶段 · 现场参与记录精彩时刻` : "现场参与 · 记录孩子的精彩时刻"}
+                </div>
               </div>
             </div>
             <div className="text-orange-300 shrink-0 text-xl">›</div>
