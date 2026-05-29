@@ -97,6 +97,16 @@ export default function CoachPage() {
             <div className="text-xs text-muted-foreground">高阶版</div>
           </div>
         </div>
+        {planCount.basic > 0 && (
+          <div className="mt-3 flex items-center justify-between bg-orange-50 rounded-xl px-3 py-2">
+            <div className="text-xs text-orange-700">
+              💡 <span className="font-bold">{planCount.basic} 名基础版</span>学员可考虑升专业版
+            </div>
+            <Link href="/org/leads">
+              <span className="text-xs font-bold text-orange-600 active:opacity-70">提醒家长 →</span>
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Live scorekeeping CTA */}
