@@ -34,7 +34,7 @@ export default function StudentProfilePage() {
   const [hasTesterBadge, setHasTesterBadge] = useState(false);
   const [childName] = useState(() => { try { return localStorage.getItem("child_name") || ""; } catch { return ""; } });
   const [timelineFilter, setTimelineFilter] = useState<"all"|"match"|"training">("all");
-  const [realStats, setRealStats] = useState<{ pts: number; reb: number; ast: number; stl: number; games: number; bestPts: number } | null>(null);
+  const [realStats, setRealStats] = useState<{ pts: number; reb: number; ast: number; stl: number; games: number; bestPts: number; partner?: { name: string; count: number } } | null>(null);
   const [recentGames, setRecentGames] = useState<GameRecord[]>([]);
 
   useEffect(() => {
@@ -50,6 +50,7 @@ export default function StudentProfilePage() {
       const allEvents = await Promise.all(recentGames.map(g => apiLoadEvents(g.id).catch(() => [])));
       let gamesWithHits = 0;
       const acc = { pts: 0, reb: 0, ast: 0, stl: 0, games: 0, bestPts: 0 };
+      const partnerCounts = new Map<string, number>();
       for (const evts of allEvents) {
         const mine = evts.filter(e => e.playerName === childName);
         if (mine.length === 0) continue;
@@ -63,10 +64,41 @@ export default function StudentProfilePage() {
           if (e.cat === "stl") acc.stl++;
         }
         if (gamePts > acc.bestPts) acc.bestPts = gamePts;
+        // Best partner: count cooperation events with each teammate
+        const myTeam = mine[0]?.team;
+        if (myTeam) {
+          const teammates = evts.filter(e => e.team === myTeam && e.playerName !== childName);
+          // Teammate assists child (ast within 5s before child scores)
+          for (const myScore of mine.filter(e => e.pts > 0)) {
+            for (const ta of teammates.filter(e => e.cat === "ast")) {
+              if (ta.videoTs <= myScore.videoTs && myScore.videoTs - ta.videoTs <= 5)
+                partnerCounts.set(ta.playerName, (partnerCounts.get(ta.playerName) || 0) + 2);
+            }
+          }
+          // Child assists teammate (child ast, teammate scores within 5s)
+          for (const myAst of mine.filter(e => e.cat === "ast")) {
+            for (const ts of teammates.filter(e => e.pts > 0)) {
+              if (ts.videoTs >= myAst.videoTs && ts.videoTs - myAst.videoTs <= 5)
+                partnerCounts.set(ts.playerName, (partnerCounts.get(ts.playerName) || 0) + 2);
+            }
+          }
+          // Fallback: co-scorers in same game
+          const seen = new Set<string>();
+          for (const ts of teammates.filter(e => e.pts > 0)) {
+            if (!seen.has(ts.playerName)) {
+              seen.add(ts.playerName);
+              partnerCounts.set(ts.playerName, (partnerCounts.get(ts.playerName) || 0) + 1);
+            }
+          }
+        }
       }
       if (gamesWithHits === 0) return;
       acc.games = gamesWithHits;
-      setRealStats(acc);
+      let partner: { name: string; count: number } | undefined;
+      for (const [name, count] of partnerCounts) {
+        if (!partner || count > partner.count) partner = { name, count };
+      }
+      setRealStats({ ...acc, partner });
     })().catch(() => {});
   }, [childName, recentGames]);
 
@@ -203,6 +235,13 @@ export default function StudentProfilePage() {
             </div>
             {realStats.games > 1 && realStats.bestPts > 0 && (
               <div className="text-xs text-orange-400 text-center mt-2">🌟 最佳单场 {realStats.bestPts} 分</div>
+            )}
+            {realStats.partner && (
+              <div className="mt-2 flex items-center justify-center gap-1.5">
+                <span className="text-xs text-blue-500">🤝 最佳搭档：</span>
+                <span className="text-xs font-bold text-gray-700">{realStats.partner.name}</span>
+                <span className="text-xs text-gray-400">· 默契值 {realStats.partner.count}</span>
+              </div>
             )}
           </div>
         </div>
