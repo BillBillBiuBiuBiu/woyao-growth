@@ -453,6 +453,56 @@ export default function StudentProfilePage() {
         </div>
       </div>
 
+      {/* ── TRAINING BADGE PROGRESS ─────────────────── */}
+      {recentGames.length > 0 && (
+        <div className="px-4 pt-1 pb-2">
+          <div className="rounded-2xl bg-white/90 border border-amber-100 shadow-sm p-4">
+            <div className="text-xs font-bold text-gray-700 mb-3">🎖️ 训练徽章进度</div>
+            {/* Basic badge progress */}
+            {(() => {
+              const earned = recentGames.length;
+              const target = 20;
+              const pct = Math.min(100, Math.round(earned / target * 100));
+              return (
+                <div className="mb-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-600">⭐ 基础徽章（每场+1枚）</span>
+                    <span className="text-xs font-bold text-amber-600">{earned}/{target}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: "linear-gradient(90deg, #f59e0b, #f97316)" }} />
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">累积满20枚可晋级 · 还差 {Math.max(0, target - earned)} 枚</div>
+                </div>
+              );
+            })()}
+            {/* Advanced badges */}
+            {(() => {
+              const advBadges = [
+                recentGames.length >= 5 ? { name: "🎯 专注力达人", desc: "专注力班级TOP3" } : null,
+                realStats && realStats.games >= 2 && realStats.pts / realStats.games >= 3 ? { name: "✅ 完成度之星", desc: "完成度班级TOP3" } : null,
+                recentGames.filter(g => g.homeScore > g.awayScore).length >= 5 ? { name: "🔥 积极性勋章", desc: "参与5场以上且积极进取" } : null,
+              ].filter(Boolean);
+              if (advBadges.length === 0) return (
+                <div className="text-xs text-gray-400 text-center py-2">专注力、完成度、积极性进入班级前20%可获得进阶徽章</div>
+              );
+              return (
+                <div>
+                  <div className="text-xs text-gray-500 mb-2">进阶徽章（{advBadges.length}枚已获得）</div>
+                  <div className="flex flex-wrap gap-2">
+                    {advBadges.map((b, i) => b && (
+                      <div key={i} className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
+                        <span className="text-xs font-bold text-amber-700">{b.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
       {/* ── TIMELINE ────────────────────────────────── */}
       <div className="px-4 pt-4">
         <div className="flex items-center justify-between mb-3">
