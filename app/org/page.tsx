@@ -27,6 +27,28 @@ export default function OrgDashboard() {
         <p className="text-sm text-muted-foreground mt-0.5">{`PAB球馆 · ${new Date().getFullYear()}年${new Date().getMonth() + 1}月`}</p>
       </div>
 
+      {/* Today's action items */}
+      {(() => {
+        const newLeads = mockLeads.filter(l => l.status === "new").length;
+        if (newLeads === 0) return null;
+        return (
+          <div className="rounded-2xl border border-orange-300 bg-orange-50 p-4 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-bold text-orange-800 mb-0.5">🔔 今日待办</div>
+              <div className="text-sm text-orange-700">
+                <span className="font-bold">{newLeads} 个线索</span> 还没有跟进——趁热！
+              </div>
+              <div className="text-xs text-orange-500 mt-0.5">越快联系，转化率越高</div>
+            </div>
+            <Link href="/org/leads">
+              <button className="shrink-0 bg-orange-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl active:opacity-80 transition-opacity">
+                去跟进 →
+              </button>
+            </Link>
+          </div>
+        );
+      })()}
+
       {/* Key metrics */}
       <div className="grid grid-cols-2 gap-3">
         {[
@@ -40,6 +62,11 @@ export default function OrgDashboard() {
             <div className="text-xs text-muted-foreground mt-0.5">{m.label}</div>
           </div>
         ))}
+      </div>
+
+      {/* Warm summary line */}
+      <div className="text-xs text-gray-500 text-center px-2 -mt-2">
+        🏀 本赛季 PAB U10 整体表现优秀，报告打开率 {Math.round(mockOrgStats.reportOpenRate * 100)}%，家长参与度持续上升
       </div>
 
       {/* Conversion summary */}
