@@ -653,7 +653,12 @@ export default function ParentHome() {
                                   style={{ maxHeight: 240 }}
                                 />
                                 <button
-                                  onClick={() => copyClipLink(clip.public_url)}
+                                  onClick={async () => {
+                                    if ("share" in navigator) {
+                                      try { await (navigator as Navigator & {share:(d:ShareData)=>Promise<void>}).share({ url: clip.public_url, title: childName ? `${childName}的精彩集锦` : "精彩集锦" }); return; } catch {}
+                                    }
+                                    copyClipLink(clip.public_url);
+                                  }}
                                   className="w-full py-1.5 rounded-lg text-xs font-bold border active:opacity-70 transition-colors"
                                   style={{
                                     borderColor: linkToast === clip.public_url ? "rgba(34,197,94,0.4)" : "rgba(249,115,22,0.4)",
@@ -661,7 +666,7 @@ export default function ParentHome() {
                                     background: linkToast === clip.public_url ? "rgba(34,197,94,0.08)" : "rgba(249,115,22,0.08)",
                                   }}
                                 >
-                                  {linkToast === clip.public_url ? "✅ 已复制" : "🔗 复制链接"}
+                                  {linkToast === clip.public_url ? "✅ 已复制" : "📤 分享集锦"}
                                 </button>
                               </div>
                             )}
