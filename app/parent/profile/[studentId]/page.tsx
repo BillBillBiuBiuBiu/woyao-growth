@@ -34,7 +34,7 @@ export default function StudentProfilePage() {
   const [hasTesterBadge, setHasTesterBadge] = useState(false);
   const [childName] = useState(() => { try { return localStorage.getItem("child_name") || ""; } catch { return ""; } });
   const [timelineFilter, setTimelineFilter] = useState<"all"|"match"|"training">("all");
-  const [realStats, setRealStats] = useState<{ pts: number; reb: number; ast: number; stl: number; games: number } | null>(null);
+  const [realStats, setRealStats] = useState<{ pts: number; reb: number; ast: number; stl: number; games: number; bestPts: number } | null>(null);
   const [recentGames, setRecentGames] = useState<GameRecord[]>([]);
 
   useEffect(() => {
@@ -49,17 +49,20 @@ export default function StudentProfilePage() {
     (async () => {
       const allEvents = await Promise.all(recentGames.map(g => apiLoadEvents(g.id).catch(() => [])));
       let gamesWithHits = 0;
-      const acc = { pts: 0, reb: 0, ast: 0, stl: 0, games: 0 };
+      const acc = { pts: 0, reb: 0, ast: 0, stl: 0, games: 0, bestPts: 0 };
       for (const evts of allEvents) {
         const mine = evts.filter(e => e.playerName === childName);
         if (mine.length === 0) continue;
         gamesWithHits++;
+        let gamePts = 0;
         for (const e of mine) {
           acc.pts += e.pts;
+          gamePts += e.pts;
           if (e.cat === "oreb" || e.cat === "dreb") acc.reb++;
           if (e.cat === "ast") acc.ast++;
           if (e.cat === "stl") acc.stl++;
         }
+        if (gamePts > acc.bestPts) acc.bestPts = gamePts;
       }
       if (gamesWithHits === 0) return;
       acc.games = gamesWithHits;
@@ -198,6 +201,9 @@ export default function StudentProfilePage() {
                 </div>
               ))}
             </div>
+            {realStats.games > 1 && realStats.bestPts > 0 && (
+              <div className="text-xs text-orange-400 text-center mt-2">🌟 最佳单场 {realStats.bestPts} 分</div>
+            )}
           </div>
         </div>
       )}
