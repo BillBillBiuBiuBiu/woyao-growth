@@ -923,18 +923,34 @@ export default function HighlightsPage() {
           if (startErr) throw new Error(startErr);
 
           await new Promise<void>((resolve, reject) => {
-            const es = new EventSource(`/api/highlights/status/${jobId}`);
-            es.onmessage = (e) => {
-              try {
-                const data = JSON.parse(e.data) as { status: string; progress: number; stage: string; url?: string; error?: string };
-                if (data.stage) setStatusMsg(data.stage);
-                if (typeof data.progress === "number") setProgress(70 + Math.round(data.progress * 0.28));
-                if (data.status === "done" && data.url) { es.close(); setServerUrl(data.url); resolve(); }
-                if (data.status === "error") { es.close(); reject(new Error(data.error || "服务端处理失败")); }
-              } catch { es.close(); reject(new Error("响应解析失败")); }
-            };
-            es.onerror = () => { es.close(); reject(new Error("连接中断，请检查网络")); };
-            setTimeout(() => { es.close(); reject(new Error("处理超时（>3分钟），请重试")); }, 180_000);
+            let retries = 0;
+            const MAX_RETRIES = 3;
+            const overallTimer = setTimeout(() => { reject(new Error("处理超时（>3分钟），请重试")); }, 180_000);
+            function connect() {
+              const es = new EventSource(`/api/highlights/status/${jobId}`);
+              es.onmessage = (e) => {
+                retries = 0; // reset on successful message
+                try {
+                  const data = JSON.parse(e.data) as { status: string; progress: number; stage: string; url?: string; error?: string };
+                  if (data.stage) setStatusMsg(data.stage);
+                  if (typeof data.progress === "number") setProgress(70 + Math.round(data.progress * 0.28));
+                  if (data.status === "done" && data.url) { es.close(); clearTimeout(overallTimer); setServerUrl(data.url); resolve(); }
+                  if (data.status === "error") { es.close(); clearTimeout(overallTimer); reject(new Error(data.error || "服务端处理失败")); }
+                } catch { es.close(); clearTimeout(overallTimer); reject(new Error("响应解析失败")); }
+              };
+              es.onerror = () => {
+                es.close();
+                if (retries < MAX_RETRIES) {
+                  retries++;
+                  setStatusMsg(`网络波动，正在重连（${retries}/${MAX_RETRIES}）…`);
+                  setTimeout(connect, 2000);
+                } else {
+                  clearTimeout(overallTimer);
+                  reject(new Error("连接多次中断，请检查网络后重试"));
+                }
+              };
+            }
+            connect();
           });
 
           setResultDur(Math.round(clipDuration));
