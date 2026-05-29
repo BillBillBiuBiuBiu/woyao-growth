@@ -310,6 +310,24 @@ export default function ParentHome() {
           </div>
         </Link>
 
+        {/* Growth narrative — appears when we have enough real data */}
+        {recentGames.length >= 3 && childName && (() => {
+          const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
+          const winDesc = w >= recentGames.length * 0.8
+            ? `赢下了其中 ${w} 场，表现出色`
+            : w >= recentGames.length * 0.5
+              ? `赢下了其中 ${w} 场，稳步成长`
+              : `每一场都全力以赴`;
+          return (
+            <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(249,115,22,0.06)", border: "1px solid rgba(249,115,22,0.15)" }}>
+              <div className="text-xs font-bold text-orange-500 mb-1">📖 成长记录</div>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                {childName}这个赛季，我们一起记录了 <span className="font-bold text-orange-600">{recentGames.length} 场</span> 比赛，{winDesc}。不只是比分，是每一次在球场上认真努力的证据。
+              </p>
+            </div>
+          );
+        })()}
+
         {/* Recent games list — each row clickable, opens detail sheet */}
         {recentGames.length > 0 && (
           <div className="rounded-3xl bg-white/90 border border-orange-100 shadow-sm overflow-hidden">

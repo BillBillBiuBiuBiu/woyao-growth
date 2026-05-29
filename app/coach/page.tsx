@@ -52,8 +52,8 @@ export default function CoachPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">教练工作台</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{`PAB篮球馆 · ${new Date().getFullYear()}年${new Date().getMonth() + 1}月`}</p>
+          <h1 className="text-xl font-bold">把每场比赛，变成成长证据</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{`PAB篮球馆 · 王教练工作台 · ${new Date().getFullYear()}年${new Date().getMonth() + 1}月`}</p>
         </div>
         <div className="bg-orange-100 text-orange-700 text-sm font-bold px-3 py-1.5 rounded-xl">
           {pending.length} 待确认
