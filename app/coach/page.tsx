@@ -66,10 +66,10 @@ export default function CoachPage() {
           const totalEvents = recentGames.reduce((s, g) => s + g.eventCount, 0);
           const perGame = recentGames.length > 0 ? (totalEvents / recentGames.length).toFixed(1) : null;
           return [
-            { label: "学员总数", value: mockStudents.length, sub: null, color: "text-gray-700" },
-            { label: "场次记录", value: recentGames.length, sub: recentGames.length > 0 ? `${recentGames.filter(g => g.eventCount > 0).length}场有打点` : null, color: "text-orange-600" },
-            { label: "打点总数", value: totalEvents, sub: perGame ? `场均 ${perGame}` : null, color: "text-blue-600" },
-            { label: "切片总数", value: Object.values(clipCounts).reduce((s, n) => s + n, 0), sub: recentGames.length > 0 && Object.keys(clipCounts).length > 0 ? `${(Object.values(clipCounts).reduce((s,n)=>s+n,0)/recentGames.length).toFixed(1)}个/场` : null, color: "text-green-600" },
+            { label: "学员总数", value: mockStudents.length, sub: null, color: "text-white" },
+            { label: "场次记录", value: recentGames.length, sub: recentGames.length > 0 ? `${recentGames.filter(g => g.eventCount > 0).length}场有打点` : null, color: "text-orange-400" },
+            { label: "打点总数", value: totalEvents, sub: perGame ? `场均 ${perGame}` : null, color: "text-blue-400" },
+            { label: "切片总数", value: Object.values(clipCounts).reduce((s, n) => s + n, 0), sub: recentGames.length > 0 && Object.keys(clipCounts).length > 0 ? `${(Object.values(clipCounts).reduce((s,n)=>s+n,0)/recentGames.length).toFixed(1)}个/场` : null, color: "text-green-400" },
           ].map((s) => (
             <div key={s.label} className="rounded-xl p-3 text-center" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
               <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
@@ -89,11 +89,11 @@ export default function CoachPage() {
             <div className="text-xs text-gray-500">基础版</div>
           </div>
           <div className="flex-1 rounded-xl p-3 text-center" style={{ background: "rgba(59,130,246,0.15)" }}>
-            <div className="text-lg font-bold text-blue-600">{planCount.vip}</div>
+            <div className="text-lg font-bold text-blue-400">{planCount.vip}</div>
             <div className="text-xs text-gray-500">专业版</div>
           </div>
           <div className="flex-1 rounded-xl p-3 text-center" style={{ background: "rgba(245,158,11,0.15)" }}>
-            <div className="text-lg font-bold text-amber-600">{planCount.supervip}</div>
+            <div className="text-lg font-bold text-amber-400">{planCount.supervip}</div>
             <div className="text-xs text-gray-500">高阶版</div>
           </div>
         </div>
@@ -103,7 +103,7 @@ export default function CoachPage() {
               💡 <span className="font-bold">{planCount.basic} 名基础版</span>学员可考虑升专业版
             </div>
             <Link href="/org/leads">
-              <span className="text-xs font-bold text-orange-600 active:opacity-70">提醒家长 →</span>
+              <span className="text-xs font-bold text-orange-400 active:opacity-70">提醒家长 →</span>
             </Link>
           </div>
         )}
@@ -139,7 +139,7 @@ export default function CoachPage() {
             const d = recentGames.filter(g => g.homeScore === g.awayScore).length;
             return (
               <div className="text-xs text-gray-500">
-                <span className="text-green-600 font-bold">{w}胜</span>
+                <span className="text-green-400 font-bold">{w}胜</span>
                 {l > 0 && <span className="text-red-500 font-bold ml-1">{l}负</span>}
                 {d > 0 && <span className="text-gray-400 ml-1">{d}平</span>}
               </div>
@@ -186,9 +186,9 @@ export default function CoachPage() {
           </div>
         ) : (
           <Link href="/gc">
-            <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/50 px-4 py-5 text-center active:bg-orange-50 transition-colors">
+            <div className="rounded-2xl border border-dashed border-orange-500/30 bg-orange-500/5 px-4 py-5 text-center active:bg-white/5 transition-colors">
               <div className="text-2xl mb-1">🏀</div>
-              <div className="text-sm font-medium text-gray-600">还没有打点记录</div>
+              <div className="text-sm font-medium text-gray-400">还没有打点记录</div>
               <div className="text-xs text-orange-500 mt-1">开始第一场 →</div>
             </div>
           </Link>
