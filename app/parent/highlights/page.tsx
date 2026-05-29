@@ -662,6 +662,23 @@ export default function HighlightsPage() {
   const [cloudUrl,       setCloudUrl]       = useState<string|null>(null);
   const [cloudUploading, setCloudUploading] = useState(false);
   const analyzeStartRef = useRef<number>(0);
+  const serverCheckDoneRef = useRef(false);
+  const serverOkRef = useRef<boolean | null>(null);
+
+  // Server health check on mount — auto-select working mode before user interacts
+  useEffect(() => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 3000);
+    fetch("/api/highlights/encode", { method: "POST", signal: ctrl.signal })
+      .then(r => { serverOkRef.current = r.status === 400; })
+      .catch(() => { serverOkRef.current = false; })
+      .finally(() => {
+        clearTimeout(timer);
+        serverCheckDoneRef.current = true;
+        setProcMode(serverOkRef.current ? "server" : "client");
+      });
+    return () => { ctrl.abort(); clearTimeout(timer); };
+  }, []);
 
   // Detect WeChat WKWebView once on mount — used to show long-press save hint
   useEffect(() => {
@@ -804,6 +821,7 @@ export default function HighlightsPage() {
       interface ClipSpec { el: HTMLVideoElement; start: number; end: number; dur: number }
       const clipSpecs: ClipSpec[] = [];
       const perClipTargetDur = Math.max(3, Math.round(HIGHLIGHT_S / videoEls.length));
+      let highlightCount = 0;
 
       for (let vi = 0; vi < videoEls.length; vi++) {
         const el = videoEls[vi];
@@ -824,7 +842,7 @@ export default function HighlightsPage() {
         for (let i = 0; i < framesPerVideo; i++) {
           if (Date.now() > deadline) break;
           const t = i * fInterval;
-          setStatusMsg(`分析视频${vi+1}/${videoEls.length} 第${i+1}/${framesPerVideo}帧`);
+          setStatusMsg(`🔍 扫描 ${videoEls.length > 1 ? `视频${vi+1} ` : ""}${i+1}/${framesPerVideo} 帧${highlightCount > 0 ? ` · 发现 ${highlightCount} 个有球时刻` : "…"}`);
           try {
             await seekVideoTo(el, t);
             ctx.drawImage(el, 0, 0, SAMPLE_W, sH);
@@ -832,6 +850,7 @@ export default function HighlightsPage() {
             const fs = analyzeFrame(currFrame, prevFrame, sig, SAMPLE_W, sH, track);
             fs.t = t; scores.push(fs);
             if (fs.hasPlayer) {
+              highlightCount++;
               if (track.x >= 0) { track.vx = track.vx*0.5+(fs.playerX-track.x)*0.5; track.vy = track.vy*0.5+(fs.playerY-track.y)*0.5; }
               const nearEdge = fs.playerX < SAMPLE_W*0.08||fs.playerX > SAMPLE_W*0.92||fs.playerY < sH*0.08||fs.playerY > sH*0.92;
               if (nearEdge) track.lastExitX = fs.playerX;
@@ -1251,21 +1270,40 @@ export default function HighlightsPage() {
 
       {/* Processing mode selector */}
       {!isProcessing && (
-        <div className="flex rounded-xl bg-gray-100 p-0.5 gap-0.5">
-          <button
-            onClick={() => setProcMode("server")}
-            className={`flex-1 rounded-lg py-2 text-xs font-bold transition-colors flex flex-col items-center gap-0.5 ${procMode === "server" ? "bg-white text-orange-600 shadow-sm" : "text-gray-400"}`}
-          >
-            <span>☁️ 服务端处理</span>
-            <span className="font-normal opacity-70">快速 · 后台运行 · 云端链接</span>
-          </button>
-          <button
-            onClick={() => setProcMode("client")}
-            className={`flex-1 rounded-lg py-2 text-xs font-bold transition-colors flex flex-col items-center gap-0.5 ${procMode === "client" ? "bg-white text-gray-600 shadow-sm" : "text-gray-400"}`}
-          >
-            <span>📱 本地处理</span>
-            <span className="font-normal opacity-70">离线可用 · 保存到手机</span>
-          </button>
+        <div className="flex flex-col gap-1.5">
+          {!serverCheckDoneRef.current && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-400 px-1">
+              <div className="w-3 h-3 rounded-full border-2 border-orange-400 border-t-transparent animate-spin shrink-0" />
+              <span>正在检测最优处理方式…</span>
+            </div>
+          )}
+          <div className="flex rounded-xl bg-gray-100 p-0.5 gap-0.5">
+            <button
+              onClick={() => setProcMode("server")}
+              disabled={serverCheckDoneRef.current && serverOkRef.current === false}
+              className={`flex-1 rounded-lg py-2 text-xs font-bold transition-colors flex flex-col items-center gap-0.5
+                ${serverCheckDoneRef.current && serverOkRef.current === false
+                  ? "opacity-40 cursor-not-allowed text-gray-400"
+                  : procMode === "server" ? "bg-white text-orange-600 shadow-sm" : "text-gray-400"}`}
+            >
+              <span className="flex items-center gap-1">
+                ☁️ 服务端处理
+                {serverCheckDoneRef.current && (
+                  <span className={`w-1.5 h-1.5 rounded-full ${serverOkRef.current ? "bg-green-500" : "bg-red-400"}`} />
+                )}
+              </span>
+              <span className="font-normal opacity-70">
+                {serverCheckDoneRef.current && serverOkRef.current === false ? "暂不可用" : "快速 · 后台运行 · 云端链接"}
+              </span>
+            </button>
+            <button
+              onClick={() => setProcMode("client")}
+              className={`flex-1 rounded-lg py-2 text-xs font-bold transition-colors flex flex-col items-center gap-0.5 ${procMode === "client" ? "bg-white text-gray-600 shadow-sm" : "text-gray-400"}`}
+            >
+              <span>📱 本地处理</span>
+              <span className="font-normal opacity-70">离线可用 · 保存到手机</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -1277,16 +1315,26 @@ export default function HighlightsPage() {
       {isProcessing&&(
         <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-gray-700 flex-1 mr-2">{statusMsg}</span>
+            <span className={`text-sm font-medium flex-1 mr-2 ${stage === "analyzing" ? "text-orange-600" : "text-gray-700"}`}>{statusMsg}</span>
             <span className="text-sm font-bold text-orange-500 shrink-0">{progress}%</span>
           </div>
           <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-to-r from-orange-400 to-yellow-400 transition-all duration-500" style={{width:`${progress}%`}}/>
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${progress}%`,
+                background: stage === "done"
+                  ? "linear-gradient(90deg, #22c55e, #4ade80)"
+                  : "linear-gradient(to right, #fb923c, #fbbf24)"
+              }}
+            />
           </div>
           {stage === "analyzing" && analyzeElapsed > 5 && (
-            <div className="text-xs text-orange-400 text-center">🔍 已用时 {analyzeElapsed}s，视频越长等待越久</div>
+            <div className="text-xs text-orange-400 text-center">⏱ 已用时 {analyzeElapsed}s，视频越长等待越久，请耐心等待</div>
           )}
-          <div className="text-xs text-gray-400 text-center">全程本地处理，视频不会上传服务器</div>
+          <div className="text-xs text-gray-400 text-center">
+            {procMode === "client" ? "全程本地处理，视频不会上传服务器" : "视频上传后台处理，可切换到其他页面"}
+          </div>
         </div>
       )}
 
