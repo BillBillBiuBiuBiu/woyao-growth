@@ -14,7 +14,7 @@ import {
 import { apiSaveGame, apiSaveEvents, apiUploadClip, apiLoadGames, type StoredEvent } from "@/lib/gc-api";
 import type { GameRecord } from "@/lib/gc-teams";
 import { translateError } from "@/lib/translate-error";
-import { fmt, mergeSegs } from "@/lib/gc-utils";
+import { fmt, mergeSegs, buildHighlightFFmpegArgs } from "@/lib/gc-utils";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -423,35 +423,8 @@ export default function GcReviewPage() {
       const totalDur = segs.reduce((sum, [s, e]) => sum + (e - s), 0);
       setStatusMsg(`找到 ${segs.length} 个片段（共 ${totalDur.toFixed(0)}s），正在剪辑…`);
 
-      // Single -i: one decode stream for all segments → avoids n×decode-buffer OOM on mobile
-      const n = segs.length;
-      let filterComplex: string;
-      let mapArgs: string[];
-      if (n === 1) {
-        const [segS, segE] = segs[0];
-        const dur = segE - segS;
-        filterComplex = `[0:v]trim=start=${segS.toFixed(3)}:duration=${dur.toFixed(3)},setpts=PTS-STARTPTS,scale=480:-2[cv];[0:a]atrim=start=${segS.toFixed(3)}:duration=${dur.toFixed(3)},asetpts=PTS-STARTPTS[ca]`;
-        mapArgs = ["-map", "[cv]", "-map", "[ca]"];
-      } else {
-        const vSplitOuts = segs.map((_, i) => `[vs${i}]`).join("");
-        const aSplitOuts = segs.map((_, i) => `[as${i}]`).join("");
-        const trimParts  = segs.map(([segS, segE], i) => {
-          const dur = segE - segS;
-          return `[vs${i}]trim=start=${segS.toFixed(3)}:duration=${dur.toFixed(3)},setpts=PTS-STARTPTS[v${i}];[as${i}]atrim=start=${segS.toFixed(3)}:duration=${dur.toFixed(3)},asetpts=PTS-STARTPTS[a${i}]`;
-        }).join(";");
-        const concatIn = segs.map((_, i) => `[v${i}][a${i}]`).join("");
-        filterComplex = `[0:v]split=${n}${vSplitOuts};[0:a]asplit=${n}${aSplitOuts};${trimParts};${concatIn}concat=n=${n}:v=1:a=1[rawv][rawa];[rawv]scale=480:-2[cv]`;
-        mapArgs = ["-map", "[cv]", "-map", "[rawa]"];
-      }
-      const args = [
-        "-i", "input.mp4",
-        "-filter_complex", filterComplex,
-        ...mapArgs,
-        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
-        "-c:a", "aac", "-b:a", "96k",
-        "-movflags", "+faststart",
-        "-y", "highlight.mp4",
-      ];
+      // Single -i decode stream + split/concat — see buildHighlightFFmpegArgs
+      const args = buildHighlightFFmpegArgs(segs);
 
       const encodeLog: string[] = [];
       const onLog      = ({ message }: { message: string }) => {
