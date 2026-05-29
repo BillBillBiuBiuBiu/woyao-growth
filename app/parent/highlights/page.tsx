@@ -867,54 +867,67 @@ export default function HighlightsPage() {
 
       setStage("cutting");
 
+      // ── 6a. Server-side FFmpeg path (with auto-fallback to client on 5xx) ───
+      let serverDone = false;
       if (procMode === "server") {
-        // ── 6a. Server-side FFmpeg path ─────────────────────────────────────
-        setStatusMsg("上传到服务器，后台处理中…");
-        const fd = new FormData();
-        for (let i = 0; i < clipSpecs.length; i++) {
-          fd.append(`video_${i}`, videoFiles[i] ?? videoFiles[0], videoFiles[i]?.name ?? outputName);
-          fd.append(`start_${i}`, clipSpecs[i].start.toFixed(3));
-          fd.append(`end_${i}`, clipSpecs[i].end.toFixed(3));
-        }
-        fd.append("bgm", bgmEnabled ? "true" : "false");
-        fd.append("name", outputName);
-
-        const startResp = await fetch("/api/highlights/encode", { method: "POST", body: fd });
-        if (!startResp.ok) throw new Error(`服务端错误 ${startResp.status}`);
-        const { jobId, error: startErr } = await startResp.json();
-        if (startErr) throw new Error(startErr);
-
-        // Poll job status via SSE
-        await new Promise<void>((resolve, reject) => {
-          const es = new EventSource(`/api/highlights/status/${jobId}`);
-          es.onmessage = (e) => {
-            try {
-              const data = JSON.parse(e.data) as { status: string; progress: number; stage: string; url?: string; error?: string };
-              if (data.stage) setStatusMsg(data.stage);
-              if (typeof data.progress === "number") setProgress(70 + Math.round(data.progress * 0.28));
-              if (data.status === "done" && data.url) {
-                es.close(); setServerUrl(data.url); resolve();
-              }
-              if (data.status === "error") { es.close(); reject(new Error(data.error || "服务端处理失败")); }
-            } catch { es.close(); reject(new Error("响应解析失败")); }
-          };
-          es.onerror = () => { es.close(); reject(new Error("连接中断，请检查网络")); };
-          // Fallback timeout: 3 minutes
-          setTimeout(() => { es.close(); reject(new Error("处理超时（>3分钟），请重试")); }, 180_000);
-        });
-
-        setResultDur(Math.round(clipDuration));
-        setStage("done"); setProgress(100);
-        setStatusMsg(`服务端处理完成 · 视频已保存云端${clipSpecs.length > 1 ? ` · ${clipSpecs.length}段合并` : ""}`);
         try {
-          const rec = { date: new Date().toISOString(), name: outputName, dur: Math.round(clipDuration) };
-          const prev = JSON.parse(localStorage.getItem("my_highlights") || "[]");
-          localStorage.setItem("my_highlights", JSON.stringify([rec, ...prev].slice(0, 10)));
-          setMyHighlights([rec, ...prev].slice(0, 10));
-        } catch {}
+          setStatusMsg("上传到服务器，后台处理中…");
+          const fd = new FormData();
+          for (let i = 0; i < clipSpecs.length; i++) {
+            fd.append(`video_${i}`, videoFiles[i] ?? videoFiles[0], videoFiles[i]?.name ?? outputName);
+            fd.append(`start_${i}`, clipSpecs[i].start.toFixed(3));
+            fd.append(`end_${i}`, clipSpecs[i].end.toFixed(3));
+          }
+          fd.append("bgm", bgmEnabled ? "true" : "false");
+          fd.append("name", outputName);
 
-      } else {
-        // ── 6b. Client-side MediaRecorder path ─────────────────────────────
+          const startResp = await fetch("/api/highlights/encode", { method: "POST", body: fd });
+          if (!startResp.ok) {
+            let detail = `服务端错误 ${startResp.status}`;
+            try { const b = await startResp.json(); if (b.error) detail = b.error; } catch {}
+            throw new Error(detail);
+          }
+          const { jobId, error: startErr } = await startResp.json();
+          if (startErr) throw new Error(startErr);
+
+          await new Promise<void>((resolve, reject) => {
+            const es = new EventSource(`/api/highlights/status/${jobId}`);
+            es.onmessage = (e) => {
+              try {
+                const data = JSON.parse(e.data) as { status: string; progress: number; stage: string; url?: string; error?: string };
+                if (data.stage) setStatusMsg(data.stage);
+                if (typeof data.progress === "number") setProgress(70 + Math.round(data.progress * 0.28));
+                if (data.status === "done" && data.url) { es.close(); setServerUrl(data.url); resolve(); }
+                if (data.status === "error") { es.close(); reject(new Error(data.error || "服务端处理失败")); }
+              } catch { es.close(); reject(new Error("响应解析失败")); }
+            };
+            es.onerror = () => { es.close(); reject(new Error("连接中断，请检查网络")); };
+            setTimeout(() => { es.close(); reject(new Error("处理超时（>3分钟），请重试")); }, 180_000);
+          });
+
+          setResultDur(Math.round(clipDuration));
+          setStage("done"); setProgress(100);
+          setStatusMsg(`服务端处理完成 · 视频已保存云端${clipSpecs.length > 1 ? ` · ${clipSpecs.length}段合并` : ""}`);
+          try {
+            const rec = { date: new Date().toISOString(), name: outputName, dur: Math.round(clipDuration) };
+            const prev = JSON.parse(localStorage.getItem("my_highlights") || "[]");
+            localStorage.setItem("my_highlights", JSON.stringify([rec, ...prev].slice(0, 10)));
+            setMyHighlights([rec, ...prev].slice(0, 10));
+          } catch {}
+          serverDone = true;
+        } catch (serverErr) {
+          const msg = serverErr instanceof Error ? serverErr.message : String(serverErr);
+          // Auto-fallback on 5xx or missing env var — show warning then continue to client path
+          if (/5\d\d/.test(msg) || msg.includes("not set") || msg.includes("SUPABASE")) {
+            setStatusMsg("服务端不可用，自动切换本地处理…");
+          } else {
+            throw serverErr;
+          }
+        }
+      }
+
+      // ── 6b. Client-side MediaRecorder path (client mode OR server fallback) ─
+      if (!serverDone) {
         let bgmBlob: Blob | null = null;
         if (bgmEnabled) {
           setStatusMsg("加载BGM…");
