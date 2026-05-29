@@ -304,3 +304,4 @@
 {"cycle":"C314","role":"PM","action":"scan","result":"Top priorities: move highlights CTA below game list; multi-video done summary; reset videoFiles on remake","ts":"2026-05-28T12:00:00Z"}
 {"cycle":"C315","role":"Dev","action":"implement","result":"Moved highlights CTA+last-highlight card to after game list; done statusMsg shows 'X段视频精华合并·共Xs'; 重新制作 resets videoFiles","ts":"2026-05-28T12:01:00Z"}
 {"cycle":"C316","role":"QA","action":"e2e","result":"PASS: 本赛季 label, CTA position, profile date+gradient pills, 6 progress bars all verified in production","ts":"2026-05-28T12:02:00Z","next_mandatory_e2e":"C320"}
+{"cycle":317,"date":"2026-05-29","小龙的洞察":"比赛详情底板切片分享按钮是旧版copyClipLink，与首页智能分享不一致，家长情绪峰值时体验落后","沃兹的方案":"替换onclick为navigator.share→fallback copyClipLink，文案改为📤分享集锦，与首页C304版本完全一致","柯南的裁定":"PASS — WKWebView降级正确，AbortError处理合理，零新增风险，非e2e周期","本轮一句话":"比赛详情底板切片分享升级为智能分享，家长情绪峰值时可一步分享","生产e2e":"skip","woz_commit":"813b1ea"}
