@@ -1080,7 +1080,11 @@ export default function HighlightsPage() {
       <div className="rounded-3xl p-5 shadow-lg" style={{background:"linear-gradient(135deg,#f7971e 0%,#ffd200 100%)"}}>
         <div className="text-2xl font-black mb-1" style={{color:"#7C3810"}}>🎬 生成{childName ? `${childName}的` : ""}精彩集锦</div>
         <p className="text-sm" style={{color:"#7C3810",opacity:0.85}}>
-          上传比赛视频 + 球员照片，自动剪辑有球精彩片段（约15秒），全程本地处理不上传服务器。
+          {!serverCheckDoneRef.current
+            ? "上传比赛视频 + 球员照片，自动剪辑有球精彩片段（约15秒）…"
+            : serverOkRef.current
+              ? "上传视频到云端，AI 后台处理，可切换到其他页面等待结果。"
+              : "上传比赛视频 + 球员照片，自动剪辑有球精彩片段（约15秒），全程本地处理不上传服务器。"}
         </p>
       </div>
 
