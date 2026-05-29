@@ -201,6 +201,22 @@ export default function AnnotatePage() {
       {/* Coach comment */}
       <div className="rounded-2xl border border-border bg-white p-4">
         <div className="text-sm font-semibold mb-2">教练专业点评</div>
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {[
+            "训练动作已见雏形，继续强化细节",
+            "本场表现超出预期，建议加练这个方向",
+            "技术稳定，下阶段提升对抗中的应用",
+            "心理层面有突破，保持这个状态",
+          ].map((t) => (
+            <button
+              key={t}
+              onClick={() => updateAnn({ coachComment: ann.coachComment ? `${ann.coachComment}${t}` : t })}
+              className="text-xs text-gray-500 border border-dashed border-gray-300 px-2 py-0.5 rounded-full hover:border-primary/50 hover:text-primary transition-colors"
+            >
+              + {t}
+            </button>
+          ))}
+        </div>
         <textarea
           value={ann.coachComment}
           onChange={(e) => updateAnn({ coachComment: e.target.value })}
