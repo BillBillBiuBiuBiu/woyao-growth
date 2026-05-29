@@ -186,7 +186,15 @@ export default function LeadsPage() {
               {/* Expanded */}
               {isExpanded && (
                 <div className="px-4 pb-4 border-t border-border pt-3">
-                  <div className="text-xs font-semibold text-muted-foreground mb-2">建议沟通话术</div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs font-semibold text-muted-foreground">建议沟通话术</div>
+                    {(() => {
+                      if (lead.priority === "high") return <span className="text-xs bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-full font-medium">📞 建议电话</span>;
+                      if (lead.type === "renewal") return <span className="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-full font-medium">💬 建议微信</span>;
+                      if (lead.type === "care") return <span className="text-xs bg-green-50 text-green-600 border border-green-200 px-2 py-0.5 rounded-full font-medium">🤝 当面聊聊</span>;
+                      return <span className="text-xs bg-gray-50 text-gray-500 border border-gray-200 px-2 py-0.5 rounded-full font-medium">💬 建议沟通</span>;
+                    })()}
+                  </div>
                   <div className="bg-slate-50 rounded-xl p-3 text-sm text-foreground leading-relaxed">
                     {lead.suggestedMessage}
                   </div>
