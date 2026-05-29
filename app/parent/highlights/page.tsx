@@ -658,6 +658,7 @@ export default function HighlightsPage() {
   const [hlMode, setHlMode] = useState<"upload"|"from_clips">("upload");
   const [playerClips, setPlayerClips] = useState<Array<ClipRecord & { gameLabel: string; gameId?: string }>|null>(null);
   const [loadingPlayerClips, setLoadingPlayerClips] = useState(false);
+  const [clipsLoadError, setClipsLoadError] = useState(false);
   const [gamesWithEvents, setGamesWithEvents] = useState(0);
   const [expandedClipId, setExpandedClipId] = useState<string|null>(null);
   const [nameInputVal,   setNameInputVal]   = useState("");
@@ -714,6 +715,7 @@ export default function HighlightsPage() {
     const name = nameOverride ?? childName;
     if (!name) { setPlayerClips([]); return; }
     setPlayerClips(null);
+    setClipsLoadError(false);
     setLoadingPlayerClips(true);
     try {
       const games = await apiLoadGames();
@@ -728,7 +730,7 @@ export default function HighlightsPage() {
         })
       );
       setPlayerClips(results.flat());
-    } catch { setPlayerClips([]); }
+    } catch { setPlayerClips([]); setClipsLoadError(true); }
     setLoadingPlayerClips(false);
   }, [childName]);
 
@@ -1117,7 +1119,17 @@ export default function HighlightsPage() {
               ))}
             </div>
           )}
-          {!loadingPlayerClips && playerClips !== null && playerClips.length === 0 && (
+          {!loadingPlayerClips && clipsLoadError && (
+            <div className="text-sm text-center py-6 flex flex-col items-center gap-2">
+              <div className="text-2xl">⚠️</div>
+              <div className="text-gray-600 font-medium">加载失败，请检查网络后重试</div>
+              <button
+                onClick={() => { setClipsLoadError(false); loadPlayerClips(); }}
+                className="text-xs font-bold text-orange-600 border border-orange-300 px-4 py-1.5 rounded-full active:opacity-70"
+              >🔄 重试</button>
+            </div>
+          )}
+          {!loadingPlayerClips && !clipsLoadError && playerClips !== null && playerClips.length === 0 && (
             <div className="text-sm text-gray-400 text-center py-6">
               {!childName ? (
                 <>
