@@ -421,8 +421,17 @@ export default function GcReviewPage() {
       const ff = ffmpegRef.current!;
       setProgress(20);
 
-      setStatusMsg("正在写入视频数据…");
-      await ff.writeFile("input.mp4", await fetchFile(videoFile));
+      setStatusMsg("正在读取视频数据…");
+      let writePct = 20;
+      const writeTicker = setInterval(() => {
+        writePct = Math.min(39, writePct + 0.3);
+        setProgress(p => Math.max(p, Math.round(writePct)));
+      }, 1000);
+      try {
+        await ff.writeFile("input.mp4", await fetchFile(videoFile));
+      } finally {
+        clearInterval(writeTicker);
+      }
       setProgress(40);
 
       const rawSegs: [number, number][] = events.map((e) => [

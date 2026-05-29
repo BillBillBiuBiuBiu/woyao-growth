@@ -1404,7 +1404,7 @@ export default function HighlightsPage() {
             🔗 在浏览器中打开（可长按保存）
           </a>
           <div className="text-xs text-green-600 text-center font-medium">✅ 视频已永久保存到云端，随时可分享</div>
-          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setResultDur(0);setServerUrl(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);setCloudUrl(null);setCloudUploading(false);setVideoFiles([]);}} className="text-sm text-gray-400 text-center">重新制作</button>
+          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setResultDur(0);setServerUrl(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);setCloudUrl(null);setCloudUploading(false);setVideoFiles([]);setFormatWarn(null);}} className="text-sm text-gray-400 text-center">重新制作</button>
         </div>
       )}
 
@@ -1509,7 +1509,7 @@ export default function HighlightsPage() {
           >
             {captionCopied ? "✅ 配文已复制！粘贴到微信群" : "📋 复制配文 · 发给家人群"}
           </button>
-          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setResultDur(0);setServerUrl(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);setCloudUrl(null);setCloudUploading(false);setVideoFiles([]);}} className="text-sm text-gray-400 text-center">重新制作</button>
+          <button onClick={()=>{setStage("idle");setProgress(0);setResultUrl(null);setResultBlob(null);setResultDur(0);setServerUrl(null);setFeedbackRating(0);setFeedbackTypes([]);setFeedbackDone(false);setCaptionCopied(false);setCaptionFallback(null);setCloudUrl(null);setCloudUploading(false);setVideoFiles([]);setFormatWarn(null);}} className="text-sm text-gray-400 text-center">重新制作</button>
           <Link href="/parent/profile/stu-001" className="w-full py-2.5 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-sm font-bold text-center block active:scale-95 transition-transform">
             {childName ? `📊 查看${childName}的成长档案` : "📊 查看孩子的成长档案"}
           </Link>
