@@ -664,6 +664,14 @@ export default function HighlightsPage() {
   const analyzeStartRef = useRef<number>(0);
   const serverCheckDoneRef = useRef(false);
   const serverOkRef = useRef<boolean | null>(null);
+  const trackedUrlsRef = useRef<string[]>([]);
+  const trackUrl = (url: string) => { trackedUrlsRef.current.push(url); return url; };
+
+  // Revoke all tracked blob URLs on unmount to prevent memory leaks
+  useEffect(() => () => {
+    trackedUrlsRef.current.forEach(u => { try { URL.revokeObjectURL(u); } catch {} });
+    trackedUrlsRef.current = [];
+  }, []);
 
   // Server health check on mount — auto-select working mode before user interacts
   useEffect(() => {
@@ -763,7 +771,7 @@ export default function HighlightsPage() {
   }, []);
   const handlePhotoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const f=e.target.files?.[0]; if (!f) return;
-    setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f));
+    setPhotoFile(f); setPhotoPreview(trackUrl(URL.createObjectURL(f)));
   },[]);
   const handleBgmFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setBgmUserFile(e.target.files?.[0] || null);
@@ -774,7 +782,7 @@ export default function HighlightsPage() {
     setError(null); setResultUrl(null); setResultBlob(null);
     setFeedbackRating(0); setFeedbackTypes([]); setFeedbackDone(false);
 
-    const videoObjectUrls = videoFiles.map(f => URL.createObjectURL(f));
+    const videoObjectUrls = videoFiles.map(f => trackUrl(URL.createObjectURL(f)));
     const videoEls = videoObjectUrls.map(url => {
       const el = document.createElement("video");
       el.src = url; el.muted = true; el.playsInline = true; el.preload = "auto";
@@ -976,7 +984,7 @@ export default function HighlightsPage() {
 
         setProgress(100);
         setResultBlob(outputBlob);
-        setResultUrl(URL.createObjectURL(outputBlob));
+        setResultUrl(trackUrl(URL.createObjectURL(outputBlob)));
         setResultDur(Math.round(clipDuration));
         setStage("done"); setProgress(100);
         setStatusMsg(clipSpecs.length > 1 ? `${clipSpecs.length}段视频精华合并 · 共${Math.round(clipDuration)}秒` : "");
@@ -996,6 +1004,8 @@ export default function HighlightsPage() {
     } finally {
       videoEls.forEach(el => { el.pause(); el.src = ""; });
       videoObjectUrls.forEach(url => URL.revokeObjectURL(url));
+      // Remove video processing URLs from tracker (result URL stays tracked for cleanup on unmount)
+      trackedUrlsRef.current = trackedUrlsRef.current.filter(u => !videoObjectUrls.includes(u));
     }
   }, [videoFiles, photoFile, bgmEnabled, bgmUserFile]);
 
