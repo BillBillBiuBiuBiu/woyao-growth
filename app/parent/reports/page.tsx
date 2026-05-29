@@ -98,6 +98,37 @@ export default function ParentReportsPage() {
         <p className="text-sm text-orange-600">{childName ? `${childName}的所有成长记录` : "孩子的所有成长记录"}</p>
       </div>
 
+      {/* Monthly growth summary */}
+      {(() => {
+        const now = new Date();
+        const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+        const monthReports = reports.filter(r => r.status === "sent" && r.createdAt?.startsWith(thisMonth));
+        if (monthReports.length === 0) return null;
+        // Find most common dimension across all clips
+        const dimCount: Record<string, number> = {};
+        for (const r of monthReports) {
+          for (const c of r.clips || []) {
+            if (c.dimension) dimCount[c.dimension] = (dimCount[c.dimension] || 0) + 1;
+          }
+        }
+        const topDim = Object.entries(dimCount).sort((a, b) => b[1] - a[1])[0]?.[0];
+        const dimEmoji: Record<string, string> = { "心理成长": "💪", "比赛状态": "⚡", "团队协作": "🤝", "技术成长": "🏀", "训练习惯": "📅", "战术认知": "🧠" };
+        const summary = topDim
+          ? `本月收到 ${monthReports.length} 份报告，${childName || "孩子"}在「${topDim}」方面最为突出，教练特别关注并记录了多个成长时刻。`
+          : `本月收到 ${monthReports.length} 份成长报告，保持了很好的进步势头。`;
+        return (
+          <div className="mx-4 mb-4 rounded-2xl p-4" style={{ background: "linear-gradient(135deg, #7C3810 0%, #B45309 60%, #D97706 100%)" }}>
+            <div className="text-xs text-amber-200 font-bold mb-1">{now.getMonth() + 1}月成长摘要</div>
+            <div className="flex items-center gap-2 mb-2">
+              {topDim && <span className="text-2xl">{dimEmoji[topDim] || "🏆"}</span>}
+              <div className="text-sm font-bold text-white leading-snug">{topDim ? `本月重点：${topDim}` : "综合成长"}</div>
+              <span className="ml-auto text-xs bg-white/20 text-amber-100 px-2 py-0.5 rounded-full">{monthReports.length}份报告</span>
+            </div>
+            <p className="text-xs text-amber-100 leading-relaxed">{summary}</p>
+          </div>
+        );
+      })()}
+
       {/* Filter tabs */}
       <div className="flex gap-2 px-4 mb-4">
         {tabs.map((t) => (
