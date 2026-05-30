@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { PlayCircle, Heart, BookOpen, Share2, ClipboardList, ChevronRight } from "lucide-react";
+import { PlayCircle, Heart, BookOpen, Share2, ClipboardList, ChevronRight, TrendingUp } from "lucide-react";
 import { mockReport, mockBadges, mockStudentCards, mockAssessment } from "@/lib/mock-data";
 import BasketballCard from "@/components/BasketballCard";
 import { apiLoadGames, apiLoadEvents, apiLoadClips, type StoredEvent, type ClipRecord } from "@/lib/gc-api";
@@ -598,12 +598,17 @@ export default function ParentHome() {
 
         {/* Profile link */}
         <Link href="/parent/profile/stu-001">
-          <div className="rounded-3xl p-4 flex items-center justify-between active:scale-98 transition-transform">
-            <div>
-              <div className="font-bold text-sm text-white">{childName ? `${childName}的成长档案` : "查看完整成长档案"}</div>
-              <div className="text-xs text-gray-400 mt-0.5">技术分析 · 成长曲线 · 历史比赛</div>
+          <div className="rounded-2xl px-4 py-3 flex items-center justify-between active:opacity-70 transition-opacity" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-orange-300" style={{ background: "rgba(249,115,22,0.12)" }}>
+                <TrendingUp className="size-5" />
+              </div>
+              <div>
+                <div className="font-bold text-sm text-white">{childName ? `${childName}的成长档案` : "查看完整成长档案"}</div>
+                <div className="text-xs text-gray-400 mt-0.5">技术分析 · 成长曲线 · 历史比赛</div>
+              </div>
             </div>
-            <div className="text-2xl text-orange-300">›</div>
+            <ChevronRight className="size-5 text-orange-300 shrink-0" />
           </div>
         </Link>
       </div>
