@@ -56,7 +56,7 @@ export default function NavBar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white border-b border-border shadow-sm">
+      <header className="sticky top-0 z-50 border-b border-white/10" style={{ background: "rgba(15,32,56,0.75)", backdropFilter: "blur(12px)" }}>
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/" className="font-bold text-primary text-lg">🏀 我耀</Link>
@@ -81,7 +81,7 @@ export default function NavBar() {
       </header>
 
       {/* Mobile bottom tab bar — only on small screens */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-border">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-white/10" style={{ background: "rgba(15,32,56,0.9)", backdropFilter: "blur(12px)" }}>
         <div className="flex items-stretch">
           {items.map((item) => (
             <Link

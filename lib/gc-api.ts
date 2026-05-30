@@ -17,9 +17,20 @@ export interface StoredEvent {
   note: string;
 }
 
+// ── In-memory cache ──────────────────────────────────────────────────────────
+// Persists across client-side tab switches so revisiting a page is instant
+// (no repeat network round-trip). TTL keeps it fresh; mutations invalidate.
+const GC_CACHE_TTL = 30000;
+let _gamesCache: { data: GameRecord[]; ts: number } | null = null;
+const _eventsCache = new Map<string, { data: StoredEvent[]; ts: number }>();
+const _clipsCache = new Map<string, { data: ClipRecord[]; ts: number }>();
+const _fresh = (ts: number) => Date.now() - ts < GC_CACHE_TTL;
+export function invalidateGcCache() { _gamesCache = null; _eventsCache.clear(); _clipsCache.clear(); }
+
 // ── Games ────────────────────────────────────────────────────────────────────
 
 export async function apiSaveGame(record: GameRecord & { source?: "live" | "review" }): Promise<void> {
+  invalidateGcCache();
   await fetch("/api/gc/games", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -39,8 +50,9 @@ export async function apiSaveGame(record: GameRecord & { source?: "live" | "revi
 }
 
 export async function apiLoadGames(): Promise<GameRecord[]> {
+  if (_gamesCache && _fresh(_gamesCache.ts)) return _gamesCache.data;
   const res = await fetch("/api/gc/games");
-  if (!res.ok) return [];
+  if (!res.ok) return _gamesCache?.data ?? [];
   const rows = await res.json() as {
     id: string; created_at: string;
     home_team: string; away_team: string;
@@ -48,7 +60,7 @@ export async function apiLoadGames(): Promise<GameRecord[]> {
     quarter_scores: { q: number; home: number; away: number }[];
     event_count: number; duration: number;
   }[];
-  return rows.map((r) => ({
+  const mapped = rows.map((r) => ({
     id: r.id,
     ts: r.created_at,
     homeTeam: r.home_team,
@@ -59,6 +71,8 @@ export async function apiLoadGames(): Promise<GameRecord[]> {
     eventCount: r.event_count,
     duration: r.duration,
   }));
+  _gamesCache = { data: mapped, ts: Date.now() };
+  return mapped;
 }
 
 // ── Events ───────────────────────────────────────────────────────────────────
@@ -78,6 +92,7 @@ export async function apiSaveEvents(gameId: string, events: StoredEvent[]): Prom
     video_ts: e.videoTs,
     note: e.note,
   }));
+  invalidateGcCache();
   await fetch(`/api/gc/games/${gameId}/events`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -86,10 +101,12 @@ export async function apiSaveEvents(gameId: string, events: StoredEvent[]): Prom
 }
 
 export async function apiLoadEvents(gameId: string): Promise<StoredEvent[]> {
+  const cached = _eventsCache.get(gameId);
+  if (cached && _fresh(cached.ts)) return cached.data;
   const res = await fetch(`/api/gc/games/${gameId}/events`);
-  if (!res.ok) return [];
+  if (!res.ok) return cached?.data ?? [];
   const rows = await res.json() as DbEvent[];
-  return rows.map((r) => ({
+  const mapped = rows.map((r) => ({
     id: r.id,
     seq: r.seq,
     playerId: r.player_id,
@@ -103,6 +120,8 @@ export async function apiLoadEvents(gameId: string): Promise<StoredEvent[]> {
     videoTs: r.video_ts,
     note: r.note,
   }));
+  _eventsCache.set(gameId, { data: mapped, ts: Date.now() });
+  return mapped;
 }
 
 // ── Clips ────────────────────────────────────────────────────────────────────
@@ -118,6 +137,7 @@ export async function apiUploadClip(
   form.append("label", label);
   const res = await fetch(`/api/gc/games/${gameId}/clip`, { method: "POST", body: form });
   if (!res.ok) return null;
+  invalidateGcCache();
   const data = await res.json() as { public_url: string };
   return data.public_url;
 }
@@ -132,7 +152,11 @@ export interface ClipRecord {
 }
 
 export async function apiLoadClips(gameId: string): Promise<ClipRecord[]> {
+  const cached = _clipsCache.get(gameId);
+  if (cached && _fresh(cached.ts)) return cached.data;
   const res = await fetch(`/api/gc/games/${gameId}/clip`);
-  if (!res.ok) return [];
-  return res.json();
+  if (!res.ok) return cached?.data ?? [];
+  const data = await res.json() as ClipRecord[];
+  _clipsCache.set(gameId, { data, ts: Date.now() });
+  return data;
 }
