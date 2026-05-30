@@ -24,11 +24,11 @@ export function GrowthRadarDual() {
         </RadarChart>
       </ResponsiveContainer>
       <div className="flex justify-center gap-5 mt-1">
-        <div className="flex items-center gap-1.5 text-xs text-gray-600">
+        <div className="flex items-center gap-1.5 text-xs text-gray-300">
           <div className="w-4 h-2 rounded" style={{ background: "#F97316", opacity: 0.7 }} />
           个人当前能力
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-gray-600">
+        <div className="flex items-center gap-1.5 text-xs text-gray-300">
           <div className="w-4 h-2 rounded border-2 border-amber-500 border-dashed" />
           进入下一阶段要求
         </div>
@@ -39,7 +39,7 @@ export function GrowthRadarDual() {
 
 export function GrowthRadar() {
   return (
-    <div className="rounded-2xl border border-border bg-white p-4">
+    <div className="rounded-2xl border border-border bg-white/10 backdrop-blur p-4">
       <h2 className="font-semibold text-sm mb-4">📊 六维成长雷达图</h2>
       <ResponsiveContainer width="100%" height={260}>
         <RadarChart data={mockRadarData} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>

@@ -15,7 +15,7 @@ const data = buildData();
 export function EngagementChart() {
   const maxVal = 100;
   return (
-    <div className="rounded-2xl border border-border bg-white p-4">
+    <div className="rounded-2xl border border-border bg-white/10 backdrop-blur p-4">
       <h2 className="text-sm font-semibold mb-4">📊 家长互动趋势</h2>
       <div className="flex items-end gap-3 h-36 px-2">
         {data.map((d) => (
