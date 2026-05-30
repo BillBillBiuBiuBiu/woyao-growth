@@ -152,13 +152,16 @@ U4. 沃兹上轮的改动涉及 className / style= / Tailwind 超过 20 处
 1. 读取小龙的【本次要做】，理解这次要呈现什么内容
 2. 如果唐三本轮介入，读取他的【沃兹的搬砖蓝图】，在骨架上设计视觉
 3. 读取目标页面的当前样式风格（扫描 className 和 style= 部分），保持视觉一致性
-4. 本项目的视觉基准：
-   - **主色调**：橙色系 `#F97316` / `#FB923C` / `#FBBF24`，暗色辅助 `#7C3810`
-   - **圆角**：卡片 `rounded-2xl` / `rounded-3xl`，按钮 `rounded-xl` / `rounded-full`
-   - **阴影**：`shadow-sm` 为主，重要卡片 `shadow-md`
-   - **背景**：渐变 `linear-gradient(160deg, #fff3e0 0%, #ffe9cc 40%, #fff8ec 100%)`
-   - **字重**：标题 `font-black`，副标题 `font-bold`，正文 `font-medium`
-   - **动效**：交互反馈 `active:scale-95` / `active:opacity-70`，过渡 `transition-colors` / `transition-transform`
+4. 本项目的视觉基准 —— **v4.0 金蓝玻璃体系（团队成员设计，像素级复刻目标，见 `lib/design-tokens.ts`）**：
+   - **品牌色**：金色 `--brand #FFD447` / `--brand-strong #FFBF1A`（荣誉/高光/角色徽章/图标）；**橙色 `#F97316` 仅作 CTA/主行动按钮色**；薄荷 `--success #59F0A7`；天蓝 sky `#38BDF8`（机构端）
+   - **底色**：深海军蓝 `--background #06101E`，全局 html 已带金/薄荷径向光晕；每页可叠加专属径向渐变（见 design-tokens.gradients：login/parent/coach/org）
+   - **卡片**：玻璃质感 `bg-white/10 backdrop-blur border border-white/15`，强调面板 `--panel-strong #0F2038`
+   - **圆角**：超大 `rounded-[24px]`～`rounded-[34px]`（卡片）、`rounded-full`（按钮/徽章）
+   - **图标**：**lucide-react 线性图标**（Heart/Trophy/Share2/PlayCircle…），逐步替换 emoji
+   - **徽章**：`rounded-full uppercase tracking-[0.12em]`，金底深字 `bg-brand text-slate-950` 或橙底白字
+   - **字重/字体**：标题 `font-black`，正文 `font-medium`；`--font-sans` = Noto Sans SC 栈
+   - **动效**：`hover:-translate-y-0.5` / `active:scale-95` / `transition`
+   - ⚠️ 改造路线：循环逐页把旧橙色实色卡 → 金蓝玻璃；C369 已植入地基(globals.css token)。已改造页见 qa_cron_log。
 5. 针对本次改动，给出视觉设计方案
 
 输出 **【小舞的视觉设计方案】**：

@@ -10,6 +10,14 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
+  /* 朋友设计系统 token（v4.0 迁移）—— 金蓝玻璃体系 */
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-panel: var(--panel);
+  --color-panel-strong: var(--panel-strong);
+  --color-line: var(--line);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,46 +57,70 @@
 }
 
 :root {
-  --background: oklch(0.99 0.005 60);
-  --foreground: oklch(0.2 0.02 30);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.02 30);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.02 30);
-  --primary: oklch(0.65 0.19 38);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.94 0.01 60);
-  --secondary-foreground: oklch(0.3 0.02 30);
-  --muted: oklch(0.95 0.008 60);
-  --muted-foreground: oklch(0.55 0.02 30);
-  --accent: oklch(0.94 0.02 240);
-  --accent-foreground: oklch(0.3 0.05 240);
+  /* ── 朋友 v4.0 设计系统：深蓝底 + 金色品牌 + 玻璃 ── */
+  --background: #06101e;
+  --foreground: #edf4ff;
+  --brand: #ffd447;
+  --brand-strong: #ffbf1a;
+  --panel: rgba(10, 24, 42, 0.8);
+  --panel-strong: #0f2038;
+  --line: rgba(180, 201, 228, 0.16);
+  --success: #59f0a7;
+  --warning: #ff8f3d;
+
+  /* ── shadcn token 重映射到深蓝，保证既有 UI 组件不崩 ── */
+  --card: #0f2038;
+  --card-foreground: #edf4ff;
+  --popover: #0f2038;
+  --popover-foreground: #edf4ff;
+  --primary: oklch(0.65 0.19 38);          /* 橙色保留为 CTA/primary */
+  --primary-foreground: #ffffff;
+  --secondary: #16263c;
+  --secondary-foreground: #edf4ff;
+  --muted: #16263c;
+  --muted-foreground: #9cb1cc;
+  --accent: #16263c;
+  --accent-foreground: #edf4ff;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9 0.01 60);
-  --input: oklch(0.92 0.01 60);
-  --ring: oklch(0.65 0.19 38);
-  --chart-1: oklch(0.65 0.19 38);
-  --chart-2: oklch(0.6 0.18 240);
-  --chart-3: oklch(0.65 0.18 150);
-  --chart-4: oklch(0.6 0.2 280);
-  --chart-5: oklch(0.7 0.17 80);
+  --border: rgba(180, 201, 228, 0.16);
+  --input: rgba(180, 201, 228, 0.16);
+  --ring: #ffd447;
+  --chart-1: #ffd447;
+  --chart-2: #38bdf8;
+  --chart-3: #59f0a7;
+  --chart-4: #fb923c;
+  --chart-5: #7dd3fc;
   --radius: 0.75rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.65 0.19 38);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #0f2038;
+  --sidebar-foreground: #edf4ff;
+  --sidebar-primary: #ffd447;
+  --sidebar-primary-foreground: #06101e;
+  --sidebar-accent: #16263c;
+  --sidebar-accent-foreground: #edf4ff;
+  --sidebar-border: rgba(180, 201, 228, 0.16);
+  --sidebar-ring: #ffd447;
+
+  --font-sans: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    background:
+      radial-gradient(circle at top left, rgba(255, 212, 71, 0.18), transparent 26%),
+      radial-gradient(circle at top right, rgba(89, 240, 167, 0.08), transparent 18%),
+      linear-gradient(180deg, #081423 0%, #06101e 100%);
+    background-attachment: fixed;
+  }
   body {
-    @apply bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: transparent;
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+  ::selection {
+    background: rgba(255, 212, 71, 0.35);
+    color: #06101e;
   }
 }
