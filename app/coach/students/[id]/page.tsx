@@ -29,10 +29,10 @@ const avatarColors = [
 ];
 
 const statusLabel: Record<string, { label: string; color: string }> = {
-  draft:     { label: "草稿",   color: "bg-slate-100 text-slate-500" },
-  generated: { label: "已生成", color: "bg-blue-100 text-blue-600" },
-  reviewed:  { label: "已审核", color: "bg-amber-100 text-amber-700" },
-  sent:      { label: "已发送", color: "bg-green-100 text-green-700" },
+  draft:     { label: "草稿",   color: "bg-white/10 text-slate-500" },
+  generated: { label: "已生成", color: "bg-sky-500/15 text-blue-600" },
+  reviewed:  { label: "已审核", color: "bg-amber-500/15 text-amber-300" },
+  sent:      { label: "已发送", color: "bg-green-500/15 text-green-300" },
 };
 
 export default function CoachStudentDetailPage() {
@@ -59,17 +59,17 @@ export default function CoachStudentDetailPage() {
       </Link>
 
       {/* Profile card */}
-      <div className="rounded-2xl border border-border bg-white p-5">
+      <div className="rounded-2xl border border-border bg-white/10 backdrop-blur p-5">
         <div className="flex items-center gap-4">
           <div className={`w-16 h-16 rounded-full ${avatarColor} flex items-center justify-center text-white font-bold text-2xl shrink-0`}>
             {student.name.charAt(0)}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className="text-xl font-bold text-gray-800">{student.name}</span>
+              <span className="text-xl font-bold text-white">{student.name}</span>
               <PlanBadge plan={student.plan} size="md" />
             </div>
-            <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+            <div className="flex flex-wrap gap-2 text-xs text-slate-400">
               <span>{student.age}岁</span>
               <span>·</span>
               <span>{positionLabel[student.position ?? "unknown"] ?? "未知"}</span>
@@ -82,7 +82,7 @@ export default function CoachStudentDetailPage() {
       </div>
 
       {/* Radar / Locked */}
-      <div className="rounded-2xl border border-border bg-white p-4">
+      <div className="rounded-2xl border border-border bg-white/10 backdrop-blur p-4">
         <h2 className="text-sm font-semibold mb-3">能力概览</h2>
         {hasRadar ? (
           <div>
@@ -92,10 +92,10 @@ export default function CoachStudentDetailPage() {
                   const d = mockRadarData.find((r) => r.dimension === key);
                   if (!d) return null;
                   return (
-                    <div key={key} className="flex flex-col items-center bg-orange-50 rounded-xl p-2">
+                    <div key={key} className="flex flex-col items-center bg-orange-500/10 rounded-xl p-2">
                       <span className="text-lg mb-0.5">{emoji}</span>
-                      <div className="text-xs text-gray-500 leading-tight text-center">{key}</div>
-                      <div className="text-sm font-black text-orange-600">{d.score}</div>
+                      <div className="text-xs text-slate-400 leading-tight text-center">{key}</div>
+                      <div className="text-sm font-black text-orange-300">{d.score}</div>
                     </div>
                   );
                 })}
@@ -108,10 +108,10 @@ export default function CoachStudentDetailPage() {
                   const d = mockRadarData.find((r) => r.dimension === key);
                   if (!d) return null;
                   return (
-                    <div key={key} className="flex flex-col items-center bg-orange-50 rounded-xl p-2">
+                    <div key={key} className="flex flex-col items-center bg-orange-500/10 rounded-xl p-2">
                       <span className="text-lg mb-0.5">{emoji}</span>
-                      <div className="text-xs text-gray-500 leading-tight text-center">{key}</div>
-                      <div className="text-sm font-black text-orange-600">{d.score}</div>
+                      <div className="text-xs text-slate-400 leading-tight text-center">{key}</div>
+                      <div className="text-sm font-black text-orange-300">{d.score}</div>
                     </div>
                   );
                 })}
@@ -127,18 +127,18 @@ export default function CoachStudentDetailPage() {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold">成长报告 ({reports.length})</h2>
-          <Link href={`/coach/reports/generate?studentId=${student.id}`} className="text-xs text-orange-600 font-medium hover:text-orange-700">
+          <Link href={`/coach/reports/generate?studentId=${student.id}`} className="text-xs text-orange-300 font-medium hover:text-orange-300">
             ✨ 新报告
           </Link>
         </div>
         {reports.length === 0 ? (
-          <div className="rounded-2xl border border-border bg-white p-6 text-center text-sm text-muted-foreground">暂无报告</div>
+          <div className="rounded-2xl border border-border bg-white/10 backdrop-blur p-6 text-center text-sm text-muted-foreground">暂无报告</div>
         ) : (
           <div className="flex flex-col gap-2">
             {reports.map((r) => {
               const s = statusLabel[r.status] || statusLabel.draft;
               return (
-                <Link key={r.id} href={`/coach/annotate/${r.id}`} className="block rounded-2xl border border-border bg-white p-4 hover:shadow-md transition-shadow active:scale-[0.99]">
+                <Link key={r.id} href={`/coach/annotate/${r.id}`} className="block rounded-2xl border border-border bg-white/10 backdrop-blur p-4 hover:shadow-md transition-shadow active:scale-[0.99]">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -146,9 +146,9 @@ export default function CoachStudentDetailPage() {
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s.color}`}>{s.label}</span>
                         <span className="text-xs text-gray-400">{r.createdAt}</span>
                       </div>
-                      <div className="text-sm font-medium text-gray-700 truncate">{r.title}</div>
+                      <div className="text-sm font-medium text-gray-200 truncate">{r.title}</div>
                     </div>
-                    <span className="text-xs text-orange-600 font-medium shrink-0">编辑 ›</span>
+                    <span className="text-xs text-orange-300 font-medium shrink-0">编辑 ›</span>
                   </div>
                 </Link>
               );
@@ -169,10 +169,10 @@ export default function CoachStudentDetailPage() {
               </div>
               <div className="flex-1 pb-2">
                 <div className="text-xs text-gray-400 mb-0.5">{item.date}</div>
-                <div className="text-sm font-medium text-gray-700">{item.title}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{item.summary}</div>
+                <div className="text-sm font-medium text-gray-200">{item.title}</div>
+                <div className="text-xs text-slate-400 mt-0.5">{item.summary}</div>
                 {item.badge && (
-                  <span className="inline-block mt-1 text-xs bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 text-amber-700">
+                  <span className="inline-block mt-1 text-xs bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 text-amber-300">
                     {item.badge}
                   </span>
                 )}

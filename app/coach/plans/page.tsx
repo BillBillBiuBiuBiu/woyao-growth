@@ -51,10 +51,10 @@ export default function CoachPlansPage() {
       {/* Feature comparison table */}
       <div>
         <h2 className="text-sm font-semibold mb-3">功能对比</h2>
-        <div className="rounded-2xl border border-border bg-white overflow-hidden">
+        <div className="rounded-2xl border border-border bg-white/10 backdrop-blur overflow-hidden">
           {/* Header */}
           <div className="grid grid-cols-4 border-b border-border">
-            <div className="p-3 text-xs font-medium text-gray-500">功能</div>
+            <div className="p-3 text-xs font-medium text-slate-400">功能</div>
             {allPlans.map((p) => {
               const colors = PLAN_COLORS[p];
               return (
@@ -69,9 +69,9 @@ export default function CoachPlansPage() {
           {featureRows.map((row, idx) => (
             <div
               key={row.key}
-              className={`grid grid-cols-4 border-b border-border last:border-b-0 ${idx % 2 === 0 ? "" : "bg-gray-50"}`}
+              className={`grid grid-cols-4 border-b border-border last:border-b-0 ${idx % 2 === 0 ? "" : "bg-white/5"}`}
             >
-              <div className="p-3 text-xs text-gray-600">{row.label}</div>
+              <div className="p-3 text-xs text-gray-300">{row.label}</div>
               {allPlans.map((p) => {
                 const has = PLAN_FEATURES[p][row.key] ?? false;
                 return (
@@ -90,7 +90,7 @@ export default function CoachPlansPage() {
       {/* Upgrade tips */}
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
         <div className="text-sm font-semibold text-amber-800 mb-2">套餐升级建议</div>
-        <ul className="flex flex-col gap-1.5 text-xs text-amber-700">
+        <ul className="flex flex-col gap-1.5 text-xs text-amber-300">
           <li>· 基础班学员：建议家长升级专业版，解锁雷达图和数据统计</li>
           <li>· 精英班学员：推荐高阶版，获得完整的趋势分析和个性化训练计划</li>
           <li>· 升级咨询可联系球馆管理员</li>
