@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { PlayCircle, Heart, BookOpen, Share2 } from "lucide-react";
+import { PlayCircle, Heart, BookOpen, Share2, ClipboardList, ChevronRight } from "lucide-react";
 import { mockReport, mockBadges, mockStudentCards, mockAssessment } from "@/lib/mock-data";
 import BasketballCard from "@/components/BasketballCard";
 import { apiLoadGames, apiLoadEvents, apiLoadClips, type StoredEvent, type ClipRecord } from "@/lib/gc-api";
@@ -253,8 +253,8 @@ export default function ParentHome() {
         <Link href="/gc/live">
           <div className="rounded-2xl px-4 py-3 flex items-center justify-between active:opacity-70 transition-opacity">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(249,115,22,0.10)" }}>
-                <span className="text-xl">📋</span>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-orange-300" style={{ background: "rgba(249,115,22,0.12)" }}>
+                <ClipboardList className="size-5" />
               </div>
               <div>
                 <div className="text-sm font-bold text-white">比赛现场记录</div>
@@ -263,7 +263,7 @@ export default function ParentHome() {
                 </div>
               </div>
             </div>
-            <div className="text-orange-300 shrink-0 text-xl">›</div>
+            <ChevronRight className="size-5 text-orange-300 shrink-0" />
           </div>
         </Link>
 
