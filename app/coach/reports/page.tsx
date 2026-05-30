@@ -14,10 +14,10 @@ const statusTabs: { key: ReportStatus | "all"; label: string }[] = [
 ];
 
 const statusBadge: Record<string, { label: string; color: string }> = {
-  draft:     { label: "草稿",   color: "bg-slate-100 text-slate-500" },
-  generated: { label: "已生成", color: "bg-blue-100 text-blue-600" },
-  reviewed:  { label: "已审核", color: "bg-amber-100 text-amber-300" },
-  sent:      { label: "已发送", color: "bg-green-100 text-green-700" },
+  draft:     { label: "草稿",   color: "bg-white/10 text-slate-300" },
+  generated: { label: "已生成", color: "bg-sky-500/15 text-sky-300" },
+  reviewed:  { label: "已审核", color: "bg-amber-500/15 text-amber-300" },
+  sent:      { label: "已发送", color: "bg-green-500/15 text-green-300" },
 };
 
 const sceneLabel: Record<string, string> = {

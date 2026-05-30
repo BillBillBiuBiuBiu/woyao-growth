@@ -14,10 +14,10 @@ function useChildName() {
 }
 
 const statusLabel: Record<string, { label: string; color: string }> = {
-  draft:     { label: "准备中",   color: "bg-slate-100 text-slate-400" },
-  generated: { label: "准备中",   color: "bg-slate-100 text-slate-400" },
-  reviewed:  { label: "教练已确认", color: "bg-amber-100 text-amber-700" },
-  sent:      { label: "已发送",   color: "bg-green-100 text-green-700" },
+  draft:     { label: "准备中",   color: "bg-white/10 text-slate-300" },
+  generated: { label: "准备中",   color: "bg-white/10 text-slate-300" },
+  reviewed:  { label: "教练已确认", color: "bg-amber-500/15 text-amber-300" },
+  sent:      { label: "已发送",   color: "bg-green-500/15 text-green-300" },
 };
 
 const sceneLabel: Record<string, string> = {
@@ -141,7 +141,7 @@ export default function ParentReportsPage() {
             {t.label}
             {t.dot && tab !== t.key && <span className="w-1.5 h-1.5 rounded-full bg-red-500 ml-0.5" />}
             {t.count > 0 && (
-              <span className={`text-[10px] px-1 rounded-full ${tab === t.key ? "bg-white/30 text-white" : "bg-gray-100 text-gray-500"}`}>
+              <span className={`text-[10px] px-1 rounded-full ${tab === t.key ? "bg-white/30 text-white" : "bg-white/10 text-slate-400"}`}>
                 {t.count}
               </span>
             )}
