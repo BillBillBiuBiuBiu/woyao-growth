@@ -56,6 +56,7 @@ export default function ParentHome() {
   const badge = mockBadges[0];
   const card = mockStudentCards.find((c) => c.id === "stu-001")!;
   const [recentGames, setRecentGames] = useState<GameRecord[]>([]);
+  const [gamesLoading, setGamesLoading] = useState(true);
   const [selectedGame, setSelectedGame] = useState<GameRecord | null>(null);
   const [gameDetail, setGameDetail] = useState<{
     loading: boolean;
@@ -77,7 +78,7 @@ export default function ParentHome() {
   const [latestClips, setLatestClips] = useState<ClipRecord[] | null>(null);
 
   useEffect(() => {
-    apiLoadGames().then((games) => { if (games.length > 0) setRecentGames(games.slice(0, 10)); }).catch(() => {});
+    apiLoadGames().then((games) => { if (games.length > 0) setRecentGames(games.slice(0, 10)); }).catch(() => {}).finally(() => setGamesLoading(false));
     try { const n = localStorage.getItem("child_name"); if (n) setChildName(n); } catch {}
     try { const cn = localStorage.getItem("coach_name"); if (cn) setCoachName(cn); } catch {}
     try { const hl = JSON.parse(localStorage.getItem("my_highlights") || "[]"); if (hl.length > 0) setMyLastHighlight(hl[0]); } catch {}
@@ -264,8 +265,17 @@ export default function ParentHome() {
           </div>
         </Link>
 
+        {/* Loading skeleton — reserves space so content load doesn't shift layout (CLS) */}
+        {gamesLoading && (
+          <div className="flex flex-col gap-4" aria-hidden>
+            <div className="rounded-2xl animate-pulse" style={{ height: 76, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }} />
+            <div className="rounded-3xl animate-pulse" style={{ height: 132, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }} />
+            <div className="rounded-3xl animate-pulse" style={{ height: 220, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }} />
+          </div>
+        )}
+
         {/* Growth narrative — appears when we have enough real data */}
-        {recentGames.length >= 3 && childName && (() => {
+        {!gamesLoading && recentGames.length >= 3 && childName && (() => {
           const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
           const winDesc = w >= recentGames.length * 0.8
             ? `赢下了其中 ${w} 场，表现出色`
@@ -283,7 +293,7 @@ export default function ParentHome() {
         })()}
 
         {/* 给妈妈的话 — 情绪承接区 */}
-        {recentGames.length >= 3 && childName && (
+        {!gamesLoading && recentGames.length >= 3 && childName && (
           <div className="rounded-[28px] px-4 py-4 backdrop-blur"
             style={{ background: "linear-gradient(135deg, rgba(255,132,39,0.16), rgba(255,255,255,0.08))", border: "1px solid rgba(254,215,170,0.3)" }}>
             <div className="flex items-center gap-2">
@@ -300,7 +310,7 @@ export default function ParentHome() {
         )}
 
         {/* Recent games list — each row clickable, opens detail sheet */}
-        {recentGames.length > 0 && (
+        {!gamesLoading && recentGames.length > 0 && (
           <div className="rounded-3xl overflow-hidden"
             style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(12px)" }}>
             <div className="px-4 pt-3 pb-2 flex items-center justify-between">
@@ -398,7 +408,7 @@ export default function ParentHome() {
         )}
 
         {/* Latest report — shown only when no real games exist (demo state) */}
-        {recentGames.length === 0 && (
+        {!gamesLoading && recentGames.length === 0 && (
           <Link href={`/parent/reports/${mockReport.id}`}>
             <div className="rounded-3xl p-4 flex items-center justify-between active:scale-98 transition-transform">
               <div>
@@ -412,7 +422,7 @@ export default function ParentHome() {
         )}
 
         {/* Clips — real when available, mock demo when no games, generate CTA when no clips */}
-        {recentGames.length === 0 ? (
+        {(!gamesLoading && recentGames.length === 0) ? (
           <div className="rounded-3xl p-4">
             <div className="text-sm font-bold text-white mb-3">🎞️ 教练标注片段</div>
             <div className="grid grid-cols-3 gap-2">
@@ -519,7 +529,7 @@ export default function ParentHome() {
         ) : null}
 
         {/* Next steps — shown only in demo state (no real games) */}
-        {recentGames.length === 0 && (
+        {!gamesLoading && recentGames.length === 0 && (
           <div className="rounded-3xl p-4" style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(12px)" }}>
             <div className="text-sm font-bold text-white mb-3">📌 下阶段建议</div>
             <ul className="flex flex-col gap-2">
@@ -534,7 +544,7 @@ export default function ParentHome() {
         )}
 
         {/* Cards showcase — shown only in demo state (no real games) */}
-        {recentGames.length === 0 && (
+        {!gamesLoading && recentGames.length === 0 && (
           <div className="rounded-3xl p-4">
             <div className="text-sm font-bold text-white mb-3">🃏 球星卡</div>
             <div className="flex gap-3 overflow-x-auto pb-1">
