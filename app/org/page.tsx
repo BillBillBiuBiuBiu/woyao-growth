@@ -47,14 +47,14 @@ export default function OrgDashboard() {
   }
 
   return (
-    <div className="flex flex-col gap-5" style={{ background: "#0b0f1a", minHeight: "100vh" }}>
+    <div className="flex flex-col gap-5" style={{ background: "radial-gradient(circle at 12% 0%, rgba(56,189,248,0.2), transparent 34%), radial-gradient(circle at 88% 10%, rgba(255,212,71,0.14), transparent 32%), linear-gradient(180deg, #0B1727 0%, #07111F 64%, #05070D 100%)", minHeight: "100vh" }}>
       <div>
         <h1 className="text-xl font-bold text-white">运营看板</h1>
         <p className="text-sm text-muted-foreground mt-0.5">{`PAB球馆 · ${new Date().getFullYear()}年${new Date().getMonth() + 1}月`}</p>
       </div>
 
       {/* 今天只做X件事 — 具名行动清单 */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "#141824", border: "1px solid rgba(249,115,22,0.2)" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(249,115,22,0.3)", backdropFilter: "blur(12px)" }}>
         {/* Header */}
         <div className="px-4 pt-4 pb-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <div className="flex items-center gap-2 mb-2">
@@ -134,7 +134,7 @@ export default function OrgDashboard() {
           { label: "报告打开率", value: `${Math.round(mockOrgStats.reportOpenRate * 100)}%`, unit: "", color: "text-green-600", bg: "bg-green-50" },
           { label: "视频播放率", value: `${Math.round(mockOrgStats.videoPlayRate * 100)}%`, unit: "", color: "text-purple-600", bg: "bg-purple-50" },
         ].map((m) => (
-          <div key={m.label} className="rounded-2xl p-4" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div key={m.label} className="rounded-2xl p-4" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(8px)" }}>
             <div className={`text-2xl font-bold ${m.color}`}>{m.value}<span className="text-sm">{m.unit}</span></div>
             <div className="text-xs text-gray-500 mt-0.5">{m.label}</div>
           </div>
@@ -165,7 +165,7 @@ export default function OrgDashboard() {
       <EngagementChart />
 
       {/* Student list */}
-      <div className="rounded-2xl p-4" style={{ background: "#141824", border: "1px solid rgba(255,255,255,0.08)" }}>
+      <div className="rounded-2xl p-4" style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(12px)" }}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-white">学员成长概览</h2>
           <span className="text-xs text-gray-500">{mockStudentList.length}人</span>
