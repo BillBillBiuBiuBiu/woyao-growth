@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PLAN_LABELS, PLAN_FEATURES } from "@/lib/plan-features";
 import type { PlanType } from "@/lib/types";
 
@@ -41,9 +41,11 @@ const PLAN_ORDER: Record<string, number> = { basic: 0, vip: 1, supervip: 2 };
 
 export default function ParentPlansPage() {
   const [expandedPlan, setExpandedPlan] = useState<PlanType | null>(null);
-  const [currentPlan] = useState<PlanType | null>(() => {
-    try { return (localStorage.getItem("child_plan") as PlanType) || null; } catch { return null; }
-  });
+  // Read localStorage after mount to avoid SSR/client hydration mismatch (React #418)
+  const [currentPlan, setCurrentPlan] = useState<PlanType | null>(null);
+  useEffect(() => {
+    try { setCurrentPlan((localStorage.getItem("child_plan") as PlanType) || null); } catch {}
+  }, []);
   const currentOrder = currentPlan != null ? (PLAN_ORDER[currentPlan] ?? -1) : -1;
 
   return (
