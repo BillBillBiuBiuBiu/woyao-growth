@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { PlayCircle, Heart, BookOpen } from "lucide-react";
 import { mockReport, mockBadges, mockStudentCards, mockAssessment } from "@/lib/mock-data";
 import BasketballCard from "@/components/BasketballCard";
 import { apiLoadGames, apiLoadEvents, apiLoadClips, type StoredEvent, type ClipRecord } from "@/lib/gc-api";
@@ -221,7 +222,7 @@ export default function ParentHome() {
                 onClick={() => heroGame ? openGameDetail(heroGame) : null}
                 className="flex items-center gap-2 bg-orange-500 text-white text-sm font-bold px-5 py-2.5 rounded-full active:scale-95 transition-transform shadow-lg"
               >
-                ▶ 播放最新高光
+                <PlayCircle className="size-4" /> 播放最新高光
               </button>
             )}
             {recentGames.length > 0 && (() => {
@@ -273,7 +274,7 @@ export default function ParentHome() {
               : `每一场都全力以赴`;
           return (
             <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.25)" }}>
-              <div className="text-xs font-bold text-orange-500 mb-1">📖 成长记录</div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-orange-300 mb-1"><BookOpen className="size-3.5" /> 成长记录</div>
               <p className="text-sm text-gray-300 leading-relaxed">
                 {childName}这个赛季，我们一起记录了 <span className="font-bold text-orange-600">{recentGames.length} 场</span> 比赛，{winDesc}。不只是比分，是每一次在球场上认真努力的证据。
               </p>
@@ -285,7 +286,10 @@ export default function ParentHome() {
         {recentGames.length >= 3 && childName && (
           <div className="rounded-[28px] px-4 py-4 backdrop-blur"
             style={{ background: "linear-gradient(135deg, rgba(255,132,39,0.16), rgba(255,255,255,0.08))", border: "1px solid rgba(254,215,170,0.3)" }}>
-            <span className="inline-flex items-center rounded-full bg-orange-500 px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-white">给妈妈的话</span>
+            <div className="flex items-center gap-2">
+              <span className="flex size-8 items-center justify-center rounded-2xl bg-white/10 text-orange-200"><Heart className="size-4 fill-orange-200/20" /></span>
+              <span className="inline-flex items-center rounded-full bg-orange-500 px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-white">给妈妈的话</span>
+            </div>
             <p className="mt-3 text-xl font-black text-white leading-snug">
               你看到的不只是一段视频，是孩子一点点变勇敢的样子。
             </p>
