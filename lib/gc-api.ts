@@ -1,6 +1,7 @@
 // Client-side helpers for GC backend API
 import type { GameRecord } from "./gc-teams";
 import type { DbEvent } from "./supabase";
+import snapshot from "./demo-snapshot.json";
 
 export interface StoredEvent {
   id: string;
@@ -17,15 +18,94 @@ export interface StoredEvent {
   note: string;
 }
 
-// ── In-memory cache ──────────────────────────────────────────────────────────
-// Persists across client-side tab switches so revisiting a page is instant
-// (no repeat network round-trip). TTL keeps it fresh; mutations invalidate.
+export interface ClipRecord {
+  id: string;
+  game_id: string;
+  created_at: string;
+  public_url: string;
+  label: string;
+  size_bytes: number;
+}
+
+// ── Row mappers (DB shape → app shape) ───────────────────────────────────────
+type GameRow = {
+  id: string; created_at: string;
+  home_team: string; away_team: string;
+  home_score: number; away_score: number;
+  quarter_scores: { q: number; home: number; away: number }[];
+  event_count: number; duration: number;
+};
+const mapGameRow = (r: GameRow): GameRecord => ({
+  id: r.id,
+  ts: r.created_at,
+  homeTeam: r.home_team,
+  awayTeam: r.away_team,
+  homeScore: r.home_score,
+  awayScore: r.away_score,
+  quarterScores: r.quarter_scores,
+  eventCount: r.event_count,
+  duration: r.duration,
+});
+const mapEventRow = (r: DbEvent): StoredEvent => ({
+  id: r.id, seq: r.seq, playerId: r.player_id, playerName: r.player_name,
+  playerNum: r.player_num, team: r.team as "home" | "away", cat: r.cat, pts: r.pts,
+  quarter: r.quarter, gameClock: r.game_clock, videoTs: r.video_ts, note: r.note,
+});
+
+// ── Static demo snapshot ─────────────────────────────────────────────────────
+// Baked at build time from the live demo data. Pages read this INSTANTLY (it's
+// in the JS bundle — zero network), then a background fetch revalidates so newly
+// recorded games eventually appear without ever blocking the UI. This is what
+// makes the demo feel instant despite the hosted Supabase/Railway latency.
+const snap = snapshot as unknown as {
+  games: GameRow[];
+  clips: Record<string, ClipRecord[]>;
+  events: Record<string, DbEvent[]>;
+};
+const SNAP_GAMES: GameRecord[] = snap.games.map(mapGameRow);
+const SNAP_CLIPS: Record<string, ClipRecord[]> = snap.clips ?? {};
+const SNAP_EVENTS: Record<string, StoredEvent[]> = Object.fromEntries(
+  Object.entries(snap.events ?? {}).map(([k, v]) => [k, v.map(mapEventRow)])
+);
+
+// ── In-memory cache (revalidated in background) ──────────────────────────────
 const GC_CACHE_TTL = 30000;
 let _gamesCache: { data: GameRecord[]; ts: number } | null = null;
 const _eventsCache = new Map<string, { data: StoredEvent[]; ts: number }>();
 const _clipsCache = new Map<string, { data: ClipRecord[]; ts: number }>();
 const _fresh = (ts: number) => Date.now() - ts < GC_CACHE_TTL;
 export function invalidateGcCache() { _gamesCache = null; _eventsCache.clear(); _clipsCache.clear(); }
+
+function bgRefreshGames() {
+  void (async () => {
+    try {
+      const res = await fetch("/api/gc/games");
+      if (!res.ok) return;
+      const rows = await res.json() as GameRow[];
+      if (Array.isArray(rows)) _gamesCache = { data: rows.map(mapGameRow), ts: Date.now() };
+    } catch { /* keep snapshot */ }
+  })();
+}
+function bgRefreshEvents(gameId: string) {
+  void (async () => {
+    try {
+      const res = await fetch(`/api/gc/games/${gameId}/events`);
+      if (!res.ok) return;
+      const rows = await res.json() as DbEvent[];
+      if (Array.isArray(rows)) _eventsCache.set(gameId, { data: rows.map(mapEventRow), ts: Date.now() });
+    } catch { /* keep snapshot */ }
+  })();
+}
+function bgRefreshClips(gameId: string) {
+  void (async () => {
+    try {
+      const res = await fetch(`/api/gc/games/${gameId}/clip`);
+      if (!res.ok) return;
+      const data = await res.json() as ClipRecord[];
+      if (Array.isArray(data)) _clipsCache.set(gameId, { data, ts: Date.now() });
+    } catch { /* keep snapshot */ }
+  })();
+}
 
 // ── Games ────────────────────────────────────────────────────────────────────
 
@@ -49,30 +129,11 @@ export async function apiSaveGame(record: GameRecord & { source?: "live" | "revi
   });
 }
 
+// Snapshot-first + background revalidate — never blocks on the network.
 export async function apiLoadGames(): Promise<GameRecord[]> {
-  if (_gamesCache && _fresh(_gamesCache.ts)) return _gamesCache.data;
-  const res = await fetch("/api/gc/games");
-  if (!res.ok) return _gamesCache?.data ?? [];
-  const rows = await res.json() as {
-    id: string; created_at: string;
-    home_team: string; away_team: string;
-    home_score: number; away_score: number;
-    quarter_scores: { q: number; home: number; away: number }[];
-    event_count: number; duration: number;
-  }[];
-  const mapped = rows.map((r) => ({
-    id: r.id,
-    ts: r.created_at,
-    homeTeam: r.home_team,
-    awayTeam: r.away_team,
-    homeScore: r.home_score,
-    awayScore: r.away_score,
-    quarterScores: r.quarter_scores,
-    eventCount: r.event_count,
-    duration: r.duration,
-  }));
-  _gamesCache = { data: mapped, ts: Date.now() };
-  return mapped;
+  const serve = _gamesCache?.data ?? SNAP_GAMES;
+  if (!_gamesCache || !_fresh(_gamesCache.ts)) bgRefreshGames();
+  return serve;
 }
 
 // ── Events ───────────────────────────────────────────────────────────────────
@@ -102,26 +163,9 @@ export async function apiSaveEvents(gameId: string, events: StoredEvent[]): Prom
 
 export async function apiLoadEvents(gameId: string): Promise<StoredEvent[]> {
   const cached = _eventsCache.get(gameId);
-  if (cached && _fresh(cached.ts)) return cached.data;
-  const res = await fetch(`/api/gc/games/${gameId}/events`);
-  if (!res.ok) return cached?.data ?? [];
-  const rows = await res.json() as DbEvent[];
-  const mapped = rows.map((r) => ({
-    id: r.id,
-    seq: r.seq,
-    playerId: r.player_id,
-    playerName: r.player_name,
-    playerNum: r.player_num,
-    team: r.team as "home" | "away",
-    cat: r.cat,
-    pts: r.pts,
-    quarter: r.quarter,
-    gameClock: r.game_clock,
-    videoTs: r.video_ts,
-    note: r.note,
-  }));
-  _eventsCache.set(gameId, { data: mapped, ts: Date.now() });
-  return mapped;
+  const serve = cached?.data ?? SNAP_EVENTS[gameId] ?? [];
+  if (!cached || !_fresh(cached.ts)) bgRefreshEvents(gameId);
+  return serve;
 }
 
 // ── Clips ────────────────────────────────────────────────────────────────────
@@ -142,21 +186,9 @@ export async function apiUploadClip(
   return data.public_url;
 }
 
-export interface ClipRecord {
-  id: string;
-  game_id: string;
-  created_at: string;
-  public_url: string;
-  label: string;
-  size_bytes: number;
-}
-
 export async function apiLoadClips(gameId: string): Promise<ClipRecord[]> {
   const cached = _clipsCache.get(gameId);
-  if (cached && _fresh(cached.ts)) return cached.data;
-  const res = await fetch(`/api/gc/games/${gameId}/clip`);
-  if (!res.ok) return cached?.data ?? [];
-  const data = await res.json() as ClipRecord[];
-  _clipsCache.set(gameId, { data, ts: Date.now() });
-  return data;
+  const serve = cached?.data ?? SNAP_CLIPS[gameId] ?? [];
+  if (!cached || !_fresh(cached.ts)) bgRefreshClips(gameId);
+  return serve;
 }
