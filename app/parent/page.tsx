@@ -153,6 +153,8 @@ export default function ParentHome() {
         <img
           src={card.photo || "/students/jiang-haob0.jpg"}
           alt={childName || card.name}
+          fetchPriority="high"
+          decoding="async"
           className="absolute inset-0 w-full h-full object-cover"
           style={{ objectPosition: "center 10%" }}
         />
