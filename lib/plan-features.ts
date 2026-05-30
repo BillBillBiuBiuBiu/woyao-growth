@@ -30,7 +30,7 @@ export const PLAN_LABELS: Record<PlanType, string> = {
 }
 
 export const PLAN_COLORS: Record<PlanType, { bg: string; text: string; border: string }> = {
-  basic:    { bg: 'bg-slate-100',  text: 'text-slate-600',  border: 'border-slate-200' },
-  vip:      { bg: 'bg-blue-100',   text: 'text-blue-700',   border: 'border-blue-200'  },
-  supervip: { bg: 'bg-amber-100',  text: 'text-amber-700',  border: 'border-amber-200' },
+  basic:    { bg: 'bg-white/10',     text: 'text-slate-300', border: 'border-white/15'      },
+  vip:      { bg: 'bg-sky-500/15',   text: 'text-sky-300',   border: 'border-sky-500/30'    },
+  supervip: { bg: 'bg-amber-500/15', text: 'text-amber-300', border: 'border-amber-500/30'  },
 }
