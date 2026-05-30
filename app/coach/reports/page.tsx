@@ -16,7 +16,7 @@ const statusTabs: { key: ReportStatus | "all"; label: string }[] = [
 const statusBadge: Record<string, { label: string; color: string }> = {
   draft:     { label: "草稿",   color: "bg-slate-100 text-slate-500" },
   generated: { label: "已生成", color: "bg-blue-100 text-blue-600" },
-  reviewed:  { label: "已审核", color: "bg-amber-100 text-amber-700" },
+  reviewed:  { label: "已审核", color: "bg-amber-100 text-amber-300" },
   sent:      { label: "已发送", color: "bg-green-100 text-green-700" },
 };
 
@@ -57,7 +57,7 @@ export default function CoachReportsPage() {
             className={`shrink-0 text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${
               activeTab === tab.key
                 ? "bg-orange-500 text-white border-orange-500"
-                : "bg-white border-gray-200 text-gray-600 hover:border-orange-200"
+                : "bg-white/10 border-white/15 text-gray-300 hover:border-orange-500/30"
             }`}
           >
             {tab.label}
@@ -80,19 +80,19 @@ export default function CoachReportsPage() {
           const badge = statusBadge[r.status] || statusBadge.draft;
 
           return (
-            <Link key={r.id} href={`/coach/annotate/${r.id}`} className="block rounded-2xl border border-border bg-white p-4 hover:shadow-md transition-shadow active:scale-[0.99]">
+            <Link key={r.id} href={`/coach/annotate/${r.id}`} className="block rounded-2xl border border-border bg-white/10 p-4 hover:shadow-md transition-shadow active:scale-[0.99]">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                    <span className="font-semibold text-gray-800">{student?.name ?? r.studentId}</span>
+                    <span className="font-semibold text-white">{student?.name ?? r.studentId}</span>
                     <PlanBadge plan={r.reportType} size="sm" />
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge.color}`}>{badge.label}</span>
                     <span className="text-xs text-gray-400">{sceneLabel[r.scene] ?? r.scene}</span>
                   </div>
-                  <div className="text-sm text-gray-700 truncate mb-1">{r.title}</div>
+                  <div className="text-sm text-gray-200 truncate mb-1">{r.title}</div>
                   <div className="text-xs text-gray-400">{r.createdAt}</div>
                 </div>
-                <span className="shrink-0 text-xs text-orange-600 font-medium border border-orange-200 rounded-lg px-2.5 py-1.5">
+                <span className="shrink-0 text-xs text-orange-300 font-medium border border-orange-500/30 rounded-lg px-2.5 py-1.5">
                   编辑 ›
                 </span>
               </div>
