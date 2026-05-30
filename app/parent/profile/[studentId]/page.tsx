@@ -104,8 +104,8 @@ export default function StudentProfilePage() {
 
   return (
     <div
-      className="-mx-4 -mt-6 pb-10"
-      style={{ background: "linear-gradient(160deg, #fff3e0 0%, #ffe9cc 40%, #fff8ec 100%)" }}
+      className="-mx-4 -mt-6 pb-10 text-white"
+      style={{ background: "radial-gradient(circle at 15% 0%, rgba(255,132,39,0.22), transparent 30%), radial-gradient(circle at 85% 12%, rgba(255,212,71,0.12), transparent 34%), linear-gradient(180deg, #101B2D 0%, #07111F 58%, #05070D 100%)" }}
     >
       {/* ── REPORT HEADER ───────────────────────────── */}
       <div className="relative overflow-hidden px-4 pt-5 pb-5" style={{ background: "linear-gradient(135deg, #7C3810 0%, #B45309 60%, #D97706 100%)" }}>
@@ -205,8 +205,8 @@ export default function StudentProfilePage() {
           <div className="flex items-center justify-center gap-2 py-2 px-4">
             <span className="text-xs text-orange-500 font-bold">⭐ {recentGames.length}场实战</span>
             <span className="text-gray-300 text-xs">·</span>
-            <span className="text-xs text-green-600 font-bold">{w}胜</span>
-            {l > 0 && <span className="text-xs text-gray-500 font-bold">{l}负</span>}
+            <span className="text-xs text-green-400 font-bold">{w}胜</span>
+            {l > 0 && <span className="text-xs text-slate-400 font-bold">{l}负</span>}
             {d > 0 && <span className="text-xs text-gray-400">{d}平</span>}
           </div>
         );
@@ -215,23 +215,23 @@ export default function StudentProfilePage() {
       {/* ── REAL GAME STATS ─────────────────────────── */}
       {realStats && (
         <div className="px-4 pt-3">
-          <div className="rounded-2xl bg-white/90 border border-orange-100 p-4">
+          <div className="rounded-2xl bg-white/10 backdrop-blur border border-orange-500/20 p-4">
             <div className="flex items-center justify-between mb-3">
-              <div className="text-xs font-bold text-orange-600">📊 实战统计（{realStats.games}场有个人数据）</div>
+              <div className="text-xs font-bold text-orange-300">📊 实战统计（{realStats.games}场有个人数据）</div>
               {realStats.games > 0 && (() => {
                 const avg = realStats.pts / realStats.games;
                 const rank = avg >= 8 ? "班级前2名" : avg >= 5 ? "班级前4名" : "班级前6名";
-                return <span className="text-xs bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded-full font-medium">{rank}</span>;
+                return <span className="text-xs bg-amber-500/10 text-amber-600 border border-amber-200 px-2 py-0.5 rounded-full font-medium">{rank}</span>;
               })()}
             </div>
             <div className="grid grid-cols-4 gap-2 text-center">
               {([
-                { label: "得分", value: realStats.pts, color: "text-orange-600" },
+                { label: "得分", value: realStats.pts, color: "text-orange-300" },
                 { label: "篮板", value: realStats.reb, color: "text-blue-600" },
-                { label: "助攻", value: realStats.ast, color: "text-green-600" },
+                { label: "助攻", value: realStats.ast, color: "text-green-400" },
                 { label: "抢断", value: realStats.stl, color: "text-purple-600" },
               ] as const).map(s => (
-                <div key={s.label} className="bg-gray-50 rounded-xl py-2.5">
+                <div key={s.label} className="bg-white/5 rounded-xl py-2.5">
                   <div className={`text-2xl font-black ${s.color}`}>{s.value}</div>
                   <div className="text-xs text-gray-400 mt-0.5">{s.label}</div>
                   {realStats.games > 1 && (
@@ -246,7 +246,7 @@ export default function StudentProfilePage() {
             {realStats.partner && (
               <div className="mt-2 flex items-center justify-center gap-1.5">
                 <span className="text-xs text-blue-500">🤝 最佳搭档：</span>
-                <span className="text-xs font-bold text-gray-700">{realStats.partner.name}</span>
+                <span className="text-xs font-bold text-gray-200">{realStats.partner.name}</span>
                 <span className="text-xs text-gray-400">· 默契值 {realStats.partner.count}</span>
               </div>
             )}
@@ -261,7 +261,7 @@ export default function StudentProfilePage() {
             <div className="text-white text-xs font-bold px-2.5 py-0.5 rounded" style={{ background: "#F97316" }}>
               {a.level} 项目单
             </div>
-            <div className="text-xs text-orange-700 font-medium">测评项目得分（0–4分）</div>
+            <div className="text-xs text-orange-300 font-medium">测评项目得分（0–4分）</div>
           </div>
           <div className="text-xs text-gray-400 flex items-center gap-1">
             <span>✓</span><span>教练人工测评</span>
@@ -269,9 +269,9 @@ export default function StudentProfilePage() {
         </div>
         <div className="flex gap-1.5 mb-2 flex-wrap">
           {[
-            { range: "0", label: "待起步", color: "bg-gray-100 text-gray-500" },
-            { range: "1", label: "初步掌握", color: "bg-orange-50 text-orange-400" },
-            { range: "2–3", label: "扎实进阶", color: "bg-orange-100 text-orange-600" },
+            { range: "0", label: "待起步", color: "bg-white/10 text-slate-400" },
+            { range: "1", label: "初步掌握", color: "bg-orange-500/10 text-orange-400" },
+            { range: "2–3", label: "扎实进阶", color: "bg-orange-100 text-orange-300" },
             { range: "4", label: "优秀达标", color: "bg-orange-500 text-white" },
           ].map(s => (
             <span key={s.range} className={`text-xs px-2 py-0.5 rounded-full font-medium ${s.color}`}>
@@ -279,14 +279,14 @@ export default function StudentProfilePage() {
             </span>
           ))}
         </div>
-        <div className="rounded-2xl overflow-hidden border border-orange-100 bg-white/90">
+        <div className="rounded-2xl overflow-hidden border border-orange-500/20 bg-white/10 backdrop-blur">
           {a.skillItems.map((item, i) => (
             <div
               key={item.name}
               className="flex items-center justify-between px-4 py-2.5 border-b border-orange-50 last:border-none"
               style={{ background: i % 2 === 0 ? "white" : "#FFFBF5" }}
             >
-              <span className="text-sm font-medium text-gray-800">{item.name}</span>
+              <span className="text-sm font-medium text-white">{item.name}</span>
               <div className="flex items-center gap-3">
                 <ScoreBoxes score={item.score} max={item.max} />
                 <span className="text-sm font-black w-4 text-right" style={{ color: item.score > 0 ? "#F97316" : "#9ca3af" }}>
@@ -299,10 +299,10 @@ export default function StudentProfilePage() {
       </div>
 
       {/* ── RADAR CHART ─────────────────────────────── */}
-      <div className="mx-4 rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4">
+      <div className="mx-4 rounded-3xl bg-white/10 backdrop-blur border border-orange-500/20 shadow-sm p-4">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(to bottom, #FCD34D, #F97316)" }} />
-          <span className="text-sm font-bold text-gray-800">个人能力分布</span>
+          <span className="text-sm font-bold text-white">个人能力分布</span>
         </div>
         <GrowthRadarDual />
         <div className="text-xs text-gray-400 text-center mt-2">📊 数据基于教练测评，定期更新</div>
@@ -313,13 +313,13 @@ export default function StudentProfilePage() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(to bottom, #FCD34D, #F97316)" }} />
-            <span className="text-sm font-bold text-gray-800">六维能力详情</span>
+            <span className="text-sm font-bold text-white">六维能力详情</span>
           </div>
           <span className="text-xs text-gray-400">✓ 教练测评 · {(() => { const d = new Date(a.date); return `${d.getMonth()+1}月${d.getDate()}日`; })()}</span>
         </div>
         <div className="flex flex-col gap-3">
           {a.dimensionDetails.map((d) => (
-            <div key={d.dimension} className="rounded-2xl overflow-hidden border border-orange-100 shadow-sm">
+            <div key={d.dimension} className="rounded-2xl overflow-hidden border border-orange-500/20 shadow-sm">
               {/* Header */}
               <div
                 className="flex items-center gap-3 px-3 py-2.5"
@@ -344,10 +344,10 @@ export default function StudentProfilePage() {
                 </div>
               </div>
               {/* Body */}
-              <div className="bg-white px-3 py-2.5">
+              <div className="bg-white/10 px-3 py-2.5">
                 {/* Progress toward target */}
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                  <div className="flex-1 bg-white/10 rounded-full h-1.5 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all"
                       style={{
@@ -362,10 +362,10 @@ export default function StudentProfilePage() {
                     {d.score >= d.achieveScore ? "已达标 ✓" : `${Math.round(d.score / d.achieveScore * 100)}%`}
                   </span>
                 </div>
-                <p className="text-xs text-gray-700 leading-relaxed">{d.desc}</p>
+                <p className="text-xs text-gray-200 leading-relaxed">{d.desc}</p>
                 <div className="mt-1.5 flex items-start gap-1.5">
                   <span className="text-xs font-bold text-orange-500 shrink-0 mt-0.5">下阶段目标：</span>
-                  <span className="text-xs text-gray-600">{d.next}</span>
+                  <span className="text-xs text-gray-300">{d.next}</span>
                 </div>
               </div>
             </div>
@@ -374,10 +374,10 @@ export default function StudentProfilePage() {
       </div>
 
       {/* ── GROWTH CURVE ────────────────────────────── */}
-      <div className="mx-4 rounded-3xl bg-white/90 border border-orange-100 shadow-sm p-4">
+      <div className="mx-4 rounded-3xl bg-white/10 backdrop-blur border border-orange-500/20 shadow-sm p-4">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(to bottom, #FCD34D, #F97316)" }} />
-          <span className="text-sm font-bold text-gray-800">近2个月成长趋势</span>
+          <span className="text-sm font-bold text-white">近2个月成长趋势</span>
         </div>
         <GrowthCurve />
       </div>
@@ -393,59 +393,59 @@ export default function StudentProfilePage() {
           return (
             <div className="flex items-center gap-2 mb-3">
               <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(to bottom, #FCD34D, #F97316)" }} />
-              <span className="text-sm font-bold text-gray-800">成长勋章</span>
+              <span className="text-sm font-bold text-white">成长勋章</span>
               <span className="text-xs text-amber-500 font-medium">{total} 枚</span>
             </div>
           );
         })()}
         <div className="grid grid-cols-2 gap-2">
           {mockBadges.map((b) => (
-            <div key={b.id} className="flex items-center gap-2 p-3 rounded-2xl bg-white/90 border border-amber-100 shadow-sm">
+            <div key={b.id} className="flex items-center gap-2 p-3 rounded-2xl bg-white/10 backdrop-blur border border-amber-500/20 shadow-sm">
               <span className="text-2xl">{b.icon}</span>
               <div className="min-w-0">
-                <div className="text-xs font-bold text-gray-800 truncate">{b.name}</div>
+                <div className="text-xs font-bold text-white truncate">{b.name}</div>
                 <div className="text-xs text-amber-500">{b.awardedAt}</div>
               </div>
             </div>
           ))}
           {hasTesterBadge && (
-            <div className="flex items-center gap-2 p-3 rounded-2xl bg-white/90 border border-amber-100 shadow-sm">
+            <div className="flex items-center gap-2 p-3 rounded-2xl bg-white/10 backdrop-blur border border-amber-500/20 shadow-sm">
               <span className="text-2xl">🏅</span>
               <div className="min-w-0">
-                <div className="text-xs font-bold text-gray-800 truncate">内测员</div>
+                <div className="text-xs font-bold text-white truncate">内测员</div>
                 <div className="text-xs text-amber-500">集锦功能测试员</div>
               </div>
             </div>
           )}
           {recentGames.length >= 5 && (
-            <div className="relative flex items-center gap-2 p-3 rounded-2xl bg-white/90 border border-green-100 shadow-sm">
-              <span className="text-xs text-green-500 bg-green-50 px-1 py-0.5 rounded absolute top-1.5 right-1.5 leading-none">实战</span>
+            <div className="relative flex items-center gap-2 p-3 rounded-2xl bg-white/10 backdrop-blur border border-green-500/20 shadow-sm">
+              <span className="text-xs text-green-500 bg-green-500/15 px-1 py-0.5 rounded absolute top-1.5 right-1.5 leading-none">实战</span>
               <span className="text-2xl">⚔️</span>
               <div className="min-w-0">
-                <div className="text-xs font-bold text-gray-800 truncate">赛场老将</div>
-                <div className="text-xs text-green-600">参与 {recentGames.length} 场实战</div>
+                <div className="text-xs font-bold text-white truncate">赛场老将</div>
+                <div className="text-xs text-green-400">参与 {recentGames.length} 场实战</div>
               </div>
             </div>
           )}
           {recentGames.length >= 3 && (() => {
             const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
             return w / recentGames.length >= 0.7 ? (
-              <div className="relative flex items-center gap-2 p-3 rounded-2xl bg-white/90 border border-yellow-100 shadow-sm">
+              <div className="relative flex items-center gap-2 p-3 rounded-2xl bg-white/10 backdrop-blur border border-yellow-100 shadow-sm">
                 <span className="text-xs text-yellow-500 bg-yellow-50 px-1 py-0.5 rounded absolute top-1.5 right-1.5 leading-none">实战</span>
                 <span className="text-2xl">🏆</span>
                 <div className="min-w-0">
-                  <div className="text-xs font-bold text-gray-800 truncate">常胜将军</div>
+                  <div className="text-xs font-bold text-white truncate">常胜将军</div>
                   <div className="text-xs text-yellow-600">胜率 {Math.round(w / recentGames.length * 100)}%</div>
                 </div>
               </div>
             ) : null;
           })()}
           {realStats && realStats.games >= 2 && realStats.pts / realStats.games >= 8 && (
-            <div className="relative flex items-center gap-2 p-3 rounded-2xl bg-white/90 border border-orange-100 shadow-sm">
-              <span className="text-xs text-orange-500 bg-orange-50 px-1 py-0.5 rounded absolute top-1.5 right-1.5 leading-none">实战</span>
+            <div className="relative flex items-center gap-2 p-3 rounded-2xl bg-white/10 backdrop-blur border border-orange-500/20 shadow-sm">
+              <span className="text-xs text-orange-500 bg-orange-500/10 px-1 py-0.5 rounded absolute top-1.5 right-1.5 leading-none">实战</span>
               <span className="text-2xl">🔥</span>
               <div className="min-w-0">
-                <div className="text-xs font-bold text-gray-800 truncate">得分手</div>
+                <div className="text-xs font-bold text-white truncate">得分手</div>
                 <div className="text-xs text-orange-500">场均 {(realStats.pts / realStats.games).toFixed(1)} 分</div>
               </div>
             </div>
@@ -456,8 +456,8 @@ export default function StudentProfilePage() {
       {/* ── TRAINING BADGE PROGRESS ─────────────────── */}
       {recentGames.length > 0 && (
         <div className="px-4 pt-1 pb-2">
-          <div className="rounded-2xl bg-white/90 border border-amber-100 shadow-sm p-4">
-            <div className="text-xs font-bold text-gray-700 mb-3">🎖️ 训练徽章进度</div>
+          <div className="rounded-2xl bg-white/10 backdrop-blur border border-amber-500/20 shadow-sm p-4">
+            <div className="text-xs font-bold text-gray-200 mb-3">🎖️ 训练徽章进度</div>
             {/* Basic badge progress */}
             {(() => {
               const earned = recentGames.length;
@@ -466,10 +466,10 @@ export default function StudentProfilePage() {
               return (
                 <div className="mb-3">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-gray-600">⭐ 基础徽章（每场+1枚）</span>
+                    <span className="text-xs text-gray-300">⭐ 基础徽章（每场+1枚）</span>
                     <span className="text-xs font-bold text-amber-600">{earned}/{target}</span>
                   </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                  <div className="w-full bg-white/10 rounded-full h-2.5 overflow-hidden">
                     <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: "linear-gradient(90deg, #f59e0b, #f97316)" }} />
                   </div>
                   <div className="text-xs text-gray-400 mt-1">累积满20枚可晋级 · 还差 {Math.max(0, target - earned)} 枚</div>
@@ -490,11 +490,11 @@ export default function StudentProfilePage() {
               );
               return (
                 <div>
-                  <div className="text-xs text-gray-500 mb-2">进阶徽章（{advBadges.length}枚已获得）</div>
+                  <div className="text-xs text-slate-400 mb-2">进阶徽章（{advBadges.length}枚已获得）</div>
                   <div className="flex flex-wrap gap-2">
                     {advBadges.map((b, i) => b && (
-                      <div key={i} className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
-                        <span className="text-xs font-bold text-amber-700">{b.name}</span>
+                      <div key={i} className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-200 rounded-full px-2.5 py-1">
+                        <span className="text-xs font-bold text-amber-300">{b.name}</span>
                       </div>
                     ))}
                   </div>
@@ -510,14 +510,14 @@ export default function StudentProfilePage() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="w-1 h-5 rounded-full" style={{ background: "linear-gradient(to bottom, #FCD34D, #F97316)" }} />
-            <span className="text-sm font-bold text-gray-800">成长时间线</span>
+            <span className="text-sm font-bold text-white">成长时间线</span>
           </div>
           <div className="flex gap-1">
             {(["all","match","training"] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setTimelineFilter(f)}
-                className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${timelineFilter === f ? "bg-orange-100 text-orange-600" : "text-gray-400"}`}
+                className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${timelineFilter === f ? "bg-orange-100 text-orange-300" : "text-gray-400"}`}
               >
                 {f === "all" ? "全部" : f === "match" ? "比赛" : "训练"}
               </button>
@@ -565,7 +565,7 @@ export default function StudentProfilePage() {
             ];
             return allItems.map(h => {
               const inner = (
-                <div className={`flex gap-3 p-3 rounded-2xl bg-white/90 border border-orange-100 shadow-sm ${h.hasReport ? "hover:bg-orange-50 transition-colors cursor-pointer" : ""}`}>
+                <div className={`flex gap-3 p-3 rounded-2xl bg-white/10 backdrop-blur border border-orange-500/20 shadow-sm ${h.hasReport ? "hover:bg-orange-500/10 transition-colors cursor-pointer" : ""}`}>
                   <div className="flex flex-col items-center pt-1">
                     <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${h.type === "match" ? "bg-orange-400" : "bg-amber-400"}`} />
                     <div className="flex-1 w-px bg-orange-100 mt-1" />
@@ -573,15 +573,15 @@ export default function StudentProfilePage() {
                   <div className="flex-1 min-w-0 pb-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-gray-400">{h.date}</span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${h.type === "match" ? "bg-orange-100 text-orange-600" : "bg-amber-100 text-amber-700"}`}>
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${h.type === "match" ? "bg-orange-100 text-orange-300" : "bg-amber-100 text-amber-300"}`}>
                         {h.type === "match" ? "比赛" : "训练"}
                       </span>
                     </div>
-                    <div className="text-sm font-bold text-gray-800 mt-0.5 truncate">{h.title}</div>
-                    <div className="text-xs text-gray-500 mt-0.5 leading-snug">{h.summary}</div>
+                    <div className="text-sm font-bold text-white mt-0.5 truncate">{h.title}</div>
+                    <div className="text-xs text-slate-400 mt-0.5 leading-snug">{h.summary}</div>
                     <div className="flex items-center gap-3 mt-1.5">
                       {h.badge && (
-                        <span className="text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">🏆 {h.badge}</span>
+                        <span className="text-xs text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded-full">🏆 {h.badge}</span>
                       )}
                       {h.clipCount > 0 && <span className="text-xs text-gray-400">{h.type === "match" ? "📹 有集锦素材" : `${h.clipCount}个片段`}</span>}
                     </div>
