@@ -21,8 +21,8 @@ function ScoreBoxes({ score, max }: { score: number; max: number }) {
       {Array.from({ length: max }).map((_, i) => (
         <div
           key={i}
-          className="w-5 h-5 rounded-sm border border-orange-300"
-          style={{ background: i < score ? "#F97316" : "white" }}
+          className="w-5 h-5 rounded-sm border border-orange-400/50"
+          style={{ background: i < score ? "#F97316" : "transparent" }}
         />
       ))}
     </div>
@@ -284,8 +284,8 @@ export default function StudentProfilePage() {
           {a.skillItems.map((item, i) => (
             <div
               key={item.name}
-              className="flex items-center justify-between px-4 py-2.5 border-b border-orange-50 last:border-none"
-              style={{ background: i % 2 === 0 ? "white" : "#FFFBF5" }}
+              className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 last:border-none"
+              style={{ background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.04)" }}
             >
               <span className="text-sm font-medium text-white">{item.name}</span>
               <div className="flex items-center gap-3">
