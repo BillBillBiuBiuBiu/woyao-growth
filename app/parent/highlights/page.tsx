@@ -462,7 +462,7 @@ export default function HighlightsPage() {
 
   return (
     <>
-    <div className="-mx-4 -mt-6 px-4 pt-6 pb-16 flex flex-col gap-5 min-h-screen" style={{ background: "#0b0f1a" }}>
+    <div className="-mx-4 -mt-6 px-4 pt-6 pb-16 flex flex-col gap-5 min-h-screen" style={{ background: "radial-gradient(circle at 15% 0%, rgba(255,132,39,0.18), transparent 30%), radial-gradient(circle at 85% 12%, rgba(255,212,71,0.12), transparent 34%), linear-gradient(180deg, #101B2D 0%, #07111F 58%, #05070D 100%)" }}>
       {/* Home training checkin */}
       <div className={`rounded-2xl border p-3 flex items-center justify-between gap-3 ${checkedInToday ? "bg-green-500/10 border-green-500/25" : "bg-amber-500/10 border-amber-500/25"}`}>
         <div>
@@ -509,7 +509,7 @@ export default function HighlightsPage() {
 
       {/* From clips mode */}
       {stage === "idle" && hlMode === "from_clips" && (
-        <div className="rounded-2xl bg-[#141824] border border-white/10 p-4 flex flex-col gap-3">
+        <div className="rounded-2xl bg-white/10 border border-white/15 backdrop-blur p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div className="text-sm font-bold text-white">
               {childName ? `${childName}的比赛集锦` : "比赛集锦"}
@@ -629,7 +629,7 @@ export default function HighlightsPage() {
       {/* Upload mode form */}
       <div id="upload-section" />
       {(stage !== "idle" || hlMode === "upload") && (<>
-      <div className="rounded-2xl bg-[#141824] border border-white/10 p-4">
+      <div className="rounded-2xl bg-white/10 border border-white/15 backdrop-blur p-4">
         <div className="text-sm font-bold text-white mb-3">① 上传比赛视频</div>
         <label className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 cursor-pointer transition-colors ${videoFiles.length>0?"border-orange-400/40 bg-orange-500/10":"border-white/15 bg-white/5"}`}>
           <input type="file" accept="video/*" multiple className="hidden" onChange={handleVideoChange} disabled={isProcessing}/>
@@ -666,7 +666,7 @@ export default function HighlightsPage() {
         )}
       </div>
 
-      <div className="rounded-2xl bg-[#141824] border border-white/10 p-4">
+      <div className="rounded-2xl bg-white/10 border border-white/15 backdrop-blur p-4">
         <div className="text-sm font-bold text-white mb-1">② 上传球员参考照片</div>
         <div className="text-xs text-gray-400 mb-3">全身照效果最佳 · 按队服颜色识别（同队多人会同时追踪，号码识别暂不支持）</div>
         <label className={`flex flex-col items-center rounded-xl border-2 border-dashed cursor-pointer overflow-hidden ${photoFile?"border-orange-400/40 bg-orange-500/10":"border-white/15 bg-white/5 p-6"}`}>
@@ -692,7 +692,7 @@ export default function HighlightsPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl bg-[#141824] border border-white/10 px-4 py-3">
+      <div className="rounded-2xl bg-white/10 border border-white/15 backdrop-blur px-4 py-3">
         <button onClick={()=>{ if(bgmEnabled) setBgmUserFile(null); setBgmEnabled(v=>!v); }} disabled={isProcessing}
           className="flex items-center gap-3 w-full text-left">
           <div className={`w-11 h-6 rounded-full transition-colors shrink-0 relative ${bgmEnabled?"bg-orange-500":"bg-white/15"}`}>
@@ -773,7 +773,7 @@ export default function HighlightsPage() {
       </button>
 
       {isProcessing&&(
-        <div className="rounded-2xl bg-[#141824] border border-white/10 p-4 flex flex-col gap-3">
+        <div className="rounded-2xl bg-white/10 border border-white/15 backdrop-blur p-4 flex flex-col gap-3">
           <div className="flex justify-between items-center">
             <span className={`text-sm font-medium flex-1 mr-2 ${stage === "analyzing" ? "text-orange-400" : "text-gray-200"}`}>{statusMsg}</span>
             <span className="text-sm font-bold text-orange-500 shrink-0">{progress}%</span>
@@ -808,7 +808,7 @@ export default function HighlightsPage() {
       </>)} {/* end upload mode wrapper */}
 
       {stage==="done"&&serverUrl&&(
-        <div className="rounded-2xl bg-[#141824] border border-orange-500/20 p-4 flex flex-col gap-3">
+        <div className="rounded-2xl bg-white/10 border border-orange-500/25 backdrop-blur p-4 flex flex-col gap-3">
           <div className="text-sm font-bold text-white">🎉 {childName ? `${childName}的` : ""}集锦已生成！</div>
           {statusMsg && <div className="text-xs text-orange-500 -mt-1">{statusMsg}</div>}
           <video src={serverUrl} controls playsInline className="w-full rounded-xl bg-black" style={{maxHeight:280}}/>
@@ -833,7 +833,7 @@ export default function HighlightsPage() {
       )}
 
       {stage==="done"&&resultUrl&&(
-        <div className="rounded-2xl bg-[#141824] border border-orange-500/20 p-4 flex flex-col gap-3">
+        <div className="rounded-2xl bg-white/10 border border-orange-500/25 backdrop-blur p-4 flex flex-col gap-3">
           <div className="text-sm font-bold text-white">🎉 {childName ? `${childName}的` : ""}集锦已生成！</div>
           {statusMsg && <div className="text-xs text-orange-500 -mt-1">{statusMsg}</div>}
           <video src={resultUrl} controls playsInline className="w-full rounded-xl bg-black" style={{maxHeight:280}}/>
@@ -978,7 +978,7 @@ export default function HighlightsPage() {
       )}
 
       {stage==="idle"&&myHighlights.length>0&&(
-        <div className="rounded-2xl bg-[#141824] border border-white/10 p-4">
+        <div className="rounded-2xl bg-white/10 border border-white/15 backdrop-blur p-4">
           <div className="text-sm font-bold text-white mb-2">📼 历史集锦</div>
           <div className="flex flex-col">
             {myHighlights.map((hl,i)=>(
