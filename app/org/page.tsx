@@ -8,9 +8,9 @@ import { apiLoadGames } from "@/lib/gc-api";
 const EngagementChart = dynamic(() => import("@/components/OrgCharts").then((m) => m.EngagementChart), { ssr: false });
 
 const growthTrendMap: Record<string, { icon: string; color: string }> = {
-  up: { icon: "↑", color: "text-green-600" },
-  stable: { icon: "→", color: "text-blue-600" },
-  down: { icon: "↓", color: "text-orange-600" },
+  up: { icon: "↑", color: "text-green-300" },
+  stable: { icon: "→", color: "text-sky-300" },
+  down: { icon: "↓", color: "text-orange-300" },
 };
 
 // Generate context-aware task message for a lead
@@ -96,7 +96,7 @@ export default function OrgDashboard() {
                       onClick={() => copyTask(lead.id, msg)}
                       className={`w-full py-2 rounded-xl text-xs font-bold transition-colors ${
                         copied
-                          ? "bg-green-50 text-green-600 border border-green-200"
+                          ? "bg-green-500/15 text-green-300 border border-green-500/30"
                           : "bg-orange-500 text-white active:opacity-80"
                       }`}
                     >
@@ -129,10 +129,10 @@ export default function OrgDashboard() {
       {/* Key metrics */}
       <div className="grid grid-cols-2 gap-3">
         {[
-          { label: "活跃学员", value: mockOrgStats.activeStudents, unit: "人", color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "实战场次", value: realGameCount ?? mockOrgStats.reportsThisMonth, unit: "场", color: "text-orange-600", bg: "bg-orange-50" },
-          { label: "报告打开率", value: `${Math.round(mockOrgStats.reportOpenRate * 100)}%`, unit: "", color: "text-green-600", bg: "bg-green-50" },
-          { label: "视频播放率", value: `${Math.round(mockOrgStats.videoPlayRate * 100)}%`, unit: "", color: "text-purple-600", bg: "bg-purple-50" },
+          { label: "活跃学员", value: mockOrgStats.activeStudents, unit: "人", color: "text-sky-300", bg: "bg-sky-500/10" },
+          { label: "实战场次", value: realGameCount ?? mockOrgStats.reportsThisMonth, unit: "场", color: "text-orange-300", bg: "bg-orange-500/10" },
+          { label: "报告打开率", value: `${Math.round(mockOrgStats.reportOpenRate * 100)}%`, unit: "", color: "text-green-300", bg: "bg-green-500/15" },
+          { label: "视频播放率", value: `${Math.round(mockOrgStats.videoPlayRate * 100)}%`, unit: "", color: "text-purple-300", bg: "bg-purple-500/10" },
         ].map((m) => (
           <div key={m.label} className="rounded-2xl p-4" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(8px)" }}>
             <div className={`text-2xl font-bold ${m.color}`}>{m.value}<span className="text-sm">{m.unit}</span></div>
@@ -141,7 +141,7 @@ export default function OrgDashboard() {
         ))}
       </div>
 
-      <div className="text-xs text-gray-600 text-center px-2 -mt-2">
+      <div className="text-xs text-gray-300 text-center px-2 -mt-2">
         🏀 本赛季 PAB U10 整体表现优秀，报告打开率 {Math.round(mockOrgStats.reportOpenRate * 100)}%，家长参与度持续上升
       </div>
 

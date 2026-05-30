@@ -30,7 +30,7 @@ const avatarColors = [
 
 const statusLabel: Record<string, { label: string; color: string }> = {
   draft:     { label: "草稿",   color: "bg-white/10 text-slate-500" },
-  generated: { label: "已生成", color: "bg-sky-500/15 text-blue-600" },
+  generated: { label: "已生成", color: "bg-sky-500/15 text-sky-300" },
   reviewed:  { label: "已审核", color: "bg-amber-500/15 text-amber-300" },
   sent:      { label: "已发送", color: "bg-green-500/15 text-green-300" },
 };
@@ -172,7 +172,7 @@ export default function CoachStudentDetailPage() {
                 <div className="text-sm font-medium text-gray-200">{item.title}</div>
                 <div className="text-xs text-slate-400 mt-0.5">{item.summary}</div>
                 {item.badge && (
-                  <span className="inline-block mt-1 text-xs bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 text-amber-300">
+                  <span className="inline-block mt-1 text-xs bg-amber-500/10 border border-amber-500/30 rounded-full px-2 py-0.5 text-amber-300">
                     {item.badge}
                   </span>
                 )}

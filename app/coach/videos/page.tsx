@@ -75,9 +75,9 @@ function dedupeByJersey(stats: PlayerStat[]): PlayerStat[] {
 const LS_KEY = "woyao_label_overrides";
 
 const typeLabel: Record<string, { label: string; color: string }> = {
-  training:  { label: "训练",    color: "bg-blue-100 text-sky-300" },
-  match:     { label: "比赛",    color: "bg-orange-100 text-orange-300" },
-  highlight: { label: "精彩集锦", color: "bg-purple-100 text-purple-700" },
+  training:  { label: "训练",    color: "bg-sky-500/15 text-sky-300" },
+  match:     { label: "比赛",    color: "bg-orange-500/15 text-orange-300" },
+  highlight: { label: "精彩集锦", color: "bg-purple-500/15 text-purple-300" },
 };
 
 const statusConfig: Record<string, { label: string; dot: string }> = {
@@ -89,11 +89,11 @@ const statusConfig: Record<string, { label: string; dot: string }> = {
 
 const EVENT_CFG: Record<string, { icon: string; color: string }> = {
   hold:    { icon: "🏀", color: "bg-orange-500/10 text-orange-300 border-orange-500/20" },
-  pass:    { icon: "➡️", color: "bg-sky-500/10 text-sky-300 border-blue-100" },
-  steal:   { icon: "✋", color: "bg-red-50 text-red-700 border-red-100" },
-  drive:   { icon: "⚡", color: "bg-yellow-50 text-yellow-700 border-yellow-100" },
-  shot:    { icon: "🎯", color: "bg-green-500/15 text-green-700 border-green-500/20" },
-  receive: { icon: "👐", color: "bg-purple-50 text-purple-700 border-purple-100" },
+  pass:    { icon: "➡️", color: "bg-sky-500/10 text-sky-300 border-sky-500/20" },
+  steal:   { icon: "✋", color: "bg-red-500/10 text-red-300 border-red-500/20" },
+  drive:   { icon: "⚡", color: "bg-amber-500/10 text-amber-300 border-amber-500/20" },
+  shot:    { icon: "🎯", color: "bg-green-500/15 text-green-300 border-green-500/20" },
+  receive: { icon: "👐", color: "bg-purple-500/10 text-purple-300 border-purple-500/20" },
 };
 
 const ACTION_TMPL: Record<string, (p: string, t?: string) => string> = {
@@ -248,9 +248,9 @@ export default function CoachVideosPage() {
       )}
 
       {analyzeError && (
-        <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-sm text-red-300">
           <span className="flex-1">{analyzeError}</span>
-          <button onClick={() => setAnalyzeError(null)} className="text-red-400 hover:text-red-600 shrink-0 leading-none">✕</button>
+          <button onClick={() => setAnalyzeError(null)} className="text-red-400 hover:text-red-300 shrink-0 leading-none">✕</button>
         </div>
       )}
 
@@ -278,7 +278,7 @@ export default function CoachVideosPage() {
                     {typeCfg.label}
                   </span>
                   {hasAnalysis && (
-                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-500/15 text-green-300">
                       ✓ 可分析
                     </span>
                   )}
@@ -312,7 +312,7 @@ export default function CoachVideosPage() {
                       hasAnalysis
                         ? isExpanded
                           ? "bg-green-500 text-white hover:bg-green-600"
-                          : "border border-green-500 text-green-700 hover:bg-green-500/15"
+                          : "border border-green-500 text-green-300 hover:bg-green-500/15"
                         : "border border-white/15 text-gray-400 cursor-not-allowed"
                     }`}
                   >
@@ -369,7 +369,7 @@ export default function CoachVideosPage() {
                           <div className="grid grid-cols-2 divide-x divide-gray-100">
                             {Object.entries(s.teamStats).map(([team, ts]) => (
                               <div key={team} className="p-3">
-                                <div className={`text-sm font-bold mb-2 ${team === "红队" ? "text-red-600" : "text-gray-200"}`}>
+                                <div className={`text-sm font-bold mb-2 ${team === "红队" ? "text-red-300" : "text-gray-200"}`}>
                                   {team}
                                 </div>
                                 <div className="flex flex-col gap-1 text-xs">
@@ -523,7 +523,7 @@ export default function CoachVideosPage() {
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
                                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                                      p.team === "红队" ? "bg-red-100 text-red-700" : "bg-white/10 text-gray-200"
+                                      p.team === "红队" ? "bg-red-500/15 text-red-300" : "bg-white/10 text-gray-200"
                                     }`}>{p.team}</span>
                                     <span className="text-xs text-gray-400">回合 {p.index} · {p.duration.toFixed(1)}s</span>
                                   </div>
@@ -566,7 +566,7 @@ export default function CoachVideosPage() {
         })}
       </div>
 
-      <div className="rounded-2xl border border-dashed border-orange-500/30 bg-orange-500/10/50 p-4">
+      <div className="rounded-2xl border border-dashed border-orange-500/30 bg-orange-500/10 p-4">
         <div className="text-sm font-medium text-orange-300 mb-1">关于视频分析</div>
         <div className="text-xs text-orange-300 leading-relaxed">
           视频分析使用 YOLOv8 人体检测 + ByteTrack 多目标跟踪算法，可提取球员移动轨迹、移动距离（进攻/防守）、上场时间及球的运动轨迹。

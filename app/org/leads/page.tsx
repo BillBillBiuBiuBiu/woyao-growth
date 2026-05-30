@@ -4,16 +4,16 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 
 const typeColors: Record<string, string> = {
-  private_training: "bg-orange-100 text-orange-300",
-  renewal: "bg-blue-100 text-blue-700",
-  care: "bg-slate-100 text-slate-600",
+  private_training: "bg-orange-500/15 text-orange-300",
+  renewal: "bg-sky-500/15 text-sky-300",
+  care: "bg-white/10 text-slate-300",
 };
 
 const statusColors: Record<string, string> = {
-  new: "bg-red-100 text-red-600",
-  contacted: "bg-yellow-100 text-yellow-700",
-  converted: "bg-green-100 text-green-700",
-  dismissed: "bg-slate-100 text-slate-400",
+  new: "bg-red-500/15 text-red-300",
+  contacted: "bg-amber-500/15 text-amber-300",
+  converted: "bg-green-500/15 text-green-300",
+  dismissed: "bg-white/10 text-slate-400",
 };
 
 const statusLabels: Record<string, string> = {
@@ -107,7 +107,7 @@ export default function LeadsPage() {
         <div className="flex items-center gap-2 mb-3">
           <span className="text-base">🤝</span>
           <div className="text-sm font-bold text-orange-800">转介绍文案生成器</div>
-          <span className="text-xs bg-orange-100 text-orange-300 px-2 py-0.5 rounded-full">一键复制发微信</span>
+          <span className="text-xs bg-orange-500/15 text-orange-300 px-2 py-0.5 rounded-full">一键复制发微信</span>
         </div>
         <div className="flex gap-2 mb-3">
           {referralTemplates.map((t, i) => (
@@ -140,8 +140,8 @@ export default function LeadsPage() {
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: "私教推荐", value: mockLeads.filter((l) => l.type === "private_training").length, color: "text-orange-300", bg: "bg-orange-500/10" },
-          { label: "续费线索", value: mockLeads.filter((l) => l.type === "renewal").length, color: "text-blue-600", bg: "bg-sky-500/10" },
-          { label: "关怀跟进", value: mockLeads.filter((l) => l.type === "care").length, color: "text-slate-600", bg: "bg-slate-50" },
+          { label: "续费线索", value: mockLeads.filter((l) => l.type === "renewal").length, color: "text-sky-300", bg: "bg-sky-500/10" },
+          { label: "关怀跟进", value: mockLeads.filter((l) => l.type === "care").length, color: "text-slate-300", bg: "bg-white/5" },
         ].map((s) => (
           <div key={s.label} className={`rounded-xl border border-border ${s.bg} p-3 text-center`}>
             <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
@@ -189,19 +189,19 @@ export default function LeadsPage() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-xs font-semibold text-muted-foreground">建议沟通话术</div>
                     {(() => {
-                      if (lead.priority === "high") return <span className="text-xs bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-full font-medium">📞 建议电话</span>;
-                      if (lead.type === "renewal") return <span className="text-xs bg-sky-500/10 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-full font-medium">💬 建议微信</span>;
-                      if (lead.type === "care") return <span className="text-xs bg-green-500/15 text-green-400 border border-green-200 px-2 py-0.5 rounded-full font-medium">🤝 当面聊聊</span>;
+                      if (lead.priority === "high") return <span className="text-xs bg-red-500/10 text-red-300 border border-red-500/30 px-2 py-0.5 rounded-full font-medium">📞 建议电话</span>;
+                      if (lead.type === "renewal") return <span className="text-xs bg-sky-500/10 text-sky-300 border border-sky-500/30 px-2 py-0.5 rounded-full font-medium">💬 建议微信</span>;
+                      if (lead.type === "care") return <span className="text-xs bg-green-500/15 text-green-400 border border-green-500/30 px-2 py-0.5 rounded-full font-medium">🤝 当面聊聊</span>;
                       return <span className="text-xs bg-white/5 text-slate-400 border border-white/15 px-2 py-0.5 rounded-full font-medium">💬 建议沟通</span>;
                     })()}
                   </div>
-                  <div className="bg-slate-50 rounded-xl p-3 text-sm text-foreground leading-relaxed">
+                  <div className="bg-white/5 rounded-xl p-3 text-sm text-foreground leading-relaxed">
                     {lead.suggestedMessage}
                   </div>
                   <div className="flex gap-2 mt-3">
                     <button
                       onClick={() => handleCopy(lead.id, lead.suggestedMessage)}
-                      className="flex-1 text-xs py-2 rounded-lg border border-border bg-white/10 hover:bg-slate-50 transition-colors"
+                      className="flex-1 text-xs py-2 rounded-lg border border-border bg-white/10 hover:bg-white/5 transition-colors"
                     >
                       {copied === lead.id ? "✓ 已复制" : copied === `err-${lead.id}` ? "复制失败，请手动选取" : "复制话术"}
                     </button>
@@ -209,7 +209,7 @@ export default function LeadsPage() {
                       onClick={() => updateStatus(lead.id, "contacted")}
                       className={`flex-1 text-xs py-2 rounded-lg transition-colors ${
                         status === "contacted" || status === "converted"
-                          ? "bg-green-100 text-green-700 border border-green-200"
+                          ? "bg-green-500/15 text-green-300 border border-green-500/30"
                           : "bg-primary text-white hover:bg-primary/90"
                       }`}
                     >
@@ -217,27 +217,27 @@ export default function LeadsPage() {
                     </button>
                     <button
                       onClick={() => updateStatus(lead.id, "converted")}
-                      className="px-3 text-xs py-2 rounded-lg border border-green-300 text-green-700 bg-green-500/15 hover:bg-green-100 transition-colors"
+                      className="px-3 text-xs py-2 rounded-lg border border-green-300 text-green-300 bg-green-500/15 hover:bg-green-500/15 transition-colors"
                     >
                       转化 ✓
                     </button>
                   </div>
                   {lead.coachConfirmed && (
-                    <div className="mt-2 text-xs text-blue-600 bg-sky-500/10 rounded-lg px-3 py-1.5">
+                    <div className="mt-2 text-xs text-sky-300 bg-sky-500/10 rounded-lg px-3 py-1.5">
                       🏀 教练已确认推荐
                     </div>
                   )}
                   {status !== "dismissed" ? (
                     <button
                       onClick={() => updateStatus(lead.id, "dismissed")}
-                      className="mt-2 text-xs text-slate-400 hover:text-slate-600 w-full text-right transition-colors"
+                      className="mt-2 text-xs text-slate-400 hover:text-slate-300 w-full text-right transition-colors"
                     >
                       忽略此线索
                     </button>
                   ) : (
                     <button
                       onClick={() => updateStatus(lead.id, "new")}
-                      className="mt-2 text-xs text-blue-500 hover:text-blue-700 w-full text-right transition-colors"
+                      className="mt-2 text-xs text-blue-500 hover:text-sky-300 w-full text-right transition-colors"
                     >
                       ↺ 恢复跟进
                     </button>

@@ -8,9 +8,9 @@ import { apiLoadGames, apiLoadClips } from "@/lib/gc-api";
 import type { GameRecord } from "@/lib/gc-teams";
 
 const statusMap: Record<string, { label: string; color: string }> = {
-  awaiting_review: { label: "待确认", color: "bg-orange-100 text-orange-700" },
-  in_review: { label: "确认中", color: "bg-blue-100 text-blue-700" },
-  draft: { label: "草稿", color: "bg-slate-100 text-slate-600" },
+  awaiting_review: { label: "待确认", color: "bg-orange-500/15 text-orange-300" },
+  in_review: { label: "确认中", color: "bg-sky-500/15 text-sky-300" },
+  draft: { label: "草稿", color: "bg-white/10 text-slate-300" },
 };
 
 const planCount = {

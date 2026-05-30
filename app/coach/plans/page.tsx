@@ -88,7 +88,7 @@ export default function CoachPlansPage() {
       </div>
 
       {/* Upgrade tips */}
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
         <div className="text-sm font-semibold text-amber-800 mb-2">套餐升级建议</div>
         <ul className="flex flex-col gap-1.5 text-xs text-amber-300">
           <li>· 基础班学员：建议家长升级专业版，解锁雷达图和数据统计</li>
