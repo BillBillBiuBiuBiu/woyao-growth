@@ -143,7 +143,7 @@ export default function ParentHome() {
   }
 
   return (
-    <div className="-mx-4 -mt-6 pb-10" style={{ background: "#0b0f1a" }}>
+    <div className="-mx-4 -mt-6 pb-10" style={{ background: "radial-gradient(circle at 15% 0%, rgba(255,132,39,0.28), transparent 30%), radial-gradient(circle at 85% 12%, rgba(255,212,71,0.14), transparent 34%), linear-gradient(180deg, #101B2D 0%, #07111F 58%, #05070D 100%)" }}>
 
       {/* ── CINEMATIC HERO ─────────────────────────────────────── */}
       <div className="relative overflow-hidden" style={{ minHeight: 400 }}>
@@ -156,21 +156,21 @@ export default function ParentHome() {
         />
         {/* Cinematic dark overlay — gradient fades photo into content */}
         <div className="absolute inset-0" style={{
-          background: "linear-gradient(to bottom, rgba(10,12,18,0.35) 0%, rgba(10,12,18,0.55) 50%, rgba(10,12,18,0.92) 100%)"
+          background: "linear-gradient(180deg, rgba(6,10,18,0.02) 0%, rgba(6,10,18,0.18) 45%, rgba(6,10,18,0.96) 100%)"
         }} />
 
         {/* ── Floating star card top-right ── */}
         <div className="absolute top-5 right-4 z-20">
-          <div className="rounded-2xl px-3 py-2.5 text-center"
-            style={{ background: "rgba(10,12,18,0.7)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(12px)", minWidth: 90 }}>
-            <div className="text-xs font-bold tracking-widest text-orange-400 mb-0.5">
+          <div className="rounded-[22px] px-3 py-2.5 text-center"
+            style={{ background: "rgba(6,10,18,0.42)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(12px)", minWidth: 90 }}>
+            <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-brand mb-0.5">
               #{card.number} · {card.position}
             </div>
             <div className="text-sm font-black text-white">{childName || card.name}</div>
-            <div className="text-[10px] text-gray-400 mt-0.5">PAB U10提高班</div>
+            <div className="text-[10px] text-slate-300 mt-0.5">PAB U10提高班</div>
             {recentGames.length > 0 && (() => {
               const w = recentGames.filter(g => g.homeScore > g.awayScore).length;
-              return <div className="text-xs font-bold text-yellow-400 mt-1">{recentGames.length}场 {w}胜</div>;
+              return <div className="text-xs font-bold text-brand mt-1">{recentGames.length}场 {w}胜</div>;
             })()}
           </div>
         </div>
@@ -178,7 +178,7 @@ export default function ParentHome() {
         {/* Content layer */}
         <div className="relative z-10 flex flex-col justify-end px-5 pt-12 pb-6" style={{ minHeight: 400 }}>
           {/* WOYAO MOMENT label */}
-          <div className="text-xs font-bold tracking-widest text-orange-400 mb-2.5">WOYAO MOMENT</div>
+          <div className="text-xs font-bold uppercase tracking-[0.24em] text-brand mb-2.5">WOYAO MOMENT</div>
 
           {/* Narrative headline — tap to edit name */}
           {editingName ? (
@@ -231,7 +231,7 @@ export default function ParentHome() {
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
                   style={{ background: "rgba(255,255,255,0.08)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.1)" }}>
                   <span className="text-xs text-white/70">{recentGames.length}场</span>
-                  <span className="text-xs font-bold text-yellow-400">{w}胜</span>
+                  <span className="text-xs font-bold text-brand">{w}胜</span>
                   <span className="text-xs font-bold text-orange-400">{rate}%</span>
                   {coachName && <><span className="text-white/20 text-xs">·</span><span className="text-xs text-white/50">教练{coachName}</span></>}
                 </div>
@@ -283,13 +283,13 @@ export default function ParentHome() {
 
         {/* 给妈妈的话 — 情绪承接区 */}
         {recentGames.length >= 3 && childName && (
-          <div className="rounded-2xl px-4 py-4"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(12px)" }}>
-            <div className="text-xs font-bold text-orange-400 mb-2">给妈妈的话</div>
-            <p className="text-sm text-white font-semibold leading-snug mb-1">
+          <div className="rounded-[28px] px-4 py-4 backdrop-blur"
+            style={{ background: "linear-gradient(135deg, rgba(255,132,39,0.16), rgba(255,255,255,0.08))", border: "1px solid rgba(254,215,170,0.3)" }}>
+            <span className="inline-flex items-center rounded-full bg-orange-500 px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-white">给妈妈的话</span>
+            <p className="mt-3 text-xl font-black text-white leading-snug">
               你看到的不只是一段视频，是孩子一点点变勇敢的样子。
             </p>
-            <p className="text-xs text-gray-400 leading-relaxed">
+            <p className="mt-2 text-sm text-orange-50 leading-7">
               {childName}在球场上每一次抬头、奔跑和再尝试，当时可能很快就过去了。但这些小小的瞬间拼在一起，就是孩子认真长大的证据。妈妈不用懂所有数据，我们会替你好好保存下来。
             </p>
           </div>
