@@ -49,14 +49,14 @@ export default function ParentPlansPage() {
   return (
     <div
       className="-mx-4 -mt-6 pb-10 min-h-screen"
-      style={{ background: "linear-gradient(160deg, #fff3e0 0%, #ffe9cc 40%, #fff8ec 100%)" }}
+      style={{ background: "radial-gradient(circle at 15% 0%, rgba(255,132,39,0.22), transparent 30%), radial-gradient(circle at 85% 12%, rgba(255,212,71,0.12), transparent 34%), linear-gradient(180deg, #101B2D 0%, #07111F 58%, #05070D 100%)" }}
     >
       <div className="px-4 pt-8 pb-4">
-        <h1 className="text-2xl font-black mb-1" style={{ color: "#7C3810" }}>版本权益</h1>
-        <p className="text-sm text-orange-600">{currentPlan ? `已开通 ${PLAN_LABELS[currentPlan]} · 查看全部权益` : "选择最适合孩子的成长记录方案"}</p>
+        <h1 className="text-2xl font-black mb-1" style={{ color: "#EDF4FF" }}>版本权益</h1>
+        <p className="text-sm text-orange-300">{currentPlan ? `已开通 ${PLAN_LABELS[currentPlan]} · 查看全部权益` : "选择最适合孩子的成长记录方案"}</p>
       </div>
       {currentPlan === null && (
-        <div className="mx-4 mb-2 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-xs text-orange-700 leading-relaxed">
+        <div className="mx-4 mb-2 rounded-2xl border border-orange-500/30 bg-orange-500/10 px-4 py-3 text-xs text-orange-300 leading-relaxed">
           你的孩子正在体验阶段 · 如需开通正式套餐，请联系班级教练办理
         </div>
       )}
@@ -69,26 +69,26 @@ export default function ParentPlansPage() {
           return (
             <div
               key={plan.type}
-              className={`rounded-3xl bg-white/90 shadow-sm p-5 border-2 transition-all ${
+              className={`rounded-3xl bg-white/10 backdrop-blur shadow-sm p-5 border-2 transition-all ${
                 isCurrent
                   ? "border-orange-400 shadow-orange-100"
-                  : "border-orange-100"
+                  : "border-orange-500/20"
               }`}
             >
               {/* Header */}
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg font-black text-gray-800">{PLAN_LABELS[plan.type]}</span>
+                    <span className="text-lg font-black text-white">{PLAN_LABELS[plan.type]}</span>
                     {isCurrent && (
                       <span className="text-xs bg-orange-400 text-white rounded-full px-2 py-0.5 font-medium">当前版本</span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500">{plan.audience}</p>
+                  <p className="text-xs text-slate-400">{plan.audience}</p>
                 </div>
               </div>
 
-              <p className="text-sm text-gray-700 leading-relaxed mb-4 border-l-2 border-orange-200 pl-3">
+              <p className="text-sm text-gray-200 leading-relaxed mb-4 border-l-2 border-orange-500/30 pl-3">
                 {plan.tagline}
               </p>
 
@@ -101,7 +101,7 @@ export default function ParentPlansPage() {
                       <span className={`shrink-0 font-bold ${hasFeature ? "text-green-500" : "text-gray-300"}`}>
                         {hasFeature ? "✓" : "✗"}
                       </span>
-                      <span className={hasFeature ? "text-gray-700" : "text-gray-400"}>{row.label}</span>
+                      <span className={hasFeature ? "text-gray-200" : "text-gray-400"}>{row.label}</span>
                     </div>
                   );
                 })}
@@ -109,12 +109,12 @@ export default function ParentPlansPage() {
 
               {/* CTA */}
               {isCurrent && (
-                <div className="mt-4 w-full rounded-full py-2.5 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-200 text-center">
+                <div className="mt-4 w-full rounded-full py-2.5 text-sm font-bold text-orange-300 bg-orange-500/10 border border-orange-500/30 text-center">
                   当前已开通
                 </div>
               )}
               {isBelow && !isCurrent && (
-                <div className="mt-4 w-full rounded-full py-2.5 text-xs text-gray-400 bg-gray-50 border border-gray-200 text-center">
+                <div className="mt-4 w-full rounded-full py-2.5 text-xs text-gray-400 bg-white/5 border border-white/15 text-center">
                   已超越此版本
                 </div>
               )}
@@ -128,9 +128,9 @@ export default function ParentPlansPage() {
                     升级到{PLAN_LABELS[plan.type]}
                   </button>
                   {expandedPlan === plan.type && (
-                    <div className="mt-3 rounded-2xl border border-orange-100 bg-orange-50 p-3">
-                      <div className="text-xs font-medium text-orange-700 mb-1">如需升级，请联系 PAB 球馆</div>
-                      <div className="text-xs text-orange-600 leading-relaxed">
+                    <div className="mt-3 rounded-2xl border border-orange-500/20 bg-orange-500/10 p-3">
+                      <div className="text-xs font-medium text-orange-300 mb-1">如需升级，请联系 PAB 球馆</div>
+                      <div className="text-xs text-orange-300 leading-relaxed">
                         微信搜索 <span className="font-bold">PABbasketball</span> 或联系你的班级教练，告知希望升级至{PLAN_LABELS[plan.type]}，教练会协助办理。
                       </div>
                     </div>
