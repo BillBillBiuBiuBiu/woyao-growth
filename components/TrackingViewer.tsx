@@ -85,7 +85,7 @@ export default function TrackingViewer({ data }: { data: TrackingData }) {
             key={t}
             onClick={() => setTab(t)}
             className={`px-3 py-1 rounded-full font-medium transition-colors ${
-              tab === t ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              tab === t ? "bg-orange-500 text-white" : "bg-white/10 text-gray-300 hover:bg-white/20"
             }`}
           >
             {t === "viz" ? "运动轨迹" : "数据统计"}
@@ -159,7 +159,7 @@ export default function TrackingViewer({ data }: { data: TrackingData }) {
             <button
               onClick={() => setShowBall(!showBall)}
               className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs border transition-colors ${
-                showBall ? "border-white bg-gray-700 text-white" : "border-gray-300 text-gray-500"
+                showBall ? "border-white bg-gray-700 text-white" : "border-white/20 text-slate-400"
               }`}
             >
               <div className="w-4 h-0.5 bg-white opacity-80 rounded border-dashed" style={{ borderTop: "1.5px dashed white" }} />
@@ -168,14 +168,14 @@ export default function TrackingViewer({ data }: { data: TrackingData }) {
             <button
               onClick={() => setShowHeat(!showHeat)}
               className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs border transition-colors ${
-                showHeat ? "border-orange-400 bg-orange-50 text-orange-600" : "border-gray-300 text-gray-500"
+                showHeat ? "border-orange-400 bg-orange-500/10 text-orange-600" : "border-white/20 text-slate-400"
               }`}
             >
               🔥 热区
             </button>
             <button
               onClick={() => { setSelected(null); setVisible(new Set(data.players.map((p) => p.trackId))); }}
-              className="px-2 py-1 rounded-full text-xs border border-gray-300 text-gray-500 hover:bg-gray-100"
+              className="px-2 py-1 rounded-full text-xs border border-white/20 text-slate-400 hover:bg-white/10"
             >
               全选
             </button>
@@ -191,7 +191,7 @@ export default function TrackingViewer({ data }: { data: TrackingData }) {
                   key={p.trackId}
                   onClick={() => setSelected(selected === p.trackId ? null : p.trackId)}
                   className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs border transition-all ${
-                    active ? "border-transparent text-white" : "border-gray-200 text-gray-400 bg-gray-50"
+                    active ? "border-transparent text-white" : "border-white/15 text-gray-400 bg-white/5"
                   } ${selected !== null && selected !== p.trackId ? "opacity-35" : ""} ${
                     selected === p.trackId ? "ring-2 ring-white/50 ring-offset-1 ring-offset-gray-900" : ""
                   }`}
@@ -207,11 +207,11 @@ export default function TrackingViewer({ data }: { data: TrackingData }) {
       )}
 
       {tab === "stats" && (
-        <div className="rounded-2xl border border-border bg-white overflow-hidden">
+        <div className="rounded-2xl border border-border bg-white/10 backdrop-blur overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="bg-orange-50 border-b border-orange-100">
+                <tr className="bg-orange-500/10 border-b border-orange-500/20">
                   <th className="px-3 py-2 text-left font-semibold text-orange-700">球员</th>
                   <th className="px-3 py-2 text-right font-semibold text-orange-700">上场时间</th>
                   <th className="px-3 py-2 text-right font-semibold text-orange-700">总移动</th>
@@ -227,23 +227,23 @@ export default function TrackingViewer({ data }: { data: TrackingData }) {
                     ? Math.round((p.offenseDistanceM / p.totalDistanceM) * 100)
                     : 0;
                   return (
-                    <tr key={p.trackId} className="border-b border-gray-50 hover:bg-orange-50/40 transition-colors">
+                    <tr key={p.trackId} className="border-b border-white/10 hover:bg-orange-500/10 transition-colors">
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-1.5">
                           <div className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
-                          <span className="font-medium text-gray-800">{p.label}</span>
+                          <span className="font-medium text-white">{p.label}</span>
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-right text-gray-600">{p.onCourtSeconds}s</td>
-                      <td className="px-3 py-2 text-right font-semibold text-gray-800">{p.totalDistanceM}m</td>
+                      <td className="px-3 py-2 text-right text-gray-300">{p.onCourtSeconds}s</td>
+                      <td className="px-3 py-2 text-right font-semibold text-white">{p.totalDistanceM}m</td>
                       <td className="px-3 py-2 text-right text-blue-600">{p.offenseDistanceM}m</td>
                       <td className="px-3 py-2 text-right text-red-500">{p.defenseDistanceM}m</td>
                       <td className="px-3 py-2 text-right">
                         <div className="flex items-center gap-1 justify-end">
-                          <div className="w-16 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                          <div className="w-16 h-1.5 rounded-full bg-white/10 overflow-hidden">
                             <div className="h-full rounded-full bg-blue-400" style={{ width: `${offPct}%` }} />
                           </div>
-                          <span className="text-gray-500 w-7">{offPct}%</span>
+                          <span className="text-slate-400 w-7">{offPct}%</span>
                         </div>
                       </td>
                     </tr>
@@ -254,11 +254,11 @@ export default function TrackingViewer({ data }: { data: TrackingData }) {
           </div>
 
           {/* Summary */}
-          <div className="px-3 py-2 bg-gray-50 border-t border-gray-100">
-            <div className="flex gap-4 text-xs text-gray-500">
-              <span>视频时长 <strong className="text-gray-700">{data.durationSeconds}s</strong></span>
-              <span>检测球员 <strong className="text-gray-700">{data.playerCount}名</strong></span>
-              <span>球轨迹点 <strong className="text-gray-700">{data.ballTrajectory.length}</strong></span>
+          <div className="px-3 py-2 bg-white/5 border-t border-white/10">
+            <div className="flex gap-4 text-xs text-slate-400">
+              <span>视频时长 <strong className="text-gray-200">{data.durationSeconds}s</strong></span>
+              <span>检测球员 <strong className="text-gray-200">{data.playerCount}名</strong></span>
+              <span>球轨迹点 <strong className="text-gray-200">{data.ballTrajectory.length}</strong></span>
             </div>
           </div>
         </div>
