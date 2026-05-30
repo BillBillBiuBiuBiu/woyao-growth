@@ -298,7 +298,7 @@ export default function ParentHome() {
         {/* Recent games list — each row clickable, opens detail sheet */}
         {recentGames.length > 0 && (
           <div className="rounded-3xl overflow-hidden"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(12px)" }}>
             <div className="px-4 pt-3 pb-2 flex items-center justify-between">
               <div className="text-sm font-bold text-white">🏀 比赛记录</div>
               {recentGames.length >= 2 && (() => {
@@ -382,7 +382,7 @@ export default function ParentHome() {
 
         {myLastHighlight && (
           <Link href="/parent/highlights">
-            <div className="rounded-2xl px-4 py-3 flex items-center justify-between active:bg-white/5 transition-colors" style={{ background: "#141824", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="rounded-2xl px-4 py-3 flex items-center justify-between active:bg-white/5 transition-colors" style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(12px)" }}>
               <div className="min-w-0 flex-1">
                 <div className="text-xs text-orange-500 font-medium mb-0.5">✨ 最近集锦</div>
                 <div className="text-sm font-semibold text-white truncate">{myLastHighlight.name.replace(/\.mp4$/i, "") || (childName ? `${childName}的精彩集锦` : "精彩集锦")}</div>
@@ -453,7 +453,7 @@ export default function ParentHome() {
               ) : visibleClips.slice(0, 3).map((clip) => {
                 const isExpanded = homeExpandedClipId === clip.id;
                 return (
-                  <div key={clip.id} className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <div key={clip.id} className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(8px)" }}>
                     <button
                       className="flex items-center justify-between w-full px-3 py-2.5 text-left active:bg-white/5 transition-colors"
                       onClick={() => setHomeExpandedClipId(isExpanded ? null : clip.id)}
@@ -516,7 +516,7 @@ export default function ParentHome() {
 
         {/* Next steps — shown only in demo state (no real games) */}
         {recentGames.length === 0 && (
-          <div className="rounded-3xl p-4" style={{ background: "#141824", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="rounded-3xl p-4" style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(12px)" }}>
             <div className="text-sm font-bold text-white mb-3">📌 下阶段建议</div>
             <ul className="flex flex-col gap-2">
               {mockReport.nextSteps.map((step, i) => (
@@ -623,7 +623,7 @@ export default function ParentHome() {
                         return (
                           <div
                             key={clip.id}
-                            className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
+                            className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(8px)" }}
                           >
                             <button
                               className="flex items-center justify-between w-full px-3 py-2.5 text-left active:bg-white/5 transition-colors"
