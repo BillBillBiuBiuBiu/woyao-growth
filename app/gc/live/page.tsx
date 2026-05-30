@@ -491,7 +491,7 @@ export default function GcLivePage() {
       <div className="pb-10">
         {detailStats && (
           <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.75)" }}>
-            <div className="w-full rounded-t-2xl px-4 pt-5 pb-10 max-h-[80vh] overflow-y-auto" style={{ background: "#1a1d27" }}>
+            <div className="w-full rounded-t-2xl px-4 pt-5 pb-10 max-h-[80vh] overflow-y-auto" style={{ background: "#0F2038" }}>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ background: detailStats.teamColor }} />
@@ -572,7 +572,7 @@ export default function GcLivePage() {
           </div>
         )}
 
-        <div className="bg-[#1a1d27] border-b border-white/10 px-4 py-5">
+        <div className="bg-[#0F2038] border-b border-white/10 px-4 py-5">
           <div className="text-xs text-gray-500 text-center uppercase tracking-wider mb-3">最终比分</div>
           <div className="flex items-center justify-between max-w-xs mx-auto">
             <div className="text-center">
@@ -637,7 +637,7 @@ export default function GcLivePage() {
             </div>
             <div className="flex flex-col gap-2">
               {clips.map(c => (
-                <Link key={c.id} href={lastGameId ? `/gc/review?gameId=${lastGameId}` : "/gc/review"} className="rounded-xl bg-[#1a1d27] border border-white/10 p-3 flex items-center gap-3 active:opacity-60 transition-opacity">
+                <Link key={c.id} href={lastGameId ? `/gc/review?gameId=${lastGameId}` : "/gc/review"} className="rounded-xl bg-[#0F2038] border border-white/10 p-3 flex items-center gap-3 active:opacity-60 transition-opacity">
                   <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center shrink-0">
                     <span className="text-orange-400 text-xl">▶</span>
                   </div>
@@ -751,7 +751,7 @@ export default function GcLivePage() {
         {/* Share text fallback sheet (clipboard unavailable) */}
         {shareText !== null && (
           <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.72)" }}>
-            <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+            <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#0F2038" }}>
               <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
               <div className="text-sm font-bold text-white mb-1">📤 复制战报</div>
               <div className="text-xs text-gray-500 mb-3">长按下方文字 → 全选 → 复制，粘贴到微信群</div>
@@ -787,7 +787,7 @@ export default function GcLivePage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Quarter + end */}
-      <div className="bg-[#1a1d27] border-b border-white/10 px-3 py-2 flex items-center gap-1.5 shrink-0">
+      <div className="bg-[#0F2038] border-b border-white/10 px-3 py-2 flex items-center gap-1.5 shrink-0">
         {[1, 2, 3, 4].map(q => (
           <button key={q} onClick={() => setQuarter(q)}
             className={`px-3 py-1 rounded-md text-xs font-bold transition-colors ${quarter === q ? "bg-orange-500 text-white" : "text-gray-500"}`}>
@@ -801,7 +801,7 @@ export default function GcLivePage() {
       </div>
 
       {/* Scoreboard */}
-      <div className="bg-[#1a1d27] border-b border-white/10 px-4 py-3 flex items-center justify-between shrink-0 relative">
+      <div className="bg-[#0F2038] border-b border-white/10 px-4 py-3 flex items-center justify-between shrink-0 relative">
         <div className="flex-1 text-center">
           <div className="text-xs font-bold text-orange-400 mb-1">{teams.find(t => t.id === "home")?.name ?? "主场"}</div>
           <div className={`text-4xl font-black transition-all ${score.home >= score.away ? "text-orange-400" : "text-gray-500"}`}>{score.home}</div>
@@ -858,7 +858,7 @@ export default function GcLivePage() {
         });
         if (qs.length === 0) return null;
         return (
-          <div className="bg-[#1a1d27] border-b border-white/10 px-4 py-1.5 flex items-center justify-center gap-3 shrink-0">
+          <div className="bg-[#0F2038] border-b border-white/10 px-4 py-1.5 flex items-center justify-center gap-3 shrink-0">
             {qs.map(({ q, home, away }) => (
               <div key={q} className="flex items-center gap-1">
                 <span className={`text-[10px] font-bold ${q === quarter ? "text-orange-400" : "text-gray-600"}`}>Q{q}</span>
@@ -989,7 +989,7 @@ export default function GcLivePage() {
       {pendingAction !== null && (
         <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.72)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setPendingAction(null); }}>
-          <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+          <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#0F2038" }}>
             {/* Drag handle */}
             <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
 
@@ -1098,7 +1098,7 @@ export default function GcLivePage() {
         return (
           <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.72)" }}
             onClick={(ev) => { if (ev.target === ev.currentTarget) setReassignEvent(null); }}>
-            <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+            <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#0F2038" }}>
               <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
               <div className="text-center mb-4">
                 <div className="text-base font-black text-white">补录归属</div>
@@ -1134,7 +1134,7 @@ export default function GcLivePage() {
       {/* ── Contextual prompt overlay ─────────────────────────────────────────── */}
       {ctxPrompt !== null && pendingAction === null && (
         <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.65)" }}>
-          <div className="w-full rounded-t-2xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+          <div className="w-full rounded-t-2xl px-4 pt-4 pb-10" style={{ background: "#0F2038" }}>
 
             {ctxPrompt.type === "rebound" && (<>
               <div className="text-xs text-gray-400 text-center mb-4 font-medium">谁抢到篮板？</div>
@@ -1254,7 +1254,7 @@ export default function GcLivePage() {
 
       {endConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-6" style={{ background: "rgba(0,0,0,0.75)" }}>
-          <div className="w-full max-w-sm rounded-2xl px-6 py-6" style={{ background: "#1a1d27" }}>
+          <div className="w-full max-w-sm rounded-2xl px-6 py-6" style={{ background: "#0F2038" }}>
             <div className="text-center mb-4">
               <div className="text-xl font-black text-white mb-2">⚠️ 确认结束比赛？</div>
               <div className="text-xs text-gray-500">结束后可在战报页补录遗漏事件</div>

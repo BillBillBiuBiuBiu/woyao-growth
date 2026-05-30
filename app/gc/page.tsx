@@ -193,7 +193,7 @@ export default function GcSetupPage() {
   // ── EDITING MODE ────────────────────────────────────────────────────────────
   if (editing) {
     return (
-      <div className="min-h-screen px-4 pb-10" style={{ background: "#0f1117" }}>
+      <div className="min-h-screen px-4 pb-10" style={{ background: "#06101E" }}>
         <div className="pt-6 pb-4 text-center">
           <div className="text-lg font-black text-white">✏️ 编辑阵容</div>
           <div className="text-xs text-gray-500 mt-1">修改队名、球员号码和姓名</div>
@@ -209,7 +209,7 @@ export default function GcSetupPage() {
             <div
               key={side}
               className={`rounded-2xl border p-4 mb-4 ${borderColor}`}
-              style={{ background: "#1a1d27" }}
+              style={{ background: "#0F2038" }}
             >
               {/* Team name */}
               <div className="flex items-center gap-2 mb-3">
@@ -320,7 +320,7 @@ export default function GcSetupPage() {
       </div>
 
       {/* Matchup card */}
-      <div className="w-full max-w-sm rounded-2xl bg-[#1a1d27] border border-white/10 p-5 mb-2">
+      <div className="w-full max-w-sm rounded-2xl bg-[#0F2038] border border-white/10 p-5 mb-2">
         <div className="text-xs text-gray-500 uppercase tracking-wider mb-4">今日对阵</div>
         <div className="flex items-center justify-between">
           <div className="text-center flex-1">
@@ -433,7 +433,7 @@ export default function GcSetupPage() {
               const homeWon = g.homeScore > g.awayScore;
               const awayWon = g.awayScore > g.homeScore;
               return (
-                <div key={g.id} onClick={() => openDetail(g)} className="rounded-xl border border-white/8 px-4 py-3 cursor-pointer active:bg-white/5" style={{ background: "#1a1d27" }}>
+                <div key={g.id} onClick={() => openDetail(g)} className="rounded-xl border border-white/8 px-4 py-3 cursor-pointer active:bg-white/5" style={{ background: "#0F2038" }}>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] text-gray-600">{fmtGameDate(g.ts)}</span>
                     <span className="text-[10px] text-gray-700">{g.eventCount} 事件 · {fmtDur(g.duration)}</span>
@@ -476,7 +476,7 @@ export default function GcSetupPage() {
           style={{ background: "rgba(0,0,0,0.78)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setDetailGame(null); }}
         >
-          <div className="w-full rounded-t-3xl max-h-[80vh] overflow-y-auto" style={{ background: "#1a1d27" }}>
+          <div className="w-full rounded-t-3xl max-h-[80vh] overflow-y-auto" style={{ background: "#0F2038" }}>
             <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mt-3 mb-1" />
 
             {/* Header */}
@@ -557,7 +557,7 @@ export default function GcSetupPage() {
       {/* Share fallback sheet (clipboard unavailable) */}
       {shareText !== null && (
         <div className="fixed inset-0 z-[60] flex items-end" style={{ background: "rgba(0,0,0,0.72)" }}>
-          <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#1a1d27" }}>
+          <div className="w-full rounded-t-3xl px-4 pt-4 pb-10" style={{ background: "#0F2038" }}>
             <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
             <div className="text-sm font-bold text-white mb-1">📤 复制战报</div>
             <div className="text-xs text-gray-500 mb-3">长按下方文字 → 全选 → 复制，粘贴到微信群</div>
