@@ -103,10 +103,10 @@ export default function LeadsPage() {
       </div>
 
       {/* Referral message generator */}
-      <div className="rounded-2xl border border-orange-500/30 bg-gradient-to-br from-orange-50 to-amber-50 p-4">
+      <div className="rounded-2xl border border-orange-500/30 bg-gradient-to-br from-orange-500/10 to-amber-500/10 backdrop-blur p-4">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-base">🤝</span>
-          <div className="text-sm font-bold text-orange-800">转介绍文案生成器</div>
+          <div className="text-sm font-bold text-orange-300">转介绍文案生成器</div>
           <span className="text-xs bg-orange-500/15 text-orange-300 px-2 py-0.5 rounded-full">一键复制发微信</span>
         </div>
         <div className="flex gap-2 mb-3">
