@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { PlayCircle, Heart, BookOpen } from "lucide-react";
+import { PlayCircle, Heart, BookOpen, Share2 } from "lucide-react";
 import { mockReport, mockBadges, mockStudentCards, mockAssessment } from "@/lib/mock-data";
 import BasketballCard from "@/components/BasketballCard";
 import { apiLoadGames, apiLoadEvents, apiLoadClips, type StoredEvent, type ClipRecord } from "@/lib/gc-api";
@@ -308,6 +308,34 @@ export default function ParentHome() {
             <p className="mt-2 text-sm text-orange-50 leading-7">
               {childName}在球场上每一次抬头、奔跑和再尝试，当时可能很快就过去了。但这些小小的瞬间拼在一起，就是孩子认真长大的证据。妈妈不用懂所有数据，我们会替你好好保存下来。
             </p>
+          </div>
+        )}
+
+        {/* 分享给家人 — 成长档案分享卡(驱动口碑/转介绍) */}
+        {!gamesLoading && recentGames.length > 0 && childName && (
+          <div className="rounded-[28px] p-4 backdrop-blur"
+            style={{ background: "linear-gradient(135deg, rgba(255,132,39,0.22), rgba(255,212,71,0.1))", border: "1px solid rgba(253,186,116,0.3)" }}>
+            <div className="flex items-start gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-orange-500 text-white"><Share2 className="size-5" /></span>
+              <div className="min-w-0">
+                <h2 className="text-lg font-black text-white">想给家人看，就点这里</h2>
+                <p className="mt-1 text-sm leading-6 text-orange-50">把{childName}的成长整理成一张可保存、可转发的成长档案，发给爸爸/爷爷奶奶一起见证。</p>
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                const url = `${window.location.origin}/parent/profile/stu-001`;
+                const title = `${childName}的篮球成长档案`;
+                if ("share" in navigator) {
+                  try { await (navigator as Navigator & { share: (d: ShareData) => Promise<void> }).share({ url, title, text: `来看看${childName}在 PAB 的篮球成长记录 🏀` }); return; } catch {}
+                }
+                copyClipLink(url);
+              }}
+              className="mt-4 w-full flex items-center justify-center gap-2 h-11 rounded-full bg-orange-500 text-white text-sm font-bold active:scale-95 transition-transform"
+            >
+              <Share2 className="size-4" />
+              {linkToast === `${typeof window !== "undefined" ? window.location.origin : ""}/parent/profile/stu-001` ? "✅ 链接已复制" : "分享给家人"}
+            </button>
           </div>
         )}
 
