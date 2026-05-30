@@ -27,10 +27,11 @@ export default function RoleSwitcher() {
       <select
         value={role}
         onChange={handleChange}
-        className="text-sm border border-border rounded-lg px-2 py-1 bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+        className="text-sm rounded-lg px-2 py-1 text-white border border-white/15 focus:outline-none focus:ring-2 focus:ring-brand/40"
+        style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(8px)" }}
       >
         {roles.map((r) => (
-          <option key={r.value} value={r.value}>
+          <option key={r.value} value={r.value} style={{ background: "#0F2038", color: "#EDF4FF" }}>
             {r.label}
           </option>
         ))}
