@@ -75,8 +75,8 @@ function dedupeByJersey(stats: PlayerStat[]): PlayerStat[] {
 const LS_KEY = "woyao_label_overrides";
 
 const typeLabel: Record<string, { label: string; color: string }> = {
-  training:  { label: "训练",    color: "bg-blue-100 text-blue-700" },
-  match:     { label: "比赛",    color: "bg-orange-100 text-orange-700" },
+  training:  { label: "训练",    color: "bg-blue-100 text-sky-300" },
+  match:     { label: "比赛",    color: "bg-orange-100 text-orange-300" },
   highlight: { label: "精彩集锦", color: "bg-purple-100 text-purple-700" },
 };
 
@@ -88,11 +88,11 @@ const statusConfig: Record<string, { label: string; dot: string }> = {
 };
 
 const EVENT_CFG: Record<string, { icon: string; color: string }> = {
-  hold:    { icon: "🏀", color: "bg-orange-50 text-orange-700 border-orange-100" },
-  pass:    { icon: "➡️", color: "bg-blue-50 text-blue-700 border-blue-100" },
+  hold:    { icon: "🏀", color: "bg-orange-500/10 text-orange-300 border-orange-500/20" },
+  pass:    { icon: "➡️", color: "bg-sky-500/10 text-sky-300 border-blue-100" },
   steal:   { icon: "✋", color: "bg-red-50 text-red-700 border-red-100" },
   drive:   { icon: "⚡", color: "bg-yellow-50 text-yellow-700 border-yellow-100" },
-  shot:    { icon: "🎯", color: "bg-green-50 text-green-700 border-green-100" },
+  shot:    { icon: "🎯", color: "bg-green-500/15 text-green-700 border-green-500/20" },
   receive: { icon: "👐", color: "bg-purple-50 text-purple-700 border-purple-100" },
 };
 
@@ -235,12 +235,12 @@ export default function CoachVideosPage() {
       </div>
 
       {showUploadGuide && (
-        <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4">
-          <div className="text-sm font-medium text-orange-700 mb-2">如何添加新视频</div>
-          <div className="text-xs text-orange-600 leading-relaxed mb-2">
+        <div className="rounded-2xl border border-orange-500/30 bg-orange-500/10 p-4">
+          <div className="text-sm font-medium text-orange-300 mb-2">如何添加新视频</div>
+          <div className="text-xs text-orange-300 leading-relaxed mb-2">
             视频分析需在本地运行追踪脚本，处理完成后数据自动同步至系统：
           </div>
-          <code className="block bg-white border border-orange-100 rounded-xl px-3 py-2 text-xs text-gray-700 font-mono mb-2">
+          <code className="block bg-white/10 border border-orange-500/20 rounded-xl px-3 py-2 text-xs text-gray-200 font-mono mb-2">
             python3 player_tracker.py &lt;视频路径&gt; &lt;输出目录&gt;
           </code>
           <div className="text-xs text-orange-500">脚本会输出 tracking.json / possessions.json / stats.json，放入 public/videos/ 后刷新页面即可看到分析结果。</div>
@@ -263,7 +263,7 @@ export default function CoachVideosPage() {
           const data        = trackingData[video.id];
 
           return (
-            <div key={video.id} className="rounded-2xl border border-border bg-white overflow-hidden">
+            <div key={video.id} className="rounded-2xl border border-border bg-white/10 overflow-hidden">
               {/* Thumbnail */}
               <div className="aspect-video bg-slate-900 relative">
                 {video.thumbnailUrl ? (
@@ -292,7 +292,7 @@ export default function CoachVideosPage() {
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-gray-800 truncate mb-1">{video.title}</div>
+                    <div className="font-semibold text-white truncate mb-1">{video.title}</div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <span className={`w-2 h-2 rounded-full ${statusCfg.dot}`} />
@@ -312,14 +312,14 @@ export default function CoachVideosPage() {
                       hasAnalysis
                         ? isExpanded
                           ? "bg-green-500 text-white hover:bg-green-600"
-                          : "border border-green-500 text-green-700 hover:bg-green-50"
-                        : "border border-gray-200 text-gray-400 cursor-not-allowed"
+                          : "border border-green-500 text-green-700 hover:bg-green-500/15"
+                        : "border border-white/15 text-gray-400 cursor-not-allowed"
                     }`}
                   >
                     {analyzing === video.id ? "加载中..." : isExpanded ? "▲ 收起分析" : "📊 视频分析"}
                   </button>
                   <Link href={`/coach/reports/generate?videoId=${video.id}`} className="flex-1">
-                    <button className="w-full rounded-xl border border-orange-200 text-orange-600 text-sm font-medium py-2 hover:bg-orange-50 transition-colors">
+                    <button className="w-full rounded-xl border border-orange-500/30 text-orange-300 text-sm font-medium py-2 hover:bg-orange-500/10 transition-colors">
                       生成报告
                     </button>
                   </Link>
@@ -328,10 +328,10 @@ export default function CoachVideosPage() {
 
               {/* 分析结果展开区 */}
               {isExpanded && data && (
-                <div className="px-4 pb-4 border-t border-gray-100 pt-4 bg-gray-50">
+                <div className="px-4 pb-4 border-t border-white/10 pt-4 bg-white/5">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-1 h-4 rounded-full bg-green-500" />
-                    <span className="text-sm font-semibold text-gray-800">真实视频分析结果</span>
+                    <span className="text-sm font-semibold text-white">真实视频分析结果</span>
                     <span className="text-xs text-gray-400 ml-1">YOLOv8 + 光流追踪 · {data.sourceVideo}</span>
                   </div>
 
@@ -343,7 +343,7 @@ export default function CoachVideosPage() {
                         className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                           (activeTab[video.id] || "stats") === t
                             ? "bg-green-500 text-white"
-                            : "bg-white border border-gray-200 text-gray-600"
+                            : "bg-white/10 border border-white/15 text-gray-300"
                         }`}>
                         {t === "stats" ? "📈 技术统计" : t === "tracking" ? "🗺️ 运动轨迹" : "⚡ 回合切片"}
                         {t === "possessions" && possessionData[video.id] &&
@@ -362,27 +362,27 @@ export default function CoachVideosPage() {
                     return (
                       <div className="flex flex-col gap-3">
                         {/* 队伍对比 */}
-                        <div className="rounded-xl bg-white border border-gray-100 overflow-hidden">
-                          <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-600">
+                        <div className="rounded-xl bg-white/10 border border-white/10 overflow-hidden">
+                          <div className="px-3 py-2 bg-white/5 border-b border-white/10 text-xs font-semibold text-gray-300">
                             队伍对比
                           </div>
                           <div className="grid grid-cols-2 divide-x divide-gray-100">
                             {Object.entries(s.teamStats).map(([team, ts]) => (
                               <div key={team} className="p-3">
-                                <div className={`text-sm font-bold mb-2 ${team === "红队" ? "text-red-600" : "text-gray-700"}`}>
+                                <div className={`text-sm font-bold mb-2 ${team === "红队" ? "text-red-600" : "text-gray-200"}`}>
                                   {team}
                                 </div>
                                 <div className="flex flex-col gap-1 text-xs">
-                                  <div className="flex justify-between"><span className="text-gray-500">球权时间</span><span className="font-semibold">{ts.possessionSeconds}s</span></div>
-                                  <div className="flex justify-between"><span className="text-gray-500">球权占比</span><span className="font-semibold">{ts.possessionPct}%</span></div>
-                                  <div className="h-1.5 rounded-full bg-gray-100 mt-1 overflow-hidden">
+                                  <div className="flex justify-between"><span className="text-slate-400">球权时间</span><span className="font-semibold">{ts.possessionSeconds}s</span></div>
+                                  <div className="flex justify-between"><span className="text-slate-400">球权占比</span><span className="font-semibold">{ts.possessionPct}%</span></div>
+                                  <div className="h-1.5 rounded-full bg-white/10 mt-1 overflow-hidden">
                                     <div className={`h-full rounded-full ${team === "红队" ? "bg-red-400" : "bg-gray-600"}`}
                                       style={{ width: `${ts.possessionPct}%` }} />
                                   </div>
-                                  <div className="flex justify-between mt-1"><span className="text-gray-500">传球</span><span className="font-semibold">{ts.passCount}</span></div>
-                                  <div className="flex justify-between"><span className="text-gray-500">抢断</span><span className="font-semibold">{ts.stealCount}</span></div>
-                                  <div className="flex justify-between"><span className="text-gray-500">突破</span><span className="font-semibold">{ts.driveCount}</span></div>
-                                  <div className="flex justify-between"><span className="text-gray-500">投篮</span><span className="font-semibold">{ts.shotCount}</span></div>
+                                  <div className="flex justify-between mt-1"><span className="text-slate-400">传球</span><span className="font-semibold">{ts.passCount}</span></div>
+                                  <div className="flex justify-between"><span className="text-slate-400">抢断</span><span className="font-semibold">{ts.stealCount}</span></div>
+                                  <div className="flex justify-between"><span className="text-slate-400">突破</span><span className="font-semibold">{ts.driveCount}</span></div>
+                                  <div className="flex justify-between"><span className="text-slate-400">投篮</span><span className="font-semibold">{ts.shotCount}</span></div>
                                 </div>
                               </div>
                             ))}
@@ -390,18 +390,18 @@ export default function CoachVideosPage() {
                         </div>
 
                         {/* 球员统计表 */}
-                        <div className="rounded-xl bg-white border border-gray-100 overflow-hidden">
-                          <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-600 flex items-center gap-2">
+                        <div className="rounded-xl bg-white/10 border border-white/10 overflow-hidden">
+                          <div className="px-3 py-2 bg-white/5 border-b border-white/10 text-xs font-semibold text-gray-300 flex items-center gap-2">
                             球员统计
                             <span className="text-gray-400 font-normal">— 悬停球员名可修正标签</span>
                           </div>
                           <div className="overflow-x-auto">
                             <table className="w-full text-xs min-w-[600px]">
                               <thead>
-                                <tr className="border-b border-gray-100">
-                                  <th className="px-3 py-2 text-left font-semibold text-gray-600 sticky left-0 bg-white">球员</th>
+                                <tr className="border-b border-white/10">
+                                  <th className="px-3 py-2 text-left font-semibold text-gray-300 sticky left-0 bg-white/10">球员</th>
                                   {visibleCols.map(c => (
-                                    <th key={c.key} className="px-2 py-2 text-right font-semibold text-gray-500 whitespace-nowrap">
+                                    <th key={c.key} className="px-2 py-2 text-right font-semibold text-slate-400 whitespace-nowrap">
                                       {c.label}
                                     </th>
                                   ))}
@@ -413,8 +413,8 @@ export default function CoachVideosPage() {
                                   const displayName = applyLabel(video.id, ps.label);
                                   const isEditing   = editingCell?.videoId === video.id && editingCell?.label === ps.label;
                                   return (
-                                    <tr key={i} className="group border-b border-gray-50 hover:bg-gray-50">
-                                      <td className="px-3 py-2 sticky left-0 bg-white group-hover:bg-gray-50">
+                                    <tr key={i} className="group border-b border-gray-50 hover:bg-white/5">
+                                      <td className="px-3 py-2 sticky left-0 bg-white/10 group-hover:bg-white/5">
                                         <div className="flex items-center gap-1.5">
                                           <div className={`w-2 h-2 rounded-full shrink-0 ${ps.team === "红队" ? "bg-red-400" : "bg-gray-600"}`} />
                                           {isEditing ? (
@@ -430,12 +430,12 @@ export default function CoachVideosPage() {
                                                 placeholder={ps.label}
                                                 className="border border-orange-300 rounded px-1.5 py-0.5 text-xs w-24 focus:outline-none focus:border-orange-500"
                                               />
-                                              <button type="submit" className="text-green-600 font-bold text-xs px-1">✓</button>
+                                              <button type="submit" className="text-green-400 font-bold text-xs px-1">✓</button>
                                               <button type="button" onClick={() => setEditingCell(null)} className="text-gray-400 text-xs px-1">✕</button>
                                             </form>
                                           ) : (
                                             <div className="flex items-center gap-1">
-                                              <span className={`font-medium whitespace-nowrap ${hasOverride ? "text-orange-600" : "text-gray-800"}`}>
+                                              <span className={`font-medium whitespace-nowrap ${hasOverride ? "text-orange-300" : "text-white"}`}>
                                                 {displayName}
                                               </span>
                                               {hasOverride && (
@@ -461,7 +461,7 @@ export default function CoachVideosPage() {
                                         const val    = (ps as unknown as Record<string, number>)[c.key];
                                         const isZero = val === 0;
                                         return (
-                                          <td key={c.key} className={`px-2 py-2 text-right font-mono ${isZero ? "text-gray-300" : "text-gray-800 font-semibold"}`}>
+                                          <td key={c.key} className={`px-2 py-2 text-right font-mono ${isZero ? "text-gray-300" : "text-white font-semibold"}`}>
                                             {c.key === "holdSeconds" ? `${val}s` : c.key.includes("Distance") ? `${val}` : val}
                                           </td>
                                         );
@@ -492,7 +492,7 @@ export default function CoachVideosPage() {
                     <div className="flex flex-col gap-2">
                       {possessionData[video.id] ? (
                         possessionData[video.id].possessions.map((p) => (
-                          <div key={p.id} className="rounded-xl bg-white border border-gray-100 overflow-hidden">
+                          <div key={p.id} className="rounded-xl bg-white/10 border border-white/10 overflow-hidden">
                             {/* 内嵌视频播放器 */}
                             {playingClip === p.id ? (
                               <div className="relative bg-black">
@@ -523,7 +523,7 @@ export default function CoachVideosPage() {
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
                                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                                      p.team === "红队" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700"
+                                      p.team === "红队" ? "bg-red-100 text-red-700" : "bg-white/10 text-gray-200"
                                     }`}>{p.team}</span>
                                     <span className="text-xs text-gray-400">回合 {p.index} · {p.duration.toFixed(1)}s</span>
                                   </div>
@@ -566,11 +566,11 @@ export default function CoachVideosPage() {
         })}
       </div>
 
-      <div className="rounded-2xl border border-dashed border-orange-200 bg-orange-50/50 p-4">
-        <div className="text-sm font-medium text-orange-700 mb-1">关于视频分析</div>
-        <div className="text-xs text-orange-600 leading-relaxed">
+      <div className="rounded-2xl border border-dashed border-orange-500/30 bg-orange-500/10/50 p-4">
+        <div className="text-sm font-medium text-orange-300 mb-1">关于视频分析</div>
+        <div className="text-xs text-orange-300 leading-relaxed">
           视频分析使用 YOLOv8 人体检测 + ByteTrack 多目标跟踪算法，可提取球员移动轨迹、移动距离（进攻/防守）、上场时间及球的运动轨迹。
-          新视频分析请在本地运行：<code className="bg-white px-1 rounded">python3 player_tracker.py &lt;视频路径&gt; &lt;输出目录&gt;</code>
+          新视频分析请在本地运行：<code className="bg-white/10 px-1 rounded">python3 player_tracker.py &lt;视频路径&gt; &lt;输出目录&gt;</code>
         </div>
       </div>
     </div>
