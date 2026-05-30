@@ -88,7 +88,7 @@ export default function AnnotatePage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <div className="text-5xl">✅</div>
-        <div className="text-xl font-bold text-green-600">报告已发布！</div>
+        <div className="text-xl font-bold text-green-400">报告已发布！</div>
         <div className="text-sm text-muted-foreground">家长将收到通知，正在返回...</div>
         <button
           onClick={() => { if (timerRef.current) clearTimeout(timerRef.current); setPublished(false); }}
@@ -116,7 +116,7 @@ export default function AnnotatePage() {
             className={`shrink-0 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
               i === activeClip
                 ? "bg-primary text-white"
-                : "bg-white border border-border text-muted-foreground hover:text-foreground"
+                : "bg-white/10 border border-border text-muted-foreground hover:text-foreground"
             }`}
           >
             片段 {i + 1}：{c.title}
@@ -143,7 +143,7 @@ export default function AnnotatePage() {
       </div>
 
       {/* Dimension + Tag */}
-      <div className="rounded-2xl border border-border bg-white p-4">
+      <div className="rounded-2xl border border-border bg-white/10 p-4">
         <div className="text-sm font-semibold mb-3">成长标签</div>
         <div className="flex flex-col gap-3">
           {Object.entries(growthTags).map(([dim, tags]) => (
@@ -161,7 +161,7 @@ export default function AnnotatePage() {
                     className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                       ann.tag === tag && ann.dimension === dim
                         ? "bg-primary text-white border-primary"
-                        : "bg-white border-border text-muted-foreground hover:border-primary/40"
+                        : "bg-white/10 border-border text-muted-foreground hover:border-primary/40"
                     }`}
                   >
                     {tag}
@@ -174,7 +174,7 @@ export default function AnnotatePage() {
       </div>
 
       {/* Level */}
-      <div className="rounded-2xl border border-border bg-white p-4">
+      <div className="rounded-2xl border border-border bg-white/10 p-4">
         <div className="text-sm font-semibold mb-3">成长等级</div>
         <div className="grid grid-cols-2 gap-2">
           {levels.map((l) => (
@@ -187,8 +187,8 @@ export default function AnnotatePage() {
               }}
               className={`rounded-xl border p-3 text-left transition-colors ${
                 ann.level === l.value
-                  ? "border-primary bg-orange-50"
-                  : "border-border bg-white hover:border-primary/40"
+                  ? "border-primary bg-orange-500/10"
+                  : "border-border bg-white/10 hover:border-primary/40"
               }`}
             >
               <div className={`text-sm font-medium ${ann.level === l.value ? "text-primary" : ""}`}>{l.label}</div>
@@ -199,7 +199,7 @@ export default function AnnotatePage() {
       </div>
 
       {/* Coach comment */}
-      <div className="rounded-2xl border border-border bg-white p-4">
+      <div className="rounded-2xl border border-border bg-white/10 p-4">
         <div className="text-sm font-semibold mb-2">教练专业点评</div>
         <div className="flex flex-wrap gap-1.5 mb-2">
           {[
@@ -211,7 +211,7 @@ export default function AnnotatePage() {
             <button
               key={t}
               onClick={() => updateAnn({ coachComment: ann.coachComment ? `${ann.coachComment}${t}` : t })}
-              className="text-xs text-gray-500 border border-dashed border-gray-300 px-2 py-0.5 rounded-full hover:border-primary/50 hover:text-primary transition-colors"
+              className="text-xs text-slate-400 border border-dashed border-gray-300 px-2 py-0.5 rounded-full hover:border-primary/50 hover:text-primary transition-colors"
             >
               + {t}
             </button>
@@ -226,19 +226,19 @@ export default function AnnotatePage() {
       </div>
 
       {/* Parent-friendly comment */}
-      <div className="rounded-2xl border border-border bg-white p-4">
+      <div className="rounded-2xl border border-border bg-white/10 p-4">
         <div className="flex items-center justify-between mb-2">
           <div className="text-sm font-semibold">家长版表达</div>
           <div className="flex items-center gap-2">
             {ann.tag && ann.level && (
               <button
                 onClick={() => updateAnn({ parentComment: genWarmComment(ann.tag, ann.level) })}
-                className="text-xs bg-orange-50 text-orange-600 border border-orange-200 px-2 py-0.5 rounded-full font-medium active:opacity-70"
+                className="text-xs bg-orange-500/10 text-orange-300 border border-orange-500/30 px-2 py-0.5 rounded-full font-medium active:opacity-70"
               >
                 ✨ 一键生成
               </button>
             )}
-            <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-600">AI生成</Badge>
+            <Badge variant="secondary" className="text-xs bg-sky-500/10 text-blue-600">AI生成</Badge>
           </div>
         </div>
         <textarea
@@ -255,14 +255,14 @@ export default function AnnotatePage() {
           <button
             onClick={() => setActiveClip((i) => Math.max(i - 1, 0))}
             disabled={activeClip === 0}
-            className="flex-1 rounded-xl border border-border bg-white py-3 text-sm font-medium hover:bg-slate-50 transition-colors disabled:opacity-40"
+            className="flex-1 rounded-xl border border-border bg-white/10 py-3 text-sm font-medium hover:bg-slate-50 transition-colors disabled:opacity-40"
           >
             ← 上一片段
           </button>
           <button
             onClick={() => setActiveClip((i) => Math.min(i + 1, mockReport.clips.length - 1))}
             disabled={activeClip === mockReport.clips.length - 1}
-            className="flex-1 rounded-xl border border-border bg-white py-3 text-sm font-medium hover:bg-slate-50 transition-colors disabled:opacity-40"
+            className="flex-1 rounded-xl border border-border bg-white/10 py-3 text-sm font-medium hover:bg-slate-50 transition-colors disabled:opacity-40"
           >
             下一片段 →
           </button>

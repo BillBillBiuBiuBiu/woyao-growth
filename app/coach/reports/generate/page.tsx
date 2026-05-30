@@ -66,11 +66,11 @@ function GenerateReportContent() {
     return (
       <div className="flex flex-col items-center justify-center gap-6 py-16 px-4">
         <div className="text-6xl">🎉</div>
-        <h2 className="text-xl font-bold text-gray-800 text-center">报告已发布！</h2>
-        <p className="text-sm text-gray-500 text-center">家长将收到通知，可在家长端查看成长报告。</p>
+        <h2 className="text-xl font-bold text-white text-center">报告已发布！</h2>
+        <p className="text-sm text-slate-400 text-center">家长将收到通知，可在家长端查看成长报告。</p>
         <div className="flex gap-3 w-full max-w-xs">
           <Link href="/coach/reports" className="flex-1">
-            <button className="w-full rounded-xl border border-border py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            <button className="w-full rounded-xl border border-border py-2.5 text-sm font-medium text-gray-200 hover:bg-white/5 transition-colors">
               查看报告列表
             </button>
           </Link>
@@ -94,12 +94,12 @@ function GenerateReportContent() {
           {[1, 2, 3].map((s) => (
             <div key={s} className="flex items-center gap-1">
               <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                step >= s ? "bg-orange-500 text-white" : "bg-gray-200 text-gray-500"
+                step >= s ? "bg-orange-500 text-white" : "bg-gray-200 text-slate-400"
               }`}>{s}</div>
               {s < 3 && <div className={`w-8 h-0.5 ${step > s ? "bg-orange-400" : "bg-gray-200"}`} />}
             </div>
           ))}
-          <span className="ml-2 text-xs text-gray-500">
+          <span className="ml-2 text-xs text-slate-400">
             {step === 1 ? "选择学员与视频" : step === 2 ? "选择训练场景" : "审核与发布"}
           </span>
         </div>
@@ -109,22 +109,22 @@ function GenerateReportContent() {
       {step === 1 && (
         <div className="flex flex-col gap-4">
           {/* Student */}
-          <div className="rounded-2xl border border-border bg-white p-4">
-            <label className="text-sm font-semibold text-gray-700 block mb-3">选择学员</label>
+          <div className="rounded-2xl border border-border bg-white/10 p-4">
+            <label className="text-sm font-semibold text-gray-200 block mb-3">选择学员</label>
             <div className="flex flex-col gap-2">
               {mockStudents.map((s) => (
                 <button
                   key={s.id}
                   onClick={() => setSelectedStudent(s.id)}
                   className={`flex items-center gap-3 p-3 rounded-xl border transition-colors text-left ${
-                    selectedStudent === s.id ? "border-orange-400 bg-orange-50" : "border-gray-200 hover:bg-gray-50"
+                    selectedStudent === s.id ? "border-orange-400 bg-orange-500/10" : "border-white/15 hover:bg-white/5"
                   }`}
                 >
                   <div className="w-8 h-8 rounded-full bg-orange-400 text-white flex items-center justify-center text-sm font-bold shrink-0">
                     {s.name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm text-gray-800">{s.name}</div>
+                    <div className="font-medium text-sm text-white">{s.name}</div>
                     <div className="text-xs text-gray-400">{s.age}岁</div>
                   </div>
                   <PlanBadge plan={s.plan} size="sm" />
@@ -134,22 +134,22 @@ function GenerateReportContent() {
           </div>
 
           {/* Video */}
-          <div className="rounded-2xl border border-border bg-white p-4">
-            <label className="text-sm font-semibold text-gray-700 block mb-3">选择视频</label>
+          <div className="rounded-2xl border border-border bg-white/10 p-4">
+            <label className="text-sm font-semibold text-gray-200 block mb-3">选择视频</label>
             <div className="flex flex-col gap-2">
               {mockVideos.map((v) => (
                 <button
                   key={v.id}
                   onClick={() => setSelectedVideo(v.id)}
                   className={`flex items-center gap-3 p-3 rounded-xl border transition-colors text-left ${
-                    selectedVideo === v.id ? "border-orange-400 bg-orange-50" : "border-gray-200 hover:bg-gray-50"
+                    selectedVideo === v.id ? "border-orange-400 bg-orange-500/10" : "border-white/15 hover:bg-white/5"
                   }`}
                 >
                   <div className="w-12 h-9 rounded-lg overflow-hidden bg-slate-800 shrink-0">
                     {v.thumbnailUrl && <img src={v.thumbnailUrl} alt={v.title} className="w-full h-full object-cover opacity-70" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-800 truncate">{v.title}</div>
+                    <div className="text-sm font-medium text-white truncate">{v.title}</div>
                     <div className="text-xs text-gray-400">{v.duration}分钟 · {v.studentIds.length}名学员</div>
                   </div>
                 </button>
@@ -158,19 +158,19 @@ function GenerateReportContent() {
           </div>
 
           {/* Report type */}
-          <div className="rounded-2xl border border-border bg-white p-4">
-            <label className="text-sm font-semibold text-gray-700 block mb-3">报告类型</label>
+          <div className="rounded-2xl border border-border bg-white/10 p-4">
+            <label className="text-sm font-semibold text-gray-200 block mb-3">报告类型</label>
             <div className="flex flex-col gap-2">
               {reportTypes.map((rt) => (
                 <button
                   key={rt.type}
                   onClick={() => setSelectedType(rt.type)}
                   className={`flex items-center gap-3 p-3 rounded-xl border transition-colors text-left ${
-                    selectedType === rt.type ? "border-orange-400 bg-orange-50" : "border-gray-200 hover:bg-gray-50"
+                    selectedType === rt.type ? "border-orange-400 bg-orange-500/10" : "border-white/15 hover:bg-white/5"
                   }`}
                 >
                   <PlanBadge plan={rt.type} size="md" />
-                  <div className="text-xs text-gray-500">{rt.desc}</div>
+                  <div className="text-xs text-slate-400">{rt.desc}</div>
                 </button>
               ))}
             </div>
@@ -188,19 +188,19 @@ function GenerateReportContent() {
       {/* Step 2: Scene */}
       {step === 2 && (
         <div className="flex flex-col gap-4">
-          <div className="rounded-2xl border border-border bg-white p-4">
-            <label className="text-sm font-semibold text-gray-700 block mb-3">训练场景</label>
+          <div className="rounded-2xl border border-border bg-white/10 p-4">
+            <label className="text-sm font-semibold text-gray-200 block mb-3">训练场景</label>
             <div className="flex flex-col gap-2">
               {sceneOptions.map((s) => (
                 <button
                   key={s.value}
                   onClick={() => setSelectedScene(s.value)}
                   className={`flex items-center gap-3 p-4 rounded-xl border transition-colors text-left ${
-                    selectedScene === s.value ? "border-orange-400 bg-orange-50" : "border-gray-200 hover:bg-gray-50"
+                    selectedScene === s.value ? "border-orange-400 bg-orange-500/10" : "border-white/15 hover:bg-white/5"
                   }`}
                 >
                   <span className="text-2xl">{s.emoji}</span>
-                  <span className="font-medium text-gray-800">{s.label}</span>
+                  <span className="font-medium text-white">{s.label}</span>
                 </button>
               ))}
             </div>
@@ -209,7 +209,7 @@ function GenerateReportContent() {
           <div className="flex gap-3">
             <button
               onClick={() => { setStep(1); setDraft({ summary: "", strengths: "", weaknesses: "", coachComment: "" }); }}
-              className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-gray-200 hover:bg-white/5 transition-colors"
             >
               ← 上一步
             </button>
@@ -227,40 +227,40 @@ function GenerateReportContent() {
       {/* Step 3: Review & Publish */}
       {step === 3 && (
         <div className="flex flex-col gap-4">
-          <div className="rounded-2xl border border-border bg-white p-4">
-            <label className="text-sm font-semibold text-gray-700 block mb-2">报告摘要</label>
+          <div className="rounded-2xl border border-border bg-white/10 p-4">
+            <label className="text-sm font-semibold text-gray-200 block mb-2">报告摘要</label>
             <textarea
-              className="w-full text-sm text-gray-700 border border-gray-200 rounded-xl p-3 resize-none focus:outline-none focus:border-orange-400"
+              className="w-full text-sm text-gray-200 border border-white/15 rounded-xl p-3 resize-none focus:outline-none focus:border-orange-400"
               rows={4}
               value={draft.summary}
               onChange={(e) => setDraft({ ...draft, summary: e.target.value })}
             />
           </div>
 
-          <div className="rounded-2xl border border-border bg-white p-4">
-            <label className="text-sm font-semibold text-gray-700 block mb-2">进步点</label>
+          <div className="rounded-2xl border border-border bg-white/10 p-4">
+            <label className="text-sm font-semibold text-gray-200 block mb-2">进步点</label>
             <textarea
-              className="w-full text-sm text-gray-700 border border-gray-200 rounded-xl p-3 resize-none focus:outline-none focus:border-orange-400"
+              className="w-full text-sm text-gray-200 border border-white/15 rounded-xl p-3 resize-none focus:outline-none focus:border-orange-400"
               rows={4}
               value={draft.strengths}
               onChange={(e) => setDraft({ ...draft, strengths: e.target.value })}
             />
           </div>
 
-          <div className="rounded-2xl border border-border bg-white p-4">
-            <label className="text-sm font-semibold text-gray-700 block mb-2">改进方向</label>
+          <div className="rounded-2xl border border-border bg-white/10 p-4">
+            <label className="text-sm font-semibold text-gray-200 block mb-2">改进方向</label>
             <textarea
-              className="w-full text-sm text-gray-700 border border-gray-200 rounded-xl p-3 resize-none focus:outline-none focus:border-orange-400"
+              className="w-full text-sm text-gray-200 border border-white/15 rounded-xl p-3 resize-none focus:outline-none focus:border-orange-400"
               rows={3}
               value={draft.weaknesses}
               onChange={(e) => setDraft({ ...draft, weaknesses: e.target.value })}
             />
           </div>
 
-          <div className="rounded-2xl border border-border bg-white p-4">
-            <label className="text-sm font-semibold text-gray-700 block mb-2">教练寄语</label>
+          <div className="rounded-2xl border border-border bg-white/10 p-4">
+            <label className="text-sm font-semibold text-gray-200 block mb-2">教练寄语</label>
             <textarea
-              className="w-full text-sm text-gray-700 border border-gray-200 rounded-xl p-3 resize-none focus:outline-none focus:border-orange-400"
+              className="w-full text-sm text-gray-200 border border-white/15 rounded-xl p-3 resize-none focus:outline-none focus:border-orange-400"
               rows={3}
               value={draft.coachComment}
               onChange={(e) => setDraft({ ...draft, coachComment: e.target.value })}
@@ -270,7 +270,7 @@ function GenerateReportContent() {
           <div className="flex gap-3">
             <button
               onClick={() => setStep(2)}
-              className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-gray-200 hover:bg-white/5 transition-colors"
             >
               ← 上一步
             </button>
