@@ -440,9 +440,12 @@ export default function HighlightsPage() {
   const canRun = !!(videoFiles.length > 0 && photoFile && !isProcessing);
 
   const todayKey = (() => { const d = new Date(); return `home_training_checkin_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`; })();
-  const [checkedInToday, setCheckedInToday] = useState(() => { try { return !!localStorage.getItem(todayKey); } catch { return false; } });
-  const [streakDays] = useState(() => {
+  const [checkedInToday, setCheckedInToday] = useState(false);
+  const [streakDays, setStreakDays] = useState(0);
+  // Read localStorage after mount to avoid SSR/client hydration mismatch (React #418)
+  useEffect(() => {
     try {
+      setCheckedInToday(!!localStorage.getItem(todayKey));
       let streak = 0;
       const now = new Date();
       for (let i = 0; i < 30; i++) {
@@ -450,9 +453,9 @@ export default function HighlightsPage() {
         const k = `home_training_checkin_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
         if (localStorage.getItem(k)) streak++; else break;
       }
-      return streak;
-    } catch { return 0; }
-  });
+      setStreakDays(streak);
+    } catch {}
+  }, [todayKey]);
 
   function doCheckin() {
     try { localStorage.setItem(todayKey, "1"); } catch {}

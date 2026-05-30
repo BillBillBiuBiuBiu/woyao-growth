@@ -345,18 +345,18 @@ function SupervipReportLayout({ report }: { report: Report }) {
 export default function ReportDetailPage() {
   const { id } = useParams<{ id: string }>();
   const report = mockReports.find((r) => r.id === id) ?? mockReports[0];
-  const [liked, setLiked] = useState(() => {
-    try { return localStorage.getItem(`report_liked_${id}`) === "1"; } catch { return false; }
-  });
+  const [liked, setLiked] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
-  const [coachName] = useState(() => {
-    try { return localStorage.getItem("coach_name") || ""; } catch { return ""; }
-  });
-  const [childName] = useState(() => {
-    try { return localStorage.getItem("child_name") || ""; } catch { return ""; }
-  });
+  const [coachName, setCoachName] = useState("");
+  const [childName, setChildName] = useState("");
+  // Read localStorage after mount to avoid SSR/client hydration mismatch (React #418)
   useEffect(() => {
-    try { localStorage.setItem(`report_read_${id}`, "1"); } catch {}
+    try {
+      setLiked(localStorage.getItem(`report_liked_${id}`) === "1");
+      setCoachName(localStorage.getItem("coach_name") || "");
+      setChildName(localStorage.getItem("child_name") || "");
+      localStorage.setItem(`report_read_${id}`, "1");
+    } catch {}
   }, [id]);
 
   return (

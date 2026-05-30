@@ -6,9 +6,10 @@ import PlanBadge from "@/components/PlanBadge";
 import type { Report } from "@/lib/types";
 
 function useChildName() {
-  const [name] = useState(() => {
-    try { return localStorage.getItem("child_name") || ""; } catch { return ""; }
-  });
+  const [name, setName] = useState("");
+  useEffect(() => {
+    try { setName(localStorage.getItem("child_name") || ""); } catch {}
+  }, []);
   return name;
 }
 
@@ -26,9 +27,10 @@ const sceneLabel: Record<string, string> = {
 };
 
 function ReportCard({ r }: { r: Report }) {
-  const [isRead] = useState(() => {
-    try { return localStorage.getItem(`report_read_${r.id}`) === "1"; } catch { return false; }
-  });
+  const [isRead, setIsRead] = useState(false);
+  useEffect(() => {
+    try { setIsRead(localStorage.getItem(`report_read_${r.id}`) === "1"); } catch {}
+  }, [r.id]);
   const showDot = !isRead && r.status === "sent";
   const s = statusLabel[r.status] || statusLabel.draft;
   return (

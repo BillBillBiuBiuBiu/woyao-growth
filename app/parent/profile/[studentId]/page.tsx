@@ -32,7 +32,8 @@ function ScoreBoxes({ score, max }: { score: number; max: number }) {
 export default function StudentProfilePage() {
   const a = mockAssessment;
   const [hasTesterBadge, setHasTesterBadge] = useState(false);
-  const [childName] = useState(() => { try { return localStorage.getItem("child_name") || ""; } catch { return ""; } });
+  const [childName, setChildName] = useState("");
+  useEffect(() => { try { setChildName(localStorage.getItem("child_name") || ""); } catch {} }, []);
   const [timelineFilter, setTimelineFilter] = useState<"all"|"match"|"training">("all");
   const [realStats, setRealStats] = useState<{ pts: number; reb: number; ast: number; stl: number; games: number; bestPts: number; partner?: { name: string; count: number } } | null>(null);
   const [recentGames, setRecentGames] = useState<GameRecord[]>([]);
