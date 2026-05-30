@@ -5,9 +5,9 @@ import { mockStudents, mockReports } from "@/lib/mock-data";
 import PlanBadge from "@/components/PlanBadge";
 
 const levelLabel: Record<string, { label: string; color: string }> = {
-  basic_class: { label: "基础班", color: "bg-slate-100 text-slate-600" },
-  match_class:  { label: "比赛班", color: "bg-blue-100 text-blue-700" },
-  elite_class:  { label: "精英班", color: "bg-amber-100 text-amber-700" },
+  basic_class: { label: "基础班", color: "bg-white/10 text-slate-300" },
+  match_class:  { label: "比赛班", color: "bg-sky-500/15 text-sky-300" },
+  elite_class:  { label: "精英班", color: "bg-amber-500/15 text-amber-300" },
 };
 
 const avatarColors = [
@@ -38,7 +38,7 @@ export default function CoachStudentsPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="搜索学员姓名…"
-          className="w-full rounded-xl border border-border bg-white pl-8 pr-3 py-2.5 text-sm outline-none focus:border-orange-400 transition-colors"
+          className="w-full rounded-xl border border-border bg-white/10 pl-8 pr-3 py-2.5 text-sm outline-none focus:border-orange-400 transition-colors"
         />
         {query && (
           <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm active:opacity-60">✕</button>
@@ -57,7 +57,7 @@ export default function CoachStudentsPage() {
 
           return (
             <Link key={student.id} href={`/coach/students/${student.id}`}>
-              <div className="rounded-2xl border border-border bg-white p-4 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="rounded-2xl border border-border bg-white/10 backdrop-blur p-4 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="flex items-center gap-3">
                   {/* Avatar */}
                   <div className={`w-12 h-12 rounded-full ${avatarColor} flex items-center justify-center text-white font-bold text-lg shrink-0`}>
@@ -67,7 +67,7 @@ export default function CoachStudentsPage() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-gray-800">{student.name}</span>
+                      <span className="font-semibold text-white">{student.name}</span>
                       <span className="text-xs text-gray-400">{student.age}岁</span>
                       <PlanBadge plan={student.plan} size="sm" />
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${lv.color}`}>{lv.label}</span>
