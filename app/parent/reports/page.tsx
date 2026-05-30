@@ -33,7 +33,7 @@ function ReportCard({ r }: { r: Report }) {
   const s = statusLabel[r.status] || statusLabel.draft;
   return (
     <Link href={`/parent/reports/${r.id}`}>
-      <div className="rounded-3xl p-4 flex items-start justify-between gap-3 active:scale-98 transition-transform" style={{ background: "#141824", border: "1px solid rgba(255,255,255,0.08)" }}>
+      <div className="rounded-3xl p-4 flex items-start justify-between gap-3 active:scale-98 transition-transform" style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(12px)" }}>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
             <PlanBadge plan={r.reportType} size="sm" />
@@ -86,7 +86,7 @@ export default function ParentReportsPage() {
   return (
     <div
       className="-mx-4 -mt-6 pb-10 min-h-screen"
-      style={{ background: "#0b0f1a" }}
+      style={{ background: "radial-gradient(circle at 15% 0%, rgba(255,132,39,0.2), transparent 30%), radial-gradient(circle at 85% 12%, rgba(255,212,71,0.12), transparent 34%), linear-gradient(180deg, #101B2D 0%, #07111F 58%, #05070D 100%)" }}
     >
       <div className="px-4 pt-8 pb-4">
         <h1 className="text-2xl font-black mb-1 text-white">
