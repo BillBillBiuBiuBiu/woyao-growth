@@ -9,7 +9,8 @@
 - 机构（/org/*）：看运营数据、管理线索
 
 产品代码在 `/tmp/woyao/app/`，共 18 个页面。
-生产环境：https://woyao-growth-production.up.railway.app
+⚠️ 本仓库(main 分支)是 **demo 环境**，部署地址 https://woyao-demo-production.up.railway.app
+   e2e 只测 demo 地址。https://woyao-growth-production.up.railway.app 是 production 分支(真实生产)，**禁止在此迭代/测试**。详见记忆 project_woyao_envs。
 
 ---
 
@@ -53,8 +54,8 @@ python3 /tmp/woyao/qa_tools/extract_players.py \
 ```
 
 **e2e 测试规则**：
-- ⚠️ localhost ≠ 生产环境，每 3 个循环必须做一次生产环境测试
-- 生产环境：navigate 到 https://woyao-growth-production.up.railway.app
+- ⚠️ localhost ≠ 部署环境，每 3 个循环必须做一次 demo 部署环境测试
+- demo 部署环境：navigate 到 https://woyao-demo-production.up.railway.app（绝不测 growth-production，那是真实生产）
 - 柯南负责在涉及 highlights 功能的循环里执行 e2e，记录到 qa_cron_log.jsonl
 
 ---
