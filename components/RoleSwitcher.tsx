@@ -27,6 +27,7 @@ export default function RoleSwitcher() {
       <select
         value={role}
         onChange={handleChange}
+        aria-label="切换角色（家长 / 教练 / 机构）"
         className="text-sm rounded-lg px-2 py-1 text-white border border-white/15 focus:outline-none focus:ring-2 focus:ring-brand/40"
         style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(8px)" }}
       >
