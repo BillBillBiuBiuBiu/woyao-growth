@@ -48,7 +48,7 @@ export default function CoachPage() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-5 min-h-screen" style={{ background: "#0b0f1a", padding: "0 1px" }}>
+    <div className="flex flex-col gap-5 min-h-screen" style={{ background: "radial-gradient(circle at 10% 0%, rgba(89,240,167,0.16), transparent 32%), radial-gradient(circle at 90% 10%, rgba(255,212,71,0.16), transparent 30%), linear-gradient(180deg, #0B1727 0%, #07111F 62%, #05070D 100%)", padding: "0 1px" }}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -71,7 +71,7 @@ export default function CoachPage() {
             { label: "打点总数", value: totalEvents, sub: perGame ? `场均 ${perGame}` : null, color: "text-blue-400" },
             { label: "切片总数", value: Object.values(clipCounts).reduce((s, n) => s + n, 0), sub: recentGames.length > 0 && Object.keys(clipCounts).length > 0 ? `${(Object.values(clipCounts).reduce((s,n)=>s+n,0)/recentGames.length).toFixed(1)}个/场` : null, color: "text-green-400" },
           ].map((s) => (
-            <div key={s.label} className="rounded-xl p-3 text-center" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div key={s.label} className="rounded-xl p-3 text-center" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(8px)" }}>
               <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
               <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
               {s.sub && <div className="text-xs text-gray-500 mt-0.5">{s.sub}</div>}
@@ -81,7 +81,7 @@ export default function CoachPage() {
       </div>
 
       {/* Plan breakdown */}
-      <div className="rounded-2xl p-4" style={{ background: "#141824", border: "1px solid rgba(255,255,255,0.08)" }}>
+      <div className="rounded-2xl p-4" style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(12px)" }}>
         <h2 className="text-sm font-semibold text-white mb-3">学员套餐分布</h2>
         <div className="flex gap-3">
           <div className="flex-1 rounded-xl p-3 text-center" style={{ background: "rgba(255,255,255,0.05)" }}>
@@ -147,7 +147,7 @@ export default function CoachPage() {
           })()}
         </div>
         {recentGames.length > 0 ? (
-          <div className="rounded-2xl overflow-hidden" style={{ background: "#141824", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(12px)" }}>
             {recentGames.map((game, i) => {
               const won  = game.homeScore > game.awayScore;
               const lost = game.homeScore < game.awayScore;
@@ -233,7 +233,7 @@ export default function CoachPage() {
             <h2 className="text-sm font-semibold text-white mb-3">本期训练表现排名</h2>
             <div className="flex flex-col gap-3">
               {dims.map(dim => (
-                <div key={dim.label} className="rounded-2xl p-4" style={{ background: "#141824", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <div key={dim.label} className="rounded-2xl p-4" style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(12px)" }}>
                   <div className="text-xs font-bold text-gray-300 mb-2">{dim.emoji} {dim.label}排名</div>
                   <div className="flex flex-col gap-1">
                     {dim.ranks.map((name, i) => (
@@ -263,7 +263,7 @@ export default function CoachPage() {
             const s = statusMap[r.status] || statusMap.draft;
             return (
               <Link key={r.id} href={`/coach/annotate/${r.id}`}>
-                <div className="rounded-2xl p-4 active:opacity-80 transition-opacity cursor-pointer" style={{ background: "#141824", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <div className="rounded-2xl p-4 active:opacity-80 transition-opacity cursor-pointer" style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(12px)" }}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
